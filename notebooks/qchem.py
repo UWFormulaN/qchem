@@ -19,5 +19,5 @@ def setup_project_environment():
     sys.path.insert(0, project_root)
 
 
-# Call the setup_project_environment function when context.py is imported
+# Call the setup_project_environment function when qchem.py is imported
 setup_project_environment()
