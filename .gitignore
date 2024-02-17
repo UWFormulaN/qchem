@@ -1,0 +1,19 @@
+# Ignore Data and Jupyter Notebooks
+*.csv
+*.pkl
+*.parquet
+*.feather
+*.ipynb
+
+# Personal Workbooks
+/notebooks/*
+!/notebooks/.env
+!/notebooks/qchem.py
+
+# Tests
+!tests/test_files/**
+*pycache*
+.pytest_cache
+
+# VS Code
+.vscode/
