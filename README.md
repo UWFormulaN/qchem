@@ -1,4 +1,4 @@
-QChem is a project used for Quantum Chemistry Simulations and Data Anaylsis + Visualization, developed at the University of Waterloo.
+QChem is a project used for Quantum Chemistry Simulations and Data Anaylsis/Visualization, developed at the University of Waterloo.
 
 Usage:
 
