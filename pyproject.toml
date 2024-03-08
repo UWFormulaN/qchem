@@ -17,6 +17,7 @@ pyscf = "^2.5.0"
 qiskit-nature = "^0.7.1"
 seaborn = "^0.13.2"
 python-dotenv = "^1.0.1"
+qiskit-algorithms = "^0.3.0"
 
 [tool.poetry.group.dev.dependencies]
 jupyterlab = "^4.1.1"
