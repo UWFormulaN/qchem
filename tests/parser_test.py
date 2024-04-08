@@ -1,6 +1,6 @@
 import pandas as pd
 import pytest
-from tools import utils
+from qchem import parser
 
 
 @pytest.fixture
@@ -9,7 +9,7 @@ def sample_xyz_path():
 
 
 def test_read_xyz(sample_xyz_path):
-    xyz_df = utils.read_xyz(sample_xyz_path)
+    xyz_df = parser.read_xyz(sample_xyz_path)
     expected_df = pd.DataFrame(
         {
             "Atom": ["C", "C", "C", "C", "N"],
