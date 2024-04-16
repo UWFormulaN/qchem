@@ -12,7 +12,22 @@ def read_xyz(path):
     )
 
 # This section is for parsing specific results from output files
-# So far, it contains SCF Energy and Mayer Analysis
+# So far, it contains end timings, SCF Energy, loedwin and Mayer Analysis
+
+def read_final_timings(output_path):
+    with open(output_path, 'r') as file:
+        lines = file.readlines()
+    
+    for i, line in enumerate(lines[-20:]):
+        if line.strip() == 'Timings for individual modules:':
+            start_index = i + 2
+            time_lines = lines[-20:][start_index:-2]
+
+            df = pd.DataFrame([line.split('...') for line in time_lines], columns=['Timing', 'Time'])
+            #df = df.apply(pd.to_numeric, errors='coerce').dropna()
+            df[['Time', 'B']] = df['Time'].str.split('sec', n=1, expand=True)
+            df = df.drop(['B'],axis=1)
+            return df
 
 def read_SCF_Energy(output_path):
 # Reads out Energy steps for SCF Iterations
@@ -126,7 +141,7 @@ def read_Loedwin(output_path):
             loedwin_lines = lines[start_index:end_index]
 
             df = pd.DataFrame([line.split()[0:5] for line in loedwin_lines], columns=['Count', 'Atom', ':', 'Atomic Charge'])
-            #df = df.apply(pd.to_numeric, errors='coerce').dropna()
+            df = df.drop([':'],axis=1)
             loedwin.append(df)
             start_switch = False
             end_switch = False
