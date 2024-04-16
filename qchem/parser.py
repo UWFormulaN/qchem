@@ -95,3 +95,40 @@ def read_mayer(output_path):
 
     return mayer_populations
 
+def read_Loedwin(output_path):
+# Reads out Energy steps for SCF Iterations
+
+# ITER    - Step number
+# Energy  - Energy
+# Delta-E - Change in energy from previous step
+
+# Returns data of the form [df1, df2, ...] where df1, df2, ... are dataframes for each SCF Iterations section
+# (which occur at every single point energy calculation)
+    with open(output_path, 'r') as file:
+        lines = file.readlines()
+
+    for line in lines:
+        if line.strip()[0:15] == 'Number of atoms':
+            atom_count = int(line.split()[-1])
+
+    loedwin = []
+    start_switch = False
+    end_switch = False
+    
+    for i, line in enumerate(lines):
+        if line.strip() == 'LOEWDIN ATOMIC CHARGES':
+            start_index = i + 2
+            start_switch = True
+        if line.strip() == 'LOEWDIN REDUCED ORBITAL CHARGES':
+            end_index = i-2
+            end_switch = True
+        if (start_switch & end_switch) == True:
+            loedwin_lines = lines[start_index:end_index]
+
+            df = pd.DataFrame([line.split()[0:5] for line in loedwin_lines], columns=['Count', 'Atom', ':', 'Atomic Charge'])
+            #df = df.apply(pd.to_numeric, errors='coerce').dropna()
+            loedwin.append(df)
+            start_switch = False
+            end_switch = False
+
+    return(loedwin)
