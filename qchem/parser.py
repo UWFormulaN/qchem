@@ -2,6 +2,7 @@
 
 import pandas as pd
 import seaborn as sns
+import re
 
 # This section is for parsing geometry files
 # It should include xyz, smiles, mol, etc.
