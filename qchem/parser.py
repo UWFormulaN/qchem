@@ -7,7 +7,7 @@ import re
 # This section is for parsing geometry files
 # It should include xyz, smiles, mol, etc.
  
-def read_xyz(path):
+def read_xyz(path:str) -> pd.core.frame.DataFrame:
     return pd.read_csv(
         path, sep=r"\s+", skiprows=1, names=["Atom", "X", "Y", "Z"], engine="python"
     )
@@ -15,7 +15,7 @@ def read_xyz(path):
 # This section is for parsing specific results from output files
 # So far, it contains end timings, SCF Energy, loedwin and Mayer Analysis
 
-def read_final_timings(output_path):
+def read_final_timings(output_path: str) -> pd.core.frame.DataFrame:
     with open(output_path, 'r') as file:
         lines = file.readlines()
     
@@ -30,7 +30,7 @@ def read_final_timings(output_path):
             df = df.drop(['B'],axis=1)
             return df
 
-def read_SCF_Energy(output_path):
+def read_SCF_Energy(output_path: str) -> list:
 # Reads out Energy steps for SCF Iterations
 
 # ITER    - Step number
@@ -67,7 +67,7 @@ def read_SCF_Energy(output_path):
 
     return(scf_energies)
 
-def read_mayer(output_path):
+def read_mayer(output_path: str) -> list:
     # Reads out Mayer Population Analysis data from an Orca ouput file
 
     #  NA   - Mulliken gross atomic population
@@ -111,7 +111,7 @@ def read_mayer(output_path):
 
     return mayer_populations
 
-def read_Loedwin(output_path):
+def read_Loedwin(output_path: str) -> list:
 # Reads out Energy steps for SCF Iterations
 
 # ITER    - Step number
@@ -152,7 +152,7 @@ def read_Loedwin(output_path):
 
 # This Subsection is for examining gibbs free energy data and calculating solvent partition coefficients
 
-def read_gibbs(output_path):
+def read_gibbs(output_path: str) -> tuple:
     with open(output_path, 'r') as file:
         lines = file.readlines()
     
@@ -162,7 +162,7 @@ def read_gibbs(output_path):
             unit = re.search(r'\b\w+\b$',line).group()
             return gibbs, unit
         
-def find_partition(gibbs_1, gibbs_2, temp=293.15):
+def find_partition(gibbs_1:tuple, gibbs_2:tuple, temp=293.15) -> float:
     delta_gibbs = gibbs_1[0]*convert_energy(gibbs_1[1],'Eh') - gibbs_2[0]*convert_energy(gibbs_2[1],'Eh')
     delta_gibbs = delta_gibbs*convert_energy('Eh','J/mol')
     return -delta_gibbs/(8.314*temp)
