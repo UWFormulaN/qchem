@@ -163,14 +163,10 @@ def read_gibbs(output_path):
             return gibbs, unit
         
 def find_partition(gibbs_1, gibbs_2, temp=293.15):
-    if gibbs_1[1] == gibbs_2[1]:
-        # Change function later to accomodate different units of energy
-        delta_gibbs = gibbs_1[0] - gibbs_2[0]
-    if gibbs_1[1] == "Eh":
-        # This will be replaced with convert_energy later on
-        delta_gibbs = delta_gibbs*2625.5*1000
-        return -delta_gibbs/(8.314*temp)
+    delta_gibbs = gibbs_1[0]*convert_energy(gibbs_1[1],'Eh') - gibbs_2[0]*convert_energy(gibbs_2[1],'Eh')
+    delta_gibbs = delta_gibbs*convert_energy('Eh','J/mol')
+    return -delta_gibbs/(8.314*temp)
     
-def convert_energy(unit1, unit2):
-    ## Need to make a dictionary of conversion rate from unit1 to unit2, then just index the dictionary
-    return
+def convert_energy(unit1: str, unit2: str) -> float:
+    energy = {'Eh': 1, 'eV': 27.2107, 'kJ/mol': 2625.5, 'kcal/mol': 627.503, 'J/mol':2625500}
+    return energy[unit1] * energy[unit2]
