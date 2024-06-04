@@ -169,4 +169,4 @@ def find_partition(gibbs_1:tuple, gibbs_2:tuple, temp=293.15) -> float:
     
 def convert_energy(unit1: str, unit2: str) -> float:
     energy = {'Eh': 1, 'eV': 27.2107, 'kJ/mol': 2625.5, 'kcal/mol': 627.503, 'J/mol':2625500}
-    return energy[unit1] * energy[unit2]
+    return energy[unit2]/energy[unit1]
