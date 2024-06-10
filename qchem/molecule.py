@@ -60,11 +60,13 @@ class Molecule:
             + pow(atom1[1] - atom2[1], 2)
             + pow(atom1[2] - atom2[2], 2)
         )
-    
 
     def GetBonds(self):
-
+        # Pre initialize most variables
         at_types = self.XYZCoordinates["Atom"].values
+        index = [i for i in range(self.AtomCount)] 
+        bonds = [[] for i in range(self.AtomCount)]
+        bonds_distance = [[] for i in range(self.AtomCount)]
         coords = [
             (
                 self.XYZCoordinates["X"][i],
@@ -73,9 +75,8 @@ class Molecule:
             )
             for i in range(0, len(self.XYZCoordinates["X"].values))
         ]
-        bonds = [[] for i in range(self.AtomCount)]
-        bonds_distance = [[] for i in range(self.AtomCount)]
 
+        # Get the Bonds and save to Array
         for i in range(self.AtomCount):
             radii1 = CovalentRadiiConstants[at_types[i]]
             for j in range(i + 1, self.AtomCount):
@@ -83,38 +84,44 @@ class Molecule:
                 thresh = 1.1 * (radii1 + radii2)
                 dist = self.GetRadius(coords[i], coords[j])
                 if dist < thresh:
-                    bonds_distance[i].append(dist)
-                    bonds_distance[j].append(dist)
                     bonds[i].append(j)
                     bonds[j].append(i)
 
-        index = [i+1 for i in range(self.AtomCount)] 
-        bondDataFrame = pd.DataFrame({
+        #Get Bond Distances
+        for i in range(self.AtomCount):
+            for j in bonds[i]:
+                bonds_distance[i].append(self.GetRadius(coords[i], coords[j]))
+    
+        # Save new Bonds Data Frame to Bonds Variable
+        self.Bonds = pd.DataFrame({
             "Index": index,
             "Atom" : at_types,
             "Bonds": bonds,
             "Bond Distance": bonds_distance
-            
         })
-        self.Bonds = bondDataFrame
 
         
     def DisplayBondGraph (self):
+        """Displays the Bond Graph in Terminal"""
 
-        print("%s\n" % (self.name), end="")
+        print("   %s\n" % (self.name), end="")
 
         for i in range(self.AtomCount):
-
+            # Get Index and Atom Symbol
             index = self.Bonds["Index"][i]
-
             atom = self.Bonds["Atom"][i]
 
             # Create the String for Bonds 
             bonds = ""
-            for i in self.Bonds["Bonds"][i]:
-                bonds += str(i) + " "
+            for j in self.Bonds["Bonds"][i]:
+                bonds += str(j+1) + " "
 
-            print(" %4i   %-2s - %s" % (index, atom, bonds))
+            # Create Distance for Bond Distance
+            bond_dist = ""
+            for j in self.Bonds["Bond Distance"][i]:
+                bond_dist += "%.3fÅ " % j 
+
+            print(" %4i   %-2s - %s          %4s" % (index + 1, atom, bonds, bond_dist))
 
     def __init__(self, name: str, XYZFilePath: str):
         self.name = name
