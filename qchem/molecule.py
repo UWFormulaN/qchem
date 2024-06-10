@@ -11,8 +11,8 @@ from .Data.constants import CovalentRadiiConstants
 # Includes coordinates, atom types, how optimization was performed, how energy calculations were performed, etc.
 # We can take segmented properties from the output file, and store them as attributes of the molecule object
 
-
 class Molecule:
+    """Class that represents an Entire Molecule. Stores information aboput Bonds, Atomic Positions unique Atom Properties and Allows for Specific Simulation Calculations"""
 
     # The Following are Variables that don't need to be initialized immediately or specified by the user, but belong to the Molecule class
     # For Some reason the Description needs to be defined after?
@@ -70,7 +70,7 @@ class Molecule:
     def GetBonds(self):
         """Generates a Data Frame with all Bond related Information"""
 
-        # Pre initialize most variables
+        # Pre initialize variables
         at_types = self.XYZCoordinates["Atom"].values
         index = [i for i in range(self.AtomCount)] 
         bonds = [[] for i in range(self.AtomCount)]
@@ -110,7 +110,7 @@ class Molecule:
 
     def DisplayBondGraph (self):
         """Displays the Bond Graph in Terminal"""
-
+        # Display Title Header
         print("   %s\n" % (self.name), end="")
 
         for i in range(self.AtomCount):
@@ -128,6 +128,7 @@ class Molecule:
             for j in self.Bonds["Bond Distance"][i]:
                 bond_dist += "%.3fÅ " % j 
 
+            # Print Line to Screen
             print(" %4i   %-2s - %s          %4s" % (index + 1, atom, bonds, bond_dist))
 
     def __init__(self, name: str, XYZFilePath: str):
