@@ -1,4 +1,5 @@
 from ast import List
+import dis
 from math import sqrt
 from os import read
 import string
@@ -72,7 +73,8 @@ class Molecule:
             )
             for i in range(0, len(self.XYZCoordinates["X"].values))
         ]
-        bond_graphs = [[] for i in range(self.AtomCount)]
+        bonds = [[] for i in range(self.AtomCount)]
+        bonds_distance = [[] for i in range(self.AtomCount)]
 
         for i in range(self.AtomCount):
             radii1 = CovalentRadiiConstants[at_types[i]]
@@ -81,14 +83,18 @@ class Molecule:
                 thresh = 1.1 * (radii1 + radii2)
                 dist = self.GetRadius(coords[i], coords[j])
                 if dist < thresh:
-                    bond_graphs[i].append(j)
-                    bond_graphs[j].append(i)
+                    bonds_distance[i].append(dist)
+                    bonds_distance[j].append(dist)
+                    bonds[i].append(j)
+                    bonds[j].append(i)
 
         index = [i+1 for i in range(self.AtomCount)] 
         bondDataFrame = pd.DataFrame({
             "Index": index,
             "Atom" : at_types,
-            'Bonds': bond_graphs
+            "Bonds": bonds,
+            "Bond Distance": bonds_distance
+            
         })
         self.Bonds = bondDataFrame
 
@@ -109,12 +115,6 @@ class Molecule:
                 bonds += str(i) + " "
 
             print(" %4i   %-2s - %s" % (index, atom, bonds))
-
-        
-
-
-
-
 
     def __init__(self, name: str, XYZFilePath: str):
         self.name = name
