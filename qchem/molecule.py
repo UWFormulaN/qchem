@@ -108,7 +108,6 @@ class Molecule:
             "Bond Distance": bonds_distance
         })
 
-        
     def DisplayBondGraph (self):
         """Displays the Bond Graph in Terminal"""
 
