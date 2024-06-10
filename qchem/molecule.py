@@ -22,12 +22,13 @@ class Molecule:
 
     #  Atom Symbol, X, Y, Z ?
     XYZCoordinates: pd.core.frame.DataFrame
-    """List of the XYZ Coordinates of the Atoms in the Molecule"""
+    """Data Frame of the XYZ Coordinates of the Atoms in the Molecule"""
 
     AtomCount: int = 0
 
-    # Atom Index, Atom Symbol, Bond Index 1,Bond Index 2 , Bond Index 3, Bond Index 4
+    # Atom Index, Atom Symbol 
     Bonds: pd.core.frame.DataFrame
+    """Data Frame of the Bonds connected to each Atom, as well as the Bond Lengths"""
 
     energy = None
     """The Energy of the Molecule"""
@@ -45,11 +46,16 @@ class Molecule:
     """Energy Method used for the Molecule"""
 
     def ReadXYZ(self, path: str) -> pd.core.frame.DataFrame:
+        """Reads the XYZ file and Giving a Data Frame with the Position of Each Atom
+        
+        Returns : Pandas Data Frame with Columns for Atom Symbol and X, Y, Z Position
+        """
         return pd.read_csv(
             path, sep=r"\s+", skiprows=2, names=["Atom", "X", "Y", "Z"], engine="python"
         )
 
     def GetGeometry(self):
+        """Displays the Geometry of the Molecule in the Terminal"""
         for atom in self.XYZCoordinates.itertuples():
             print(atom)
 
@@ -62,6 +68,8 @@ class Molecule:
         )
 
     def GetBonds(self):
+        """Generates a Data Frame with all Bond related Information"""
+
         # Pre initialize most variables
         at_types = self.XYZCoordinates["Atom"].values
         index = [i for i in range(self.AtomCount)] 
@@ -124,6 +132,7 @@ class Molecule:
             print(" %4i   %-2s - %s          %4s" % (index + 1, atom, bonds, bond_dist))
 
     def __init__(self, name: str, XYZFilePath: str):
+        """Initializes a New Molecule Object"""
         self.name = name
 
         # Load the XYZ File from XYZ File
