@@ -2,7 +2,7 @@ QChem is a project used for Quantum Chemistry Simulations and Data Anaylsis/Visu
 
 Usage:
 
-To use the package at the moment, you need to install Poetry and then install the dependencies contained in the pushed lock file. This ensures consistency among users. Ideally work should be done in Jupyter Notebooks or Python Scripts within the notebooks folder. This will allow you to import qchem, allowing access to any submodules (e.g., "from qchem import utils").
+To use the package at the moment, you need to install Poetry and then install the dependencies contained in the pushed lock file. This ensures consistency among users. Ideally work should be done in Jupyter Notebooks or Python Scripts within the notebooks folder. This will allow you to import the package, allowing access to any submodules (e.g., "from qchem import utils").
 
 Development:
 
