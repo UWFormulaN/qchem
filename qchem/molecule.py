@@ -228,6 +228,14 @@ class Molecule:
 
     def CreateInternalFile (self):
 
+        # Game Plan for tomorrow
+        # List the first 2 Molecules, maybe 3 as normal
+        # Then Lift through the remaining atoms
+        # Check all the Bonds, and pick the lowest index attached atom, get the distance
+        # Then check the lowest index value of the bonded atom we just checked in last step (Not the same as the current index molecule), get angle between the 3 atoms
+        # Repeat again for one chain deeper to get dihedral angle
+        # If we can't find anything longer than a 3 long chain then it means the molecule is something like a methane
+
         z_matrix = [None] * self.AtomCount
         z_matrix[0] = (self.XYZCoordinates["Atom"][0])
         z_matrix[1] = ((self.XYZCoordinates["Atom"][1], 1, self.GetRadius(self.GetPositionTuple(0), self.GetPositionTuple(1))))
