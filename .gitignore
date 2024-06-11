@@ -12,6 +12,7 @@
 
 # Tests
 !tests/test_files/**
+tests/test_files/xyz
 *pycache*
 .pytest_cache
 

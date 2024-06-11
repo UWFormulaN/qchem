@@ -1,0 +1,4 @@
+import sys
+sys.path.append("..")
+from qchem.molecule import Molecule
+mol = Molecule("Caffeine", "../tests/test_files/caffeine.xyz")
