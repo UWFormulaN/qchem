@@ -5,6 +5,7 @@ from math import pi, sqrt
 import math
 from os import read
 import string
+from unittest.util import sorted_list_difference
 import pandas as pd
 from scipy import optimize
 from .Data.constants import CovalentRadiiConstants
@@ -65,6 +66,19 @@ class Molecule:
     def GetRadius(
         self, atom1: tuple[float, float, float], atom2: tuple[float, float, float]
     ):
+        """Gets the Radius Between 2 Atoms"""
+        return sqrt(
+            pow(atom1[0] - atom2[0], 2)
+            + pow(atom1[1] - atom2[1], 2)
+            + pow(atom1[2] - atom2[2], 2)
+        )
+    
+    def GetRadiusByIndex(
+        self, atomIndex1: int, atomIndex2: int
+    ):
+        atom1 = self.GetPositionTuple(atomIndex1)
+        atom2 = self.GetPositionTuple(atomIndex2)
+
         """Gets the Radius Between 2 Atoms"""
         return sqrt(
             pow(atom1[0] - atom2[0], 2)
@@ -230,53 +244,62 @@ class Molecule:
 
         # Game Plan for tomorrow
         # List the first 2 Molecules, maybe 3 as normal
-        # Then Lift through the remaining atoms
+        # Then List through the remaining atoms
         # Check all the Bonds, and pick the lowest index attached atom, get the distance
         # Then check the lowest index value of the bonded atom we just checked in last step (Not the same as the current index molecule), get angle between the 3 atoms
         # Repeat again for one chain deeper to get dihedral angle
         # If we can't find anything longer than a 3 long chain then it means the molecule is something like a methane
 
+        # Higher Atomic Mass Molecules are often higher in XYZ Format
+
+
         z_matrix = [None] * self.AtomCount
+
+        # Maybe add a check to this to make sure we get a molecule in the center or that has a high number of bonds
         z_matrix[0] = (self.XYZCoordinates["Atom"][0])
+        
+        # Maybe add a check to this to make sure we get a molecule in the center or that has a high number of bonds
         z_matrix[1] = ((self.XYZCoordinates["Atom"][1], 1, self.GetRadius(self.GetPositionTuple(0), self.GetPositionTuple(1))))
+
+        # Maybe add a check to this to make sure we get a molecule in the center or that has a high number of bonds
         z_matrix[2] = ((self.XYZCoordinates["Atom"][2], 2, self.GetRadius(self.GetPositionTuple(1), self.GetPositionTuple(2)), 1,   self.GetAngleBetweenAtoms(0, 1, 2)))
 
 
-        for i in range(3, self.AtomCount):
-            for j in range(len(self.Bonds["Bonds"][i])):
-                for k in range(len(self.Bonds["Bonds"][j])):
+        # Try to Incorporate first and second Index into the loop another time
+        print(f" {z_matrix[0][0]}")
+        print(f" {z_matrix[1][0]} {z_matrix[1][1]} {z_matrix[1][2]} ")
 
-                    if (i == j or i == k or j == k):
-                        continue
-                    atom = self.XYZCoordinates["Atom"][k]
-                    dist = self.GetRadius(self.GetPositionTuple(j), self.GetPositionTuple(k))
-                    angle = self.GetAngleBetweenAtoms(i, j, k)
-                    dihedral = self.GetAngleBetweenAtoms(i, j, k) # Fix this to dihedral angle
+        for i in range(2, self.AtomCount):
+            
+            atomSymbol = self.XYZCoordinates["Atom"][i]
 
-                    z_matrix[i] = (atom, k, dist, j, angle, i, dihedral)
+            # Grab the Bonds for the Atom and Sort indexes by Incremental Order
+            sortedBonds : list[int] = self.Bonds["Bonds"][i]
+            sortedBonds.sort()
 
-                    #z_matrix.append((atom, k, dist, j, angle, i, dihedral))
-                # z_matrix.append()
+            # Bundle this chunk into it's own function for finding the lowest integer chain
 
-   
-        # z_matrix.append((self.XYZCoordinates["Atom"][0],)) 
-        # z_matrix.append((self.XYZCoordinates["Atom"][1], 1, self.GetRadius(self.GetPositionTuple(0), self.GetPositionTuple(1))))
-        # z_matrix.append((self.XYZCoordinates["Atom"][2], 2, self.GetRadius(self.GetPositionTuple(1), self.GetPositionTuple(2)), 1,   self.GetAngleBetweenAtoms(0, 1, 2)))
+            # Angle  j - i - k  (Maybe find 2 j's)
+
+            # Go through each Bond
+            for j in sortedBonds:
+
+                bondsDepth1 : list[int] = self.Bonds["Bonds"][j]
+
+                # Check if there are at least 2 Bonds on the Atom, early return if there isn't
+                if len(bondsDepth1) < 2:
+                    continue
+
+                bondsDepth1.sort()
+
+                for k in bondsDepth1:
+                    print(f" {atomSymbol} {j+1} {self.GetRadiusByIndex(i, j)} {k+1} {self.GetAngleBetweenAtoms(i, j, k)}")
+                    break
+                break 
+
+ # Get list of bonds, sort by incremental order, list through all the bonds as we increase, check to make sure there are at least 2 connections, and then 
 
         
-        # for i in range(3, self.AtomCount):
-        #     atom = self.XYZCoordinates["Atom"][i]
-        #     dist = self.GetRadius(self.GetPositionTuple(i), self.GetPositionTuple(i-1))
-        #     angle = self.GetAngleBetweenAtoms(i-2, i-1, i)
-        #     dihedral = self.GetAngleBetweenAtoms(i-2, i-1, i) # Fix this to dihedral angle
-        #    # z_matrix.append()
-
-        #     # dist = calculate_distance(coordinates[i], coordinates[i-1])
-        #     # angle = calculate_angle(coordinates[i-2], coordinates[i-1], coordinates[i])
-        #     # dihedral = calculate_dihedral(coordinates[i-3], coordinates[i-2], coordinates[i-1], coordinates[i])
-        #     z_matrix.append((atom, i, dist, i-1, angle, i-2, dihedral))
-        
-        return z_matrix
 
 
     def __init__(self, name: str, XYZFilePath: str):
