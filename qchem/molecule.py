@@ -4,11 +4,13 @@ import dis
 from math import pi, sqrt
 import math
 from os import read
+import random
 import string
 from unittest.util import sorted_list_difference
 import pandas as pd
 import numpy as np
 from scipy import optimize
+
 from .Data.constants import CovalentRadiiConstants
 
 # We will create molecule objects which will store information about the molecule
@@ -26,7 +28,7 @@ class Molecule:
 
     PositionSlice = slice(1, 4)
 
-    name: str = ""
+    Name: str = ""
     """Name of the Molecule"""
 
     #  Atom Symbol, X, Y, Z ?
@@ -137,20 +139,6 @@ class Molecule:
             self.XYZCoordinates["Z"][atomIndex],
         )
 
-    # def get_u12(coords1, coords2):
-    #     r12 = get_r12(coords1, coords2)
-    #     u12 = [0.0 for p in range(3)]
-    #     for p in range(3):
-    #         u12[p] = (coords2[p] - coords1[p]) / r12
-    #     return u12
-
-    def get_udp(uvec1, uvec2):
-        udp = 0.0
-        for p in range(3):
-            udp += uvec1[p] * uvec2[p]
-        udp = max(min(udp, 1.0), -1.0)
-        return udp
-
     def GetMagnitude(self, vector):
         return sqrt( pow(vector[0], 2) + pow(vector[1], 2) + pow(vector[2], 2))
 
@@ -163,6 +151,7 @@ class Molecule:
         )
 
     def GetAtomPosition(self, atomIndex):
+        """Returns a Numpy Array of the Atoms Position"""
         return np.array(self.XYZCoordinates.iloc[atomIndex, self.PositionSlice], dtype=float)
 
     def GetDihedralAngle (self, atomIndex1, atomIndex2, atomIndex3, atomIndex4):
@@ -189,40 +178,6 @@ class Molecule:
             chi = chi + 360.0
 
         return chi
-
-
-
-
-    def dihedral(xyzarr, i, j, k, l):
-        """Return the dihedral angle in degrees between four atoms 
-        with indices i, j, k, l given a set of xyz coordinates.
-        connectivity is i->j->k->l
-        """
-        rji = xyzarr[j] - xyzarr[i]
-        rkj = xyzarr[k] - xyzarr[j]
-        rlk = xyzarr[l] - xyzarr[k]
-        v1 = np.cross(rji, rkj)
-        v1 = v1 / np.linalg.norm(v1)
-        v2 = np.cross(rlk, rkj)
-        v2 = v2 / np.linalg.norm(v2)
-        m1 = np.cross(v1, rkj) / np.linalg.norm(rkj)
-        x = np.dot(v1, v2)
-        y = np.dot(m1, v2)
-        chi = np.arctan2(y, x)
-        chi = -180.0 - 180.0 * chi / np.pi
-        if (chi < -180.0):
-            chi = chi + 360.0
-        return chi
-
-    # # calculate unit cross product between two unit vectors
-    # def get_ucp(uvec1, uvec2):
-    #     ucp = [0.0 for p in range(3)]
-    #     cos_12 = get_udp(uvec1, uvec2)
-    #     sin_12 = math.sqrt(1 - cos_12**2)
-    #     ucp[0] = (uvec1[1] * uvec2[2] - uvec1[2] * uvec2[1]) / sin_12
-    #     ucp[1] = (uvec1[2] * uvec2[0] - uvec1[0] * uvec2[2]) / sin_12
-    #     ucp[2] = (uvec1[0] * uvec2[1] - uvec1[1] * uvec2[0]) / sin_12
-    #     return ucp
 
     def GetVector(self, pos1: tuple[float, float, float], pos2: tuple[float, float, float]) -> tuple[float, float, float]: 
         return (pos2[0] - pos1[0], pos2[1] - pos1[1], pos2[2] - pos1[2])
@@ -278,7 +233,7 @@ class Molecule:
                 bond_dist += "%.3fÅ " % j
 
             # Print Line to Screen
-            print(" %4i   %-2s - %s          %4s" % (index + 1, atom, bonds, bond_dist))
+            print(" %4i   %-2s - %s    %4s" % (index + 1, atom, bonds, bond_dist))
 
     def RecursiveBondSearch (self, depth, atomIndex, previousVisits: list[int],  previousChain: tuple[int, int, int]):
         for i in self.Bonds["Bonds"][atomIndex]:
@@ -295,85 +250,89 @@ class Molecule:
             if result:
                 return result
 
-            
+    def GetAtomChain(self, atomChain: list[int], depth = 0):
 
-    def CreateInternalFile (self):
+        # Grab Bonds and Sort by incrementing index
+        bonds : list[int] = self.Bonds["Bonds"][atomChain[depth]]
+        bonds.sort()
 
-        # Game Plan for tomorrow
-        # List the first 2 Molecules, maybe 3 as normal
-        # Then List through the remaining atoms
-        # Check all the Bonds, and pick the lowest index attached atom, get the distance
-        # Then check the lowest index value of the bonded atom we just checked in last step (Not the same as the current index molecule), get angle between the 3 atoms
-        # Repeat again for one chain deeper to get dihedral angle
-        # If we can't find anything longer than a 3 long chain then it means the molecule is something like a methane
+        # Loop through the Sorted Bonds
+        for i in bonds:
 
-        # Higher Atomic Mass Molecules are often higher in XYZ Format
+            # Return the Result if we are already at a length of 4
+            if (len(atomChain) == 4):
+                continue
 
-        z_matrix = [None] * self.AtomCount
+            # Skip if Atom is already in chain
+            if i in atomChain:
+                continue
 
-        # Maybe add a check to this to make sure we get a molecule in the center or that has a high number of bonds
-        z_matrix[0] = (self.XYZCoordinates["Atom"][0])
-        
-        # Maybe add a check to this to make sure we get a molecule in the center or that has a high number of bonds
-        z_matrix[1] = ((self.XYZCoordinates["Atom"][1], 1, self.GetRadius(self.GetPositionTuple(0), self.GetPositionTuple(1))))
+            # Get this Atoms Bonds
+            currentAtomBonds : list[int] = self.Bonds["Bonds"][i]
 
-        # Maybe add a check to this to make sure we get a molecule in the center or that has a high number of bonds
-        z_matrix[2] = ((self.XYZCoordinates["Atom"][2], 2, self.GetRadius(self.GetPositionTuple(1), self.GetPositionTuple(2)), 1,   self.GetAngleBetweenAtoms(0, 1, 2)))
+            # Skip if the Number of Bonds that the Current Atom has is Only one, Unless it is going to be the Last Atom in the Chain
+            if (len(currentAtomBonds) == 1 and (not len(atomChain) == 3)):
+                continue
 
-        # Try to Incorporate first and second Index into the loop another time
-        print(f" {z_matrix[0][0]}")
-        print(f" {z_matrix[1][0]} {z_matrix[1][1]} {z_matrix[1][2]} ")
+            # Chosen to be a valid chain so we add it to the list
+            atomChain.append(i)
 
+            # Go one layer deeper in recursion to add an Atom to the chain
+            self.GetAtomChain(atomChain, depth + 1)
 
-        # Add Checkers
-        # If there are 2 or more molecules with more than 2? bonds then the molecule is big enough for dihedrals
+        return atomChain
 
-        # Convert the inners of the function to a chain search algorithm, if it can't fill in everything (all 4 atoms) it can pick random molecules at the end
+    def DisplayZMatrix(self):
+        z_matrix = self.CreateZMatrixFile()
+        for i in z_matrix:
+            print(i)
 
-        for i in range(2, self.AtomCount):
-            
+    def CreateZMatrixFile (self):
+        """Creates an Array of Strings that Reprensents the ZMatrix File"""
+
+        # Create an Array Reprensenting the File, First line is Number of Atoms, Second is the Name of the Molecule
+        z_matrix = []
+        z_matrix.append(f"{self.AtomCount}")
+        z_matrix.append(self.name)
+
+        # Loop through all the Atoms
+        for i in range(self.AtomCount):
+
+            # Create an Atom Chain starting with the Current Atom
+            atomChain = self.GetAtomChain([i])
+
+            # If the Chain hasn't reached 4 add Random Atoms until we reach 4
+            while (len(atomChain) < 4):
+                randomAtom = random.randint(0, self.AtomCount - 1)
+                if randomAtom not in atomChain:
+                    atomChain.append(randomAtom)
+
+            j = atomChain[1]
+            k = atomChain[2]
+            l = atomChain[3]
+
             atomSymbol = self.XYZCoordinates["Atom"][i]
 
-            # Grab the Bonds for the Atom and Sort indexes by Incremental Order
-            sortedBonds : list[int] = self.Bonds["Bonds"][i]
-            sortedBonds.sort()
+            # Check if First Atom, Only Append symbol
+            if (i == 0):
+                z_matrix.append(f"{atomSymbol}")
+                continue
 
-            # Bundle this chunk into it's own function for finding the lowest integer chain
+            # Check if Second Atom, Append Symbol and Distance from Next Closest Atom
+            if (i == 1):
+                z_matrix.append(f"{atomSymbol} {j+1} {self.GetRadiusByIndex(i, j)}")
+                continue
 
-            # Angle  j - i - k  (Maybe find 2 j's)
+            # Check if Third Atom, Append Symbol, Distance and Angle
+            if (i == 2):
+                z_matrix.append(f"{atomSymbol} {j+1} {self.GetRadiusByIndex(i, j)} {k+1} {self.GetAngleBetweenAtoms(i, j, k)}")
+                continue
 
-            # Maybe have them Pick random Molecules if they can't find a good one
+            # Append Symbol, Distance, Angle and Dihedral Angle
+            z_matrix.append(f"{atomSymbol} {j+1} {self.GetRadiusByIndex(i, j)} {k+1} {self.GetAngleBetweenAtoms(i, j, k)} {l+1} {self.GetDihedralAngle(i, j, k, l)}")
 
-            # Go through each Bond
-            for j in sortedBonds:
-
-                bondsDepth1 : list[int] = self.Bonds["Bonds"][j]
-
-                # Check if there are at least 2 Bonds on the Atom, early return if there isn't
-                if len(bondsDepth1) < 2:
-                    continue
-
-                bondsDepth1.sort()
-
-                for k in bondsDepth1:
-
-                    bondsDepth2 : list[int] = self.Bonds["Bonds"][k]
-
-                    # Check if there are at least 2 Bonds on the Atom, early return if there isn't
-                    if len(bondsDepth2) < 2:
-                        continue
-
-                    bondsDepth2.sort()
-
-                    for l in bondsDepth2:
-                        if not(l == k or l == j or l == i):
-                            print(f" {atomSymbol} {j+1} {self.GetRadiusByIndex(i, j)} {k+1} {self.GetAngleBetweenAtoms(i, j, k)} {l+1} {self.GetDihedralAngle(i, j, k, l)}")
-                            break
-                        
-                    break
-                break 
-
- # Get list of bonds, sort by incremental order, list through all the bonds as we increase, check to make sure there are at least 2 connections, and then 
+        return z_matrix
+    
 
     def __init__(self, name: str, XYZFilePath: str):
         """Initializes a New Molecule Object"""
