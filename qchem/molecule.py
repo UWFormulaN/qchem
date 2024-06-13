@@ -7,6 +7,7 @@ from os import read
 import string
 from unittest.util import sorted_list_difference
 import pandas as pd
+import numpy as np
 from scipy import optimize
 from .Data.constants import CovalentRadiiConstants
 
@@ -15,11 +16,15 @@ from .Data.constants import CovalentRadiiConstants
 # We can take segmented properties from the output file, and store them as attributes of the molecule object
 
 
+# May need to Redesign all the math to use dependency injection to a Class called Internal Molecular Math
+
 class Molecule:
     """Class that represents an Entire Molecule. Stores information aboput Bonds, Atomic Positions unique Atom Properties and Allows for Specific Simulation Calculations"""
 
     # The Following are Variables that don't need to be initialized immediately or specified by the user, but belong to the Molecule class
     # For Some reason the Description needs to be defined after?
+
+    PositionSlice = slice(1, 4)
 
     name: str = ""
     """Name of the Molecule"""
@@ -157,6 +162,58 @@ class Molecule:
             dotProduct / (self.GetMagnitude(vector1) * self.GetMagnitude(vector2))
         )
 
+    def GetAtomPosition(self, atomIndex):
+        return np.array(self.XYZCoordinates.iloc[atomIndex, self.PositionSlice], dtype=float)
+
+    def GetDihedralAngle (self, atomIndex1, atomIndex2, atomIndex3, atomIndex4):
+        atom1Pos = self.GetAtomPosition(atomIndex1)
+        atom2Pos = self.GetAtomPosition(atomIndex2)
+        atom3Pos = self.GetAtomPosition(atomIndex3)
+        atom4Pos = self.GetAtomPosition(atomIndex4)
+
+        v21 = atom2Pos - atom1Pos
+        v32 = atom3Pos - atom2Pos
+        v43 = atom4Pos - atom3Pos
+
+        v1 = np.cross(v21, v32)
+        v1 = v1 / np.linalg.norm(v1)
+        v2 = np.cross(v43, v32)
+        v2 = v2 / np.linalg.norm(v2)
+        m1 = np.cross(v1, v32)
+        m1 = m1 / np.linalg.norm(m1)
+        x = np.dot(v1, v2)
+        y = np.dot(m1, v2)
+        chi = np.arctan2(y, x)
+        chi = -180.0 - 180.0 * chi / np.pi
+        if (chi < -180.0):
+            chi = chi + 360.0
+
+        return chi
+
+
+
+
+    def dihedral(xyzarr, i, j, k, l):
+        """Return the dihedral angle in degrees between four atoms 
+        with indices i, j, k, l given a set of xyz coordinates.
+        connectivity is i->j->k->l
+        """
+        rji = xyzarr[j] - xyzarr[i]
+        rkj = xyzarr[k] - xyzarr[j]
+        rlk = xyzarr[l] - xyzarr[k]
+        v1 = np.cross(rji, rkj)
+        v1 = v1 / np.linalg.norm(v1)
+        v2 = np.cross(rlk, rkj)
+        v2 = v2 / np.linalg.norm(v2)
+        m1 = np.cross(v1, rkj) / np.linalg.norm(rkj)
+        x = np.dot(v1, v2)
+        y = np.dot(m1, v2)
+        chi = np.arctan2(y, x)
+        chi = -180.0 - 180.0 * chi / np.pi
+        if (chi < -180.0):
+            chi = chi + 360.0
+        return chi
+
     # # calculate unit cross product between two unit vectors
     # def get_ucp(uvec1, uvec2):
     #     ucp = [0.0 for p in range(3)]
@@ -252,7 +309,6 @@ class Molecule:
 
         # Higher Atomic Mass Molecules are often higher in XYZ Format
 
-
         z_matrix = [None] * self.AtomCount
 
         # Maybe add a check to this to make sure we get a molecule in the center or that has a high number of bonds
@@ -264,10 +320,15 @@ class Molecule:
         # Maybe add a check to this to make sure we get a molecule in the center or that has a high number of bonds
         z_matrix[2] = ((self.XYZCoordinates["Atom"][2], 2, self.GetRadius(self.GetPositionTuple(1), self.GetPositionTuple(2)), 1,   self.GetAngleBetweenAtoms(0, 1, 2)))
 
-
         # Try to Incorporate first and second Index into the loop another time
         print(f" {z_matrix[0][0]}")
         print(f" {z_matrix[1][0]} {z_matrix[1][1]} {z_matrix[1][2]} ")
+
+
+        # Add Checkers
+        # If there are 2 or more molecules with more than 2? bonds then the molecule is big enough for dihedrals
+
+        # Convert the inners of the function to a chain search algorithm, if it can't fill in everything (all 4 atoms) it can pick random molecules at the end
 
         for i in range(2, self.AtomCount):
             
@@ -281,6 +342,8 @@ class Molecule:
 
             # Angle  j - i - k  (Maybe find 2 j's)
 
+            # Maybe have them Pick random Molecules if they can't find a good one
+
             # Go through each Bond
             for j in sortedBonds:
 
@@ -293,14 +356,24 @@ class Molecule:
                 bondsDepth1.sort()
 
                 for k in bondsDepth1:
-                    print(f" {atomSymbol} {j+1} {self.GetRadiusByIndex(i, j)} {k+1} {self.GetAngleBetweenAtoms(i, j, k)}")
+
+                    bondsDepth2 : list[int] = self.Bonds["Bonds"][k]
+
+                    # Check if there are at least 2 Bonds on the Atom, early return if there isn't
+                    if len(bondsDepth2) < 2:
+                        continue
+
+                    bondsDepth2.sort()
+
+                    for l in bondsDepth2:
+                        if not(l == k or l == j or l == i):
+                            print(f" {atomSymbol} {j+1} {self.GetRadiusByIndex(i, j)} {k+1} {self.GetAngleBetweenAtoms(i, j, k)} {l+1} {self.GetDihedralAngle(i, j, k, l)}")
+                            break
+                        
                     break
                 break 
 
  # Get list of bonds, sort by incremental order, list through all the bonds as we increase, check to make sure there are at least 2 connections, and then 
-
-        
-
 
     def __init__(self, name: str, XYZFilePath: str):
         """Initializes a New Molecule Object"""
