@@ -2,13 +2,12 @@ import copy
 import dis
 from math import pi
 import math
-from os import name
+from os import path
+import os
 import random
-from turtle import position
 from uu import Error
 import pandas as pd
 import numpy as np
-from scipy import optimize
 
 from .Data.constants import CovalentRadiiConstants
 
@@ -70,12 +69,10 @@ class Molecule:
         vector = self.GetAtomPosition(atomIndex1) - self.GetAtomPosition(atomIndex2)
         return np.linalg.norm(vector)
 
-
     def GetAllAtomsAfterBond(self, atomIndex1, atomIndex2) -> list[int]:
         """Starts a Recursive Search to find all the Atoms Present after a Bond"""
-
         if (atomIndex2 not in self.Bonds["Bonds"][atomIndex1]):
-            Error("These Atoms are not Bonded Together")
+            raise Error("These Atoms are not Bonded Together")
 
         return self.BranchSearch(atomIndex2, [] , atomIndex1)
 
@@ -126,18 +123,14 @@ class Molecule:
         
         return normalized_vector
 
-    def RotateBond (self, atomIndex1, atomIndex2, radians):
+    def RotateBond (self, atomIndex1: int, atomIndex2: int, radians: float):
+        """Rotates a Bond in the Molecule by the Specified Radians"""
 
         atomIndexes: list[int] = self.GetAllAtomsAfterBond(atomIndex1, atomIndex2)
-
-        print(atomIndexes)
-
         atomPositions: np.ndarray = np.array(self.GetAtomPosition(atomIndexes[0]) - self.GetAtomPosition(atomIndex2))
 
         for i in range(1, len(atomIndexes)):
             atomPositions = np.vstack((atomPositions, self.GetAtomPosition(atomIndexes[i]) - self.GetAtomPosition(atomIndex2)))
-
-        # Atom 1 -> 2 = Z Axis in original
 
         z_vector = self.GetAtomPosition(atomIndex2) - self.GetAtomPosition(atomIndex1)
         z_vector = z_vector / np.linalg.norm(z_vector)
@@ -153,9 +146,6 @@ class Molecule:
             z_vector   # Original Z-axis
         ])
 
-        # print(rotatedAtoms)
-        print(atomPositions)
-
         # Define rotation matrix around Z-axis by given radians
         cos_theta = np.cos(radians)
         sin_theta = np.sin(radians)
@@ -168,71 +158,52 @@ class Molecule:
         # Combine the transformations to find the full rotation matrix
         rotation_basis = original_axes.T
         rotation_matrix = rotation_basis @ z_rotation_matrix @ np.linalg.inv(rotation_basis)
-        print("Rotation Matrix:")
-        print(rotation_matrix)
 
         # Apply the rotation to all atom positions
         rotatedAtoms = atomPositions @ rotation_matrix.T
-        print("Rotated Atoms:")
-        print(rotatedAtoms)
 
         # Update atom coordinates in the original structure
         for i, atomIndex in enumerate(atomIndexes):
             newPosition = rotatedAtoms[i] + self.GetAtomPosition(atomIndex2)
-            self.XYZCoordinates["X"][atomIndex] = newPosition[0]
-            self.XYZCoordinates["Y"][atomIndex] = newPosition[1]
-            self.XYZCoordinates["Z"][atomIndex] = newPosition[2]
-        # # Combine the rotations
-        # rotation_matrix = rotation_basis @ z_rotation_matrix @ np.linalg.inv(rotation_basis)
-        # print("Rotation Matrix:")
-        # print(rotation_matrix)
-
-        # # Apply the rotation to all atom positions
-        # rotatedAtoms = atomPositions @ rotation_matrix.T
-        # print("Rotated Atoms:")
-        # print(rotatedAtoms)
-
-
-
-        # for i in range(len(atomIndexes)):
-        #     atomIndex = atomIndexes[i]
-
-        #     self.XYZCoordinates["X"][atomIndex] = rotatedAtoms[i][0] + self.GetAtomPosition(atomIndex2)[0]
-        #     self.XYZCoordinates["Y"][atomIndex] = rotatedAtoms[i][1]+ self.GetAtomPosition(atomIndex2)[1]
-        #     self.XYZCoordinates["Z"][atomIndex] = rotatedAtoms[i][2]+ self.GetAtomPosition(atomIndex2)[2]
-
+            self.XYZCoordinates.loc[atomIndex, "X"] = newPosition[0]
+            self.XYZCoordinates.loc[atomIndex, "Y"] = newPosition[1]
+            self.XYZCoordinates.loc[atomIndex, "Z"] = newPosition[2]
 
     def GetConformers (self, atomIndex1, atomIndex2, steps):
-
+        """Returns a list of Conformers Molecules where a bond is rotated by (2pi / steps) radians """
         stepSizeRad = (2 * pi)/steps
-        atomIndexes: list[int] = self.GetAllAtomsAfterBond(atomIndex1, atomIndex2)
         conformers: list[Molecule] = []
 
+        # Loops and creates a new Rotated Molecule to add to the List of Conformers
         for i in range(steps):
-
+            rotation = stepSizeRad * i
             newMolecule = self.Copy()
+            newMolecule.name = f"{self.name}_rot_{(180 / pi) * rotation}"
+            newMolecule.RotateBond(atomIndex1, atomIndex2, rotation)
+            conformers.append(newMolecule)
 
-            newMolecule.name = f"Hello {i}"
+        return conformers
 
-            newMolecule.RotateBond(atomIndex1, atomIndex2, stepSizeRad * i)
+    def DisplayXYZ (self):
+        """Prints the XYZ File to the Terminal"""
+        XYZ = self.CreateXYZFile()
+        for line in XYZ:
+            print(line[0]) 
 
-            newMolecule.SaveAsXYZ(f"C:\\Users\\alexe\\Desktop\\Programming Projects\\qchem\\Notebooks\\hello_{i}.xyz")
 
-            
-
-
-    def SaveAsXYZ (self, path):
+    def CreateXYZFile (self) -> np.ndarray:
+        """Returns the XYZ File in an Array like format"""
         array = np.array(str(self.AtomCount))
-
         array = np.vstack((array, self.name))
 
         for i in range(self.AtomCount):
             array = np.vstack((array, f"{self.XYZCoordinates["Atom"][i]} {self.XYZCoordinates["X"][i]} {self.XYZCoordinates["Y"][i]} {self.XYZCoordinates["Z"][i]}"))
 
-        print(array)
-        np.savetxt(path, array, fmt='%s')
+        return array
 
-
+    def SaveAsXYZ (self, filePath):
+        """Saves the Molecule to a XYZ File"""
+        np.savetxt(path.join(filePath, self.name) + ".xyz", self.CreateXYZFile(), fmt='%s')
 
     def FindRotatableBonds (self):
         """Goes through all Bonds and Determine if it's rotatable"""
