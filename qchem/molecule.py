@@ -1,31 +1,19 @@
-from array import array
-from ast import List
 import dis
-from math import pi, sqrt
+from math import pi
 import math
-from os import read
 import random
-import string
-from unittest.util import sorted_list_difference
 import pandas as pd
 import numpy as np
 from scipy import optimize
-
 from .Data.constants import CovalentRadiiConstants
 
 # We will create molecule objects which will store information about the molecule
 # Includes coordinates, atom types, how optimization was performed, how energy calculations were performed, etc.
 # We can take segmented properties from the output file, and store them as attributes of the molecule object
-
-
 # May need to Redesign all the math to use dependency injection to a Class called Internal Molecular Math
-
 
 class Molecule:
     """Class that represents an Entire Molecule. Stores information aboput Bonds, Atomic Positions unique Atom Properties and Allows for Specific Simulation Calculations"""
-
-    # The Following are Variables that don't need to be initialized immediately or specified by the user, but belong to the Molecule class
-    # For Some reason the Description needs to be defined after?
 
     PositionSlice = slice(1, 4)
     """Constant that Grabs a Array/List of the Atom Position. Used for the Function GetAtomPosition. Is global so that you can get the position using self.XYZCoordinates.iloc[atomIndex, self.PositionSlice]"""
@@ -33,13 +21,13 @@ class Molecule:
     Name: str = ""
     """Name of the Molecule"""
 
-    #  Atom Symbol, X, Y, Z ?
+    #  Atom Symbol, X, Y, Z 
     XYZCoordinates: pd.core.frame.DataFrame
     """Data Frame of the XYZ Coordinates of the Atoms in the Molecule"""
 
     AtomCount: int = 0
 
-    # Atom Index, Atom Symbol
+    # Atom Index, Atom Symbol, Array of Index of other Atoms it's bonded to
     Bonds: pd.core.frame.DataFrame
     """Data Frame of the Bonds connected to each Atom, as well as the Bond Lengths"""
 
@@ -176,7 +164,7 @@ class Molecule:
             # Print Line to Screen
             print(" %4i   %-2s - %s    %4s" % (index + 1, atom, bonds, bond_dist))
 
-    def GetAtomChain(self, atomChain: list[int], depth=0):
+    def GetDihedralAtomChain(self, atomChain: list[int], depth=0):
         """Recursively Searches for a Viable Atom Chain of length 4"""
         # Grab Bonds and Sort by incrementing index
         bonds: list[int] = self.Bonds["Bonds"][atomChain[depth]]
@@ -204,7 +192,7 @@ class Molecule:
             atomChain.append(i)
 
             # Go one layer deeper in recursion to add an Atom to the chain
-            self.GetAtomChain(atomChain, depth + 1)
+            self.GetDihedralAtomChain(atomChain, depth + 1)
 
         return atomChain
 
@@ -225,7 +213,7 @@ class Molecule:
         for i in range(self.AtomCount):
 
             # Create an Atom Chain starting with the Current Atom
-            atomChain = self.GetAtomChain([i])
+            atomChain = self.GetDihedralAtomChain([i])
 
             # If the Chain hasn't reached 4 add Random Atoms until we reach 4
             while len(atomChain) < 4:
