@@ -1,11 +1,15 @@
+import copy
 import dis
 from math import pi
 import math
+from os import name
 import random
+from turtle import position
 from uu import Error
 import pandas as pd
 import numpy as np
 from scipy import optimize
+
 from .Data.constants import CovalentRadiiConstants
 
 # We will create molecule objects which will store information about the molecule
@@ -92,6 +96,143 @@ class Molecule:
                 self.BranchSearch(i,  atoms, currentIndex)
           
         return atoms
+    
+    def CopyPositions (self) -> pd.core.frame.DataFrame:
+        return copy.deepcopy(self.XYZCoordinates)
+
+    def Copy (self):
+        return copy.deepcopy(self)
+    
+    def GeneratePerpendicularVector(self, v):
+        # Check if the input vector is not zero
+        if np.linalg.norm(v) == 0:
+            raise ValueError("The input vector cannot be the zero vector")
+        
+        # Create a second vector which is not parallel to the input vector
+        if v[0] == 0:
+            w = np.array([1, 0, 0])  # Choose a simple vector if the first element is zero
+        else:
+            w = np.array([v[1], -v[0], 0])  # This ensures the vector is not parallel
+
+        # Compute the cross product
+        cross_product = np.cross(v, w)
+        
+        # Normalize the cross product
+        norm = np.linalg.norm(cross_product)
+        if norm == 0:
+            raise ValueError("The cross product resulted in a zero vector, which should not happen")
+        
+        normalized_vector = cross_product / norm
+        
+        return normalized_vector
+
+    def RotateBond (self, atomIndex1, atomIndex2, radians):
+
+        atomIndexes: list[int] = self.GetAllAtomsAfterBond(atomIndex1, atomIndex2)
+
+        print(atomIndexes)
+
+        atomPositions: np.ndarray = np.array(self.GetAtomPosition(atomIndexes[0]) - self.GetAtomPosition(atomIndex2))
+
+        for i in range(1, len(atomIndexes)):
+            atomPositions = np.vstack((atomPositions, self.GetAtomPosition(atomIndexes[i]) - self.GetAtomPosition(atomIndex2)))
+
+        # Atom 1 -> 2 = Z Axis in original
+
+        z_vector = self.GetAtomPosition(atomIndex2) - self.GetAtomPosition(atomIndex1)
+        z_vector = z_vector / np.linalg.norm(z_vector)
+
+        x_vector = self.GeneratePerpendicularVector(z_vector)
+        
+        y_vector = np.cross(z_vector, x_vector)
+        y_vector = y_vector / np.linalg.norm(y_vector)
+
+        original_axes = np.array([
+            x_vector,  # Original X-axis
+            y_vector,  # Original Y-axis
+            z_vector   # Original Z-axis
+        ])
+
+        # print(rotatedAtoms)
+        print(atomPositions)
+
+        # Define rotation matrix around Z-axis by given radians
+        cos_theta = np.cos(radians)
+        sin_theta = np.sin(radians)
+        z_rotation_matrix = np.array([
+            [cos_theta, -sin_theta, 0],
+            [sin_theta,  cos_theta, 0],
+            [0,          0,         1]
+        ])
+
+        # Combine the transformations to find the full rotation matrix
+        rotation_basis = original_axes.T
+        rotation_matrix = rotation_basis @ z_rotation_matrix @ np.linalg.inv(rotation_basis)
+        print("Rotation Matrix:")
+        print(rotation_matrix)
+
+        # Apply the rotation to all atom positions
+        rotatedAtoms = atomPositions @ rotation_matrix.T
+        print("Rotated Atoms:")
+        print(rotatedAtoms)
+
+        # Update atom coordinates in the original structure
+        for i, atomIndex in enumerate(atomIndexes):
+            newPosition = rotatedAtoms[i] + self.GetAtomPosition(atomIndex2)
+            self.XYZCoordinates["X"][atomIndex] = newPosition[0]
+            self.XYZCoordinates["Y"][atomIndex] = newPosition[1]
+            self.XYZCoordinates["Z"][atomIndex] = newPosition[2]
+        # # Combine the rotations
+        # rotation_matrix = rotation_basis @ z_rotation_matrix @ np.linalg.inv(rotation_basis)
+        # print("Rotation Matrix:")
+        # print(rotation_matrix)
+
+        # # Apply the rotation to all atom positions
+        # rotatedAtoms = atomPositions @ rotation_matrix.T
+        # print("Rotated Atoms:")
+        # print(rotatedAtoms)
+
+
+
+        # for i in range(len(atomIndexes)):
+        #     atomIndex = atomIndexes[i]
+
+        #     self.XYZCoordinates["X"][atomIndex] = rotatedAtoms[i][0] + self.GetAtomPosition(atomIndex2)[0]
+        #     self.XYZCoordinates["Y"][atomIndex] = rotatedAtoms[i][1]+ self.GetAtomPosition(atomIndex2)[1]
+        #     self.XYZCoordinates["Z"][atomIndex] = rotatedAtoms[i][2]+ self.GetAtomPosition(atomIndex2)[2]
+
+
+    def GetConformers (self, atomIndex1, atomIndex2, steps):
+
+        stepSizeRad = (2 * pi)/steps
+        atomIndexes: list[int] = self.GetAllAtomsAfterBond(atomIndex1, atomIndex2)
+        conformers: list[Molecule] = []
+
+        for i in range(steps):
+
+            newMolecule = self.Copy()
+
+            newMolecule.name = f"Hello {i}"
+
+            newMolecule.RotateBond(atomIndex1, atomIndex2, stepSizeRad * i)
+
+            newMolecule.SaveAsXYZ(f"C:\\Users\\alexe\\Desktop\\Programming Projects\\qchem\\Notebooks\\hello_{i}.xyz")
+
+            
+
+
+    def SaveAsXYZ (self, path):
+        array = np.array(str(self.AtomCount))
+
+        array = np.vstack((array, self.name))
+
+        for i in range(self.AtomCount):
+            array = np.vstack((array, f"{self.XYZCoordinates["Atom"][i]} {self.XYZCoordinates["X"][i]} {self.XYZCoordinates["Y"][i]} {self.XYZCoordinates["Z"][i]}"))
+
+        print(array)
+        np.savetxt(path, array, fmt='%s')
+
+
 
     def FindRotatableBonds (self):
         """Goes through all Bonds and Determine if it's rotatable"""
