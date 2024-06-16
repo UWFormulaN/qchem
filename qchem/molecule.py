@@ -107,7 +107,7 @@ class Molecule:
             rotatableList :list[bool] = [] 
 
             # Loop through All Atoms that are Bonded
-            for j in range(bonds):
+            for j in bonds:
                 # Get the List of Atoms that come after the Bond of i - j -> 
                 atoms: list[int] = self.GetAllAtomsAfterBond(i, j)
 
