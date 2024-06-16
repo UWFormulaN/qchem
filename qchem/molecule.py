@@ -2,6 +2,7 @@ import dis
 from math import pi
 import math
 import random
+from uu import Error
 import pandas as pd
 import numpy as np
 from scipy import optimize
@@ -27,7 +28,7 @@ class Molecule:
 
     AtomCount: int = 0
 
-    # Atom Index, Atom Symbol, Array of Index of other Atoms it's bonded to
+    # Atom Index, Atom Symbol, Array of Index of other Atoms it's bonded to, Array of Booleans determining if Bond is Rotatable
     Bonds: pd.core.frame.DataFrame
     """Data Frame of the Bonds connected to each Atom, as well as the Bond Lengths"""
 
@@ -65,6 +66,63 @@ class Molecule:
         vector = self.GetAtomPosition(atomIndex1) - self.GetAtomPosition(atomIndex2)
         return np.linalg.norm(vector)
 
+
+    def GetAllAtomsAfterBond(self, atomIndex1, atomIndex2) -> list[int]:
+        """Starts a Recursive Search to find all the Atoms Present after a Bond"""
+
+        if (atomIndex2 not in self.Bonds["Bonds"][atomIndex1]):
+            Error("These Atoms are not Bonded Together")
+
+        return self.BranchSearch(atomIndex2, [] , atomIndex1)
+
+    def BranchSearch (self, currentIndex: int, atoms: list[int] = None,  ignoreIndex: int = None) -> list[int]:
+        """Recursively Branch Searches through all the Atoms in a Molecule"""
+        bonds: list[int] = self.Bonds["Bonds"][currentIndex]
+
+        # Loop through all Bonds
+        for i in bonds:
+
+            # Ignore the Atom That we just came from
+            if i == ignoreIndex:
+                continue
+            
+            # If the Atom is 
+            if i not in atoms:
+                atoms.append(i)
+                self.BranchSearch(i,  atoms, currentIndex)
+          
+        return atoms
+
+    def FindRotatableBonds (self):
+        """Goes through all Bonds and Determine if it's rotatable"""
+        #TODO: Will need to Factor in Double Bonds in the Future
+
+        rotatableBonds: list[list[bool]] =[]
+
+        # Go through all Bonds in the Molecule. Do a Chain search 
+        for i in range(self.AtomCount):
+
+            # Cache the Bonds for the current Atom and initialize 
+            bonds = self.Bonds["Bonds"][i]
+            rotatableList :list[bool] = [] 
+
+            # Loop through All Atoms that are Bonded
+            for j in range(bonds):
+                # Get the List of Atoms that come after the Bond of i - j -> 
+                atoms: list[int] = self.GetAllAtomsAfterBond(i, j)
+
+                # Rules that determine if the Bond is Rotatable TODO: Expand to factor in double bonds and more rules
+                if i in atoms:
+                    rotatableList.append(False)
+                else:
+                    rotatableList.append(True)
+
+            # Adds the results of rotatable Bond 
+            rotatableBonds.append(rotatableList)
+
+        # Add to Data Frame
+        self.Bonds["Rotatable"] = rotatableBonds
+            
     def GetBonds(self):
         """Generates a Data Frame with all Bond related Information"""
         # Pre initialize variables
@@ -105,15 +163,18 @@ class Molecule:
 
     def GetDihedralAngle(self, atomIndex1, atomIndex2, atomIndex3, atomIndex4):
         """Returns the Dihedral Angle of between Atoms"""
+        # Get the position of the Atoms
         atom1Pos = self.GetAtomPosition(atomIndex1)
         atom2Pos = self.GetAtomPosition(atomIndex2)
         atom3Pos = self.GetAtomPosition(atomIndex3)
         atom4Pos = self.GetAtomPosition(atomIndex4)
 
+        # Get the Vectors between each atom
         v21 = atom2Pos - atom1Pos
         v32 = atom3Pos - atom2Pos
         v43 = atom4Pos - atom3Pos
 
+        # Calculate the Dihedral Angles
         v1 = np.cross(v21, v32)
         v1 = v1 / np.linalg.norm(v1)
         v2 = np.cross(v43, v32)
@@ -130,15 +191,18 @@ class Molecule:
 
     def GetAngleBetweenAtoms(self, atomIndex1, atomIndex2, atomIndex3):
         """Returns the Angle between Atoms in Degrees"""
+        # Get Atom Positions
         atom1Pos = self.GetAtomPosition(atomIndex1)
         atom2Pos = self.GetAtomPosition(atomIndex2)
         atom3Pos = self.GetAtomPosition(atomIndex3)
 
+        # Get Normalized Vectors
         v1 = atom1Pos - atom2Pos
         v1 = v1 / np.linalg.norm(v1)
         v2 = atom3Pos - atom2Pos
         v2 = v2 / np.linalg.norm(v2)
 
+        # Return the Angle between the Vectors aka between Atoms
         return (180 / pi) * math.acos(np.dot(v1, v2))
 
     def DisplayBondGraph(self):
@@ -150,19 +214,28 @@ class Molecule:
             # Get Index and Atom Symbol
             index = self.Bonds["Index"][i]
             atom = self.Bonds["Atom"][i]
+            rotatable = self.Bonds["Rotatable"]
 
             # Create the String for Bonds
             bonds = ""
             for j in self.Bonds["Bonds"][i]:
                 bonds += str(j + 1) + " "
 
-            # Create Distance for Bond Distance
+            # Create String for Bond Distance
             bond_dist = ""
             for j in self.Bonds["Bond Distance"][i]:
                 bond_dist += "%.3fÅ " % j
 
+            # Create String for Rotatable Bonds
+            rotatable = ""
+            for j in self.Bonds["Rotatable"][i]:
+                if j:
+                    rotatable += "T "
+                else:
+                    rotatable += "F "
+
             # Print Line to Screen
-            print(" %4i   %-2s - %s    %4s" % (index + 1, atom, bonds, bond_dist))
+            print(" %4i   %-2s - %s    %4s  %2s" % (index + 1, atom, bonds, bond_dist, rotatable))
 
     def GetDihedralAtomChain(self, atomChain: list[int], depth=0):
         """Recursively Searches for a Viable Atom Chain of length 4"""
@@ -264,3 +337,4 @@ class Molecule:
         self.AtomCount = len(self.XYZCoordinates["Atom"].values)
 
         self.GetBonds()
+        self.FindRotatableBonds()
