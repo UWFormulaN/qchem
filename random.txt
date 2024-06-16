@@ -1,0 +1,33 @@
+def print_directory_structure(startpath):
+    for root, dirs, files in os.walk(startpath):
+        level = root.replace(startpath, '').count(os.sep)
+        indent = ' ' * 4 * (level)
+        print(f"{indent}{os.path.basename(root)}/")
+        subindent = ' ' * 4 * (level + 1)
+        for f in files:
+            print(f"{subindent}{f}")
+
+path = os.path.join(os.curdir, '..')
+
+print(path)
+print_directory_structure(startpath=path)
+
+
+
+
+
+   def RecursiveBondSearch (self, depth = 0, atomIndex = 0, previousVisits: list[int] = [],  previousChain: tuple[int, int, int] = (0, 0, 0), angles : list[tuple[int, int, int]] = []):
+        for i in self.Bonds["Bonds"][atomIndex]:
+            if i in previousVisits:
+                continue
+            if depth >= self.AtomCount:
+                print("end")
+                return previousChain
+            
+            newChain = (previousChain[1], previousChain[2], i)
+            angles.append(newChain)
+            previousVisits.append(atomIndex)
+            self.RecursiveBondSearch(depth + 1, i, previousVisits, newChain, angles )
+            
+        if depth == 0:
+            return angles
