@@ -68,20 +68,18 @@ class Molecule:
 
 
     def GetAllAtomsAfterBond(self, atomIndex1, atomIndex2) -> list[int]:
+        """Starts a Recursive Search to find all the Atoms Present after a Bond"""
 
         if (atomIndex2 not in self.Bonds["Bonds"][atomIndex1]):
             Error("These Atoms are not Bonded Together")
 
-        #print(f" {atomIndex1} - {atomIndex2} -> ")
-
         return self.BranchSearch(atomIndex2, [] , atomIndex1)
 
-    
-    #Ignore index will be the previous Atom
-    def BranchSearch (self, currentIndex: int, atoms: list[int] = None,  ignoreIndex: int = None,  depth: int = 0) -> list[int]:
-
+    def BranchSearch (self, currentIndex: int, atoms: list[int] = None,  ignoreIndex: int = None) -> list[int]:
+        """Recursively Branch Searches through all the Atoms in a Molecule"""
         bonds: list[int] = self.Bonds["Bonds"][currentIndex]
 
+        # Loop through all Bonds
         for i in bonds:
 
             # Ignore the Atom That we just came from
@@ -91,7 +89,7 @@ class Molecule:
             # If the Atom is 
             if i not in atoms:
                 atoms.append(i)
-                self.BranchSearch(i,  atoms, currentIndex, depth + 1)
+                self.BranchSearch(i,  atoms, currentIndex)
           
         return atoms
 
@@ -104,36 +102,27 @@ class Molecule:
         # Go through all Bonds in the Molecule. Do a Chain search 
         for i in range(self.AtomCount):
 
+            # Cache the Bonds for the current Atom and initialize 
             bonds = self.Bonds["Bonds"][i]
-            rotatable :list[bool] = [] 
+            rotatableList :list[bool] = [] 
 
-            for j in range(len(bonds)):
-                atoms: list[int] = self.GetAllAtomsAfterBond(i, bonds[j])
+            # Loop through All Atoms that are Bonded
+            for j in range(bonds):
+                # Get the List of Atoms that come after the Bond of i - j -> 
+                atoms: list[int] = self.GetAllAtomsAfterBond(i, j)
 
-                #print(f"Atom {i} -> Atom {bonds[j]} Atom Branch: {atoms}")
-
+                # Rules that determine if the Bond is Rotatable TODO: Expand to factor in double bonds and more rules
                 if i in atoms:
-                    rotatable.append(False)
+                    rotatableList.append(False)
                 else:
-                    rotatable.append(True)
+                    rotatableList.append(True)
 
-            rotatableBonds.append(rotatable)
+            # Adds the results of rotatable Bond 
+            rotatableBonds.append(rotatableList)
 
+        # Add to Data Frame
         self.Bonds["Rotatable"] = rotatableBonds
             
-
-
-
-
-
-
-
-
-
-
-
-
-
     def GetBonds(self):
         """Generates a Data Frame with all Bond related Information"""
         # Pre initialize variables
@@ -174,15 +163,18 @@ class Molecule:
 
     def GetDihedralAngle(self, atomIndex1, atomIndex2, atomIndex3, atomIndex4):
         """Returns the Dihedral Angle of between Atoms"""
+        # Get the position of the Atoms
         atom1Pos = self.GetAtomPosition(atomIndex1)
         atom2Pos = self.GetAtomPosition(atomIndex2)
         atom3Pos = self.GetAtomPosition(atomIndex3)
         atom4Pos = self.GetAtomPosition(atomIndex4)
 
+        # Get the Vectors between each atom
         v21 = atom2Pos - atom1Pos
         v32 = atom3Pos - atom2Pos
         v43 = atom4Pos - atom3Pos
 
+        # Calculate the Dihedral Angles
         v1 = np.cross(v21, v32)
         v1 = v1 / np.linalg.norm(v1)
         v2 = np.cross(v43, v32)
@@ -199,15 +191,18 @@ class Molecule:
 
     def GetAngleBetweenAtoms(self, atomIndex1, atomIndex2, atomIndex3):
         """Returns the Angle between Atoms in Degrees"""
+        # Get Atom Positions
         atom1Pos = self.GetAtomPosition(atomIndex1)
         atom2Pos = self.GetAtomPosition(atomIndex2)
         atom3Pos = self.GetAtomPosition(atomIndex3)
 
+        # Get Normalized Vectors
         v1 = atom1Pos - atom2Pos
         v1 = v1 / np.linalg.norm(v1)
         v2 = atom3Pos - atom2Pos
         v2 = v2 / np.linalg.norm(v2)
 
+        # Return the Angle between the Vectors aka between Atoms
         return (180 / pi) * math.acos(np.dot(v1, v2))
 
     def DisplayBondGraph(self):
@@ -226,18 +221,18 @@ class Molecule:
             for j in self.Bonds["Bonds"][i]:
                 bonds += str(j + 1) + " "
 
-            # Create Distance for Bond Distance
+            # Create String for Bond Distance
             bond_dist = ""
             for j in self.Bonds["Bond Distance"][i]:
                 bond_dist += "%.3fÅ " % j
 
+            # Create String for Rotatable Bonds
             rotatable = ""
             for j in self.Bonds["Rotatable"][i]:
                 if j:
                     rotatable += "T "
                 else:
                     rotatable += "F "
-
 
             # Print Line to Screen
             print(" %4i   %-2s - %s    %4s  %2s" % (index + 1, atom, bonds, bond_dist, rotatable))
