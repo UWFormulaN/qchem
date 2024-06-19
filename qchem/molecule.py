@@ -9,6 +9,7 @@ from uu import Error
 import pandas as pd
 import numpy as np
 
+
 from .Data.constants import CovalentRadiiConstants
 
 # We will create molecule objects which will store information about the molecule
@@ -49,6 +50,17 @@ class Molecule:
 
     energy_method = None
     """Energy Method used for the Molecule"""
+
+    def __init__(self, name: str, XYZFilePath: str):
+        """Initializes a New Molecule Object"""
+        self.Name = name
+
+        # Load the XYZ File from XYZ File
+        self.XYZCoordinates = self.ReadXYZ(path=XYZFilePath)
+        self.AtomCount = len(self.XYZCoordinates["Atom"].values)
+
+        self.GetBonds()
+        self.FindRotatableBonds()
 
     def ReadXYZ(self, path: str) -> pd.core.frame.DataFrame:
         """Reads the XYZ file and Giving a Data Frame with the Position of Each Atom
@@ -178,7 +190,7 @@ class Molecule:
         for i in range(steps):
             rotation = stepSizeRad * i
             newMolecule = self.Copy()
-            newMolecule.name = f"{self.name}_rot_{(180 / pi) * rotation}"
+            newMolecule.Name = f"{self.Name}_rot_{(180 / pi) * rotation}"
             newMolecule.RotateBond(atomIndex1, atomIndex2, rotation)
             conformers.append(newMolecule)
 
@@ -186,24 +198,24 @@ class Molecule:
 
     def DisplayXYZ (self):
         """Prints the XYZ File to the Terminal"""
-        XYZ = self.CreateXYZFile()
-        for line in XYZ:
-            print(line[0]) 
+        from qchem.XYZFile import XYZFile
+        print(XYZFile(self).GetFileAsString())
 
 
-    def CreateXYZFile (self) -> np.ndarray:
-        """Returns the XYZ File in an Array like format"""
-        array = np.array(str(self.AtomCount))
-        array = np.vstack((array, self.name))
+    # def CreateXYZFile (self) -> np.ndarray:
+    #     """Returns the XYZ File in an Array like format"""
+    #     array = np.array(str(self.AtomCount))
+    #     array = np.vstack((array, self.Name))
 
-        for i in range(self.AtomCount):
-            array = np.vstack((array, f"{self.XYZCoordinates["Atom"][i]} {self.XYZCoordinates["X"][i]} {self.XYZCoordinates["Y"][i]} {self.XYZCoordinates["Z"][i]}"))
+    #     for i in range(self.AtomCount):
+    #         array = np.vstack((array, f"{self.XYZCoordinates["Atom"][i]} {self.XYZCoordinates["X"][i]} {self.XYZCoordinates["Y"][i]} {self.XYZCoordinates["Z"][i]}"))
 
-        return array
+    #     return array
 
     def SaveAsXYZ (self, filePath):
         """Saves the Molecule to a XYZ File"""
-        np.savetxt(path.join(filePath, self.name) + ".xyz", self.CreateXYZFile(), fmt='%s')
+        from qchem.XYZFile import XYZFile
+        XYZFile(self).SaveToFile(filePath)
 
     def FindRotatableBonds (self):
         """Goes through all Bonds and Determine if it's rotatable"""
@@ -320,7 +332,7 @@ class Molecule:
     def DisplayBondGraph(self):
         """Displays the Bond Graph in Terminal"""
         # Display Title Header
-        print("   %s\n" % (self.name), end="")
+        print("   %s\n" % (self.Name), end="")
 
         for i in range(self.AtomCount):
             # Get Index and Atom Symbol
@@ -392,7 +404,7 @@ class Molecule:
         # Create an Array Reprensenting the File, First line is Number of Atoms, Second is the Name of the Molecule
         z_matrix = []
         z_matrix.append(f"{self.AtomCount}")
-        z_matrix.append(self.name)
+        z_matrix.append(self.Name)
 
         # Loop through all the Atoms
         for i in range(self.AtomCount):
@@ -439,14 +451,4 @@ class Molecule:
 
         return z_matrix
 
-    def __init__(self, name: str, XYZFilePath: str):
-        """Initializes a New Molecule Object"""
-        self.name = name
-
-        # Load the XYZ File from XYZ File
-        self.XYZCoordinates = self.ReadXYZ(path=XYZFilePath)
-
-        self.AtomCount = len(self.XYZCoordinates["Atom"].values)
-
-        self.GetBonds()
-        self.FindRotatableBonds()
+   
