@@ -1,6 +1,4 @@
-import enum
+from enum import Enum
 
-
-class OrcaDensityFunctional(enum):
-
-    B3LYP = "B3LYP",
+class OrcaDensityFunctional(Enum):
+    B3LYP = "B3LYP"

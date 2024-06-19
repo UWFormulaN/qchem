@@ -1,8 +1,8 @@
-import enum
+from enum import Enum
 
-class OrcaBasisSet(enum):
+class OrcaBasisSet(Enum):
 
-    DEF2_SVP = "DEF2-SVP",
+    DEF2_SVP = "DEF2-SVP"
 
 
 

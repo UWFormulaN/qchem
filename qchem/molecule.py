@@ -201,17 +201,6 @@ class Molecule:
         from qchem.XYZFile import XYZFile
         print(XYZFile(self).GetFileAsString())
 
-
-    # def CreateXYZFile (self) -> np.ndarray:
-    #     """Returns the XYZ File in an Array like format"""
-    #     array = np.array(str(self.AtomCount))
-    #     array = np.vstack((array, self.Name))
-
-    #     for i in range(self.AtomCount):
-    #         array = np.vstack((array, f"{self.XYZCoordinates["Atom"][i]} {self.XYZCoordinates["X"][i]} {self.XYZCoordinates["Y"][i]} {self.XYZCoordinates["Z"][i]}"))
-
-    #     return array
-
     def SaveAsXYZ (self, filePath):
         """Saves the Molecule to a XYZ File"""
         from qchem.XYZFile import XYZFile

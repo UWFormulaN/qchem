@@ -1,6 +1,6 @@
-import enum
+from enum import Enum
 
-class OrcaCalculationType(enum):
-    OPTIMIZATION = "OPT",
-    INFRARED_SPECTRUM = "FREQ",
-    HARTREE_FOCK = "HF",
+class OrcaCalculationType(Enum):
+    OPTIMIZATION = "OPT"
+    INFRARED_SPECTRUM = "FREQ"
+    HARTREE_FOCK = "HF"

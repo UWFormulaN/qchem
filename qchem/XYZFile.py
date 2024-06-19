@@ -36,6 +36,14 @@ class XYZFile:
         with open(os.path.join(filePath, f"{self.MoleculeName}.xyz"), "w") as file:
             file.write(self.GetFileAsString())
 
+    def GetXYZBody (self):
+        string = self.AtomPositions[0]
+        
+        for i in range(2, self.AtomCount):
+            string += f"\n{self.AtomPositions[i]}"
+
+        return string
+
       
 
 
