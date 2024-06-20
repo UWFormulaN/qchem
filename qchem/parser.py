@@ -33,7 +33,8 @@ class OrcaOutput:
         self.absolutedipole = self.read_absolute_dipole()
         #self.quadrupole = self.read_quadrupole()
         self.name = re.search(r"[^\\]+$",self.file_path).group()[:-4]
-            
+        self.energy = self.finalenergy()
+
     def read_final_timings(self) -> pd.core.frame.DataFrame:   
         for i, line in enumerate(self.lines[-20:]):
             if line.strip() == 'Timings for individual modules:':
@@ -44,7 +45,11 @@ class OrcaOutput:
                 #df = df.apply(pd.to_numeric, errors='coerce').dropna()
                 df[['Time', 'B']] = df['Time'].str.split('sec', n=1, expand=True)
                 return df.drop(['B'],axis=1)
-            
+    def finalenergy(self) -> float:
+        for line in self.lines:
+            if line.strip()[0:25] == "FINAL SINGLE POINT ENERGY":
+                return float(line.split()[-1])
+
     def read_mayer(self) -> list:
         # Reads out Mayer Population Analysis data from an Orca ouput file
 
