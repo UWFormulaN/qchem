@@ -15,7 +15,10 @@ def read_xyz(path:str) -> pd.core.frame.DataFrame:
 # This section is for parsing specific results from output files
 # So far, it contains end timings, SCF Energy, loedwin and Mayer Analysis
 
-class output_file:
+# Add class "Project" or "OrcaProject" that takes a folder, extracts all the .out files and makes them into OrcaOutput objects
+# Will also need a class variable ".name" for OrcaOutput that will be the file name
+
+class OrcaOutput:
     def __init__(
         self,
         file_path
@@ -26,7 +29,12 @@ class output_file:
         self.final_timings = self.read_final_timings()
         self.mayer_population = self.read_mayer()
         self.loedwin = self.read_Loedwin()
-            
+        self.dipole = self.read_dipole()
+        self.absolutedipole = self.read_absolute_dipole()
+        #self.quadrupole = self.read_quadrupole()
+        self.name = re.search(r"[^\\]+$",self.file_path).group()[:-4]
+        self.energy = self.finalenergy()
+
     def read_final_timings(self) -> pd.core.frame.DataFrame:   
         for i, line in enumerate(self.lines[-20:]):
             if line.strip() == 'Timings for individual modules:':
@@ -37,7 +45,11 @@ class output_file:
                 #df = df.apply(pd.to_numeric, errors='coerce').dropna()
                 df[['Time', 'B']] = df['Time'].str.split('sec', n=1, expand=True)
                 return df.drop(['B'],axis=1)
-            
+    def finalenergy(self) -> float:
+        for line in self.lines:
+            if line.strip()[0:25] == "FINAL SINGLE POINT ENERGY":
+                return float(line.split()[-1])
+
     def read_mayer(self) -> list:
         # Reads out Mayer Population Analysis data from an Orca ouput file
 
@@ -141,18 +153,22 @@ class output_file:
                 end_switch = False
 
         return(scf_energies)
-
+    
+    def read_dipole(self) -> tuple:
+        for line in self.lines:
+            if line.strip()[0:19] == "Total Dipole Moment":
+                return tuple(map(float, line.split()[4:]))
+    def read_absolute_dipole(self) -> float:
+        for line in self.lines:
+            if line.strip()[0:15] == "Magnitude (a.u.)":
+                return line.split()[2]
             
+    def read_quadrupole(self) -> tuple:
+        for i, line in enumerate(self.lines):
+            if line.strip()[0:24] == "QUADRUPOLE MOMENT (A.U.)":
+                df = pd.read_csv(self.lines[i+3:i+7], delim_whitespace=True, names=["Type", "XX", "YY", "ZZ", "XY", "XZ", "YZ"])
+                return df
             
-
-def read_dipole(output_file: Union[list,str]) -> tuple:
-    if isinstance(output_file, str):
-        with open(output_file, 'r') as file:
-            lines = file.readlines()
-    elif isinstance(output_file, list):
-        lines = output_file
-
-    return
 
 def read_final_timings(output_path: str) -> pd.core.frame.DataFrame:
     with open(output_path, 'r') as file:
