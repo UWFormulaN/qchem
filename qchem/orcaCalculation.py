@@ -1,5 +1,7 @@
 from os import path
 import os
+import subprocess
+import comm
 from distutils import core
 from qchem.Enums.OrcaCalculationTypes import OrcaCalculationType
 from qchem.Enums.OrcaDensityFunctional import OrcaDensityFunctional
@@ -11,6 +13,8 @@ class OrcaCalculation:
     """Class capable of running an Orca Calculation"""
 
     FINISHED = False
+
+    CalculationOutput: str
 
     CalculationMolecule: Molecule
     """Molecule that will have an Orca Calculation run on it"""
@@ -43,7 +47,44 @@ class OrcaCalculation:
 
         # Density Function, Basis Set, Calculation Type, PAL#, XYZ File
 
-        print("Running Calculation")
+        # process = subprocess.Popen(['docker', 'run', '-it', 'mrdnalex/orca'])
+
+        # print(process.stdout)
+
+        orcaCache = "OrcaCache"
+
+        if not os.path.exists(orcaCache):
+            os.makedirs(orcaCache)
+
+        path = f'{os.getcwd()}\{orcaCache}'
+
+        print(f"Running Calulation {self.GetInputFileName()}")
+
+        self.SaveInputFile(orcaCache)
+
+        command = f'docker run --name qchemorca -v "{path}":/home/orca mrdnalex/orca sh -c "cd /home/orca && /Orca/orca {self.GetInputFileName()} > {self.GetOutputFileName()}"'
+
+        result = subprocess.run(command, shell=True, text=True, capture_output=True)
+
+        subprocess.run("docker kill qchemorca" , shell=True)
+        subprocess.run("docker rm qchemorca" , shell=True)
+
+        print(f"Calculation {self.GetInputFileName()} Complete")
+
+        orcaOutput = result.stdout
+
+        with open(f'{os.getcwd()}/{orcaCache}/{self.GetOutputFileName()}', 'r') as file:
+            self.CalculationOutput = file.read()
+
+        self.FINISHED = True
+
+        # print(result.stdout)
+
+    def GetInputFileName (self):
+        return f"{self.CalculationMolecule.Name}.inp"
+
+    def GetOutputFileName (self):
+        return f"{self.CalculationMolecule.Name}.out"
 
     def GetInputFile (self):
         """Generates a Input file in String format"""
@@ -77,7 +118,7 @@ class OrcaCalculation:
 
     def SaveInputFile (self, filePath: str):
         """Saves a Input File using the Settings Provided to the Path Specified"""
-        with open(os.path.join(filePath, f"{self.CalculationMolecule.Name}.inp"), "w") as file:
+        with open(os.path.join(filePath, self.GetInputFileName()), "w") as file:
             file.write(self.GetInputFile())
         
 
