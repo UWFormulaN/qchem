@@ -20,9 +20,6 @@ from .Data.constants import CovalentRadiiConstants
 class Molecule:
     """Class that represents an Entire Molecule. Stores information aboput Bonds, Atomic Positions unique Atom Properties and Allows for Specific Simulation Calculations"""
 
-    PositionSlice = slice(1, 4)
-    """Constant that Grabs a Array/List of the Atom Position. Used for the Function GetAtomPosition. Is global so that you can get the position using self.XYZCoordinates.iloc[atomIndex, self.PositionSlice]"""
-
     Name: str = ""
     """Name of the Molecule"""
 
@@ -272,7 +269,7 @@ class Molecule:
 
     def GetAtomPosition(self, atomIndex):
         """Returns a Numpy Array of the Atoms Position"""
-        return np.array(self.XYZCoordinates.iloc[atomIndex, self.PositionSlice], dtype=float)
+        return np.array(self.XYZCoordinates.iloc[atomIndex, slice(1, 4)], dtype=float)
 
     def GetDihedralAngle(self, atomIndex1, atomIndex2, atomIndex3, atomIndex4):
         """Returns the Dihedral Angle of between Atoms"""
@@ -439,5 +436,3 @@ class Molecule:
             )
 
         return z_matrix
-
-   

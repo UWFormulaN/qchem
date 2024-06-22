@@ -56,7 +56,7 @@ class OrcaCalculation:
         if not os.path.exists(orcaCache):
             os.makedirs(orcaCache)
 
-        path = f'{os.getcwd()}\{orcaCache}'
+        path = f'{os.getcwd()}\\{orcaCache}'
 
         print(f"Running Calulation {self.GetInputFileName()}")
 
