@@ -2,6 +2,7 @@ import os
 from qchem.molecule import Molecule
 
 class XYZFile:
+    """Class that Describes a XYZ Molecule File"""
 
     AtomCount: int
     """Number of Atoms in the Molecule"""
@@ -24,6 +25,7 @@ class XYZFile:
 
 
     def GetFileAsString(self):
+        """Returns the Entire XYZ File as a String"""
         fileString = f"{self.AtomCount}"
         fileString += f"\n{self.MoleculeName}"
 
@@ -33,10 +35,12 @@ class XYZFile:
         return fileString
     
     def SaveToFile (self, filePath: str):
+        """Saves the XYZ File to the Specified Path"""
         with open(os.path.join(filePath, f"{self.MoleculeName}.xyz"), "w") as file:
             file.write(self.GetFileAsString())
 
     def GetXYZBody (self):
+        """Gets the XYZ Atom Position Body of the file as a String"""
         string = self.AtomPositions[0]
         
         for i in range(2, self.AtomCount):

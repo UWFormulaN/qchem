@@ -97,6 +97,7 @@ class OrcaCalculation:
 
         firstLine = "!"
 
+        # Check if the Properties are defined and Add them to the First line of the Input File
         if (self.DensityFunctional):
             firstLine += f"{self.DensityFunctional.value}"
 
@@ -112,11 +113,14 @@ class OrcaCalculation:
             else:
                 firstLine += f"\n%PAL NPROCS {self.Cores} END"
 
+        # Generate XYZ Wrappers
         xyzWrapperStart = "* xyz 0 1"
         xyzWrapperEnd = "*"
 
+        # Create a XYZ File for the Molecule
         xyz = XYZFile(self.CalculationMolecule)
 
+        # Generate the Entire Input File as a String
         inputFile = f"{firstLine}\n{xyzWrapperStart}\n{xyz.GetXYZBody()}\n{xyzWrapperEnd}"
 
         return inputFile

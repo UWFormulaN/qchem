@@ -25,6 +25,7 @@ class Molecule:
     """Data Frame of the XYZ Coordinates of the Atoms in the Molecule"""
 
     AtomCount: int = 0
+    """The Number of Atoms present in the Molecule"""
 
     # Atom Index, Atom Symbol, Array of Index of other Atoms it's bonded to, Array of Booleans determining if Bond is Rotatable
     Bonds: pd.core.frame.DataFrame
