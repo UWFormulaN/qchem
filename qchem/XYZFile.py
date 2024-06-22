@@ -1,5 +1,6 @@
 import os
-from qchem.molecule import Molecule
+import pandas as pd
+from qchem.Molecule import Molecule
 
 class XYZFile:
     """Class that Describes a XYZ Molecule File"""
@@ -18,11 +19,10 @@ class XYZFile:
         self.MoleculeName = molecule.Name
         self.AtomPositions = []
 
-        positionDF = molecule.XYZCoordinates
+        positionDF =  molecule.XYZCoordinates
 
         for i in range(self.AtomCount):
             self.AtomPositions.append(f"{positionDF["Atom"][i]} {positionDF["X"][i]} {positionDF["Y"][i]} {positionDF["Z"][i]}")
-
 
     def GetFileAsString(self):
         """Returns the Entire XYZ File as a String"""
@@ -47,8 +47,3 @@ class XYZFile:
             string += f"\n{self.AtomPositions[i]}"
 
         return string
-
-      
-
-
-
