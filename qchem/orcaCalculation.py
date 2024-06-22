@@ -12,9 +12,8 @@ from qchem.Enums.OrcaBasisSet import OrcaBasisSet
 class OrcaCalculation:
     """Class capable of running an Orca Calculation"""
 
-    FINISHED = False
-
     CalculationOutput: str
+    """The Entire Orca Output File in a single String"""
 
     CalculationMolecule: Molecule
     """Molecule that will have an Orca Calculation run on it"""
@@ -31,7 +30,13 @@ class OrcaCalculation:
     Cores : int
     """Number of Cores to use for the Calculation"""
 
-    def __init__(self, molecule: Molecule, calculationType: OrcaCalculationType = None, basisSet: OrcaBasisSet = None, densityFunctional: OrcaDensityFunctional = None, cores : int = 1 ):
+    OutputFilePath: str
+    """The Path to the Output File on the Device"""
+
+    InputFilePath: str
+    """The Path to the Input File on the Device"""
+
+    def __init__(self, molecule: Molecule, calculationType: OrcaCalculationType = None, basisSet: OrcaBasisSet = None, densityFunctional: OrcaDensityFunctional = None, cores : int = 1):
 
         self.CalculationMolecule = molecule
         self.CalculationType = calculationType
@@ -40,50 +45,51 @@ class OrcaCalculation:
         self.Cores = cores
 
     def RunCalculation(self):
-
-        # Create a "Process" like in Java Script
-        # Have it create a new Docker Container using the Orca Image
-        # Transfer the XYZ File somehow (Save and then transfer?)
-
-        # Density Function, Basis Set, Calculation Type, PAL#, XYZ File
-
-        # process = subprocess.Popen(['docker', 'run', '-it', 'mrdnalex/orca'])
-
-        # print(process.stdout)
-
+        """Runs a Orca Calculation in a Docker Container """
         orcaCache = "OrcaCache"
+        orcaCachePath = f'{os.getcwd()}\\{orcaCache}\\{self.CalculationMolecule.Name.replace('.', '')}'
+        self.OutputFilePath = f'{orcaCachePath}\\{self.GetOutputFileName()}'
+        self.InputFilePath = f'{orcaCachePath}\\{self.GetInputFileName()}'
 
+        # Make Cache Folder if it doesn't Exist
         if not os.path.exists(orcaCache):
             os.makedirs(orcaCache)
 
-        path = f'{os.getcwd()}\\{orcaCache}'
+        # Make a folder for the Specific Calculation
+        if not os.path.exists(orcaCachePath):
+            os.makedirs(orcaCachePath)
 
-        print(f"Running Calulation {self.GetInputFileName()}")
+        # Save the Input File to the folder
+        self.SaveInputFile(orcaCachePath)
 
-        self.SaveInputFile(orcaCache)
+        # Create the Command String
+        command = f'docker run --name qchemorca -v "{orcaCachePath}":/home/orca mrdnalex/orca sh -c "cd /home/orca && /Orca/orca {self.GetInputFileName()} > {self.GetOutputFileName()}"'
 
-        command = f'docker run --name qchemorca -v "{path}":/home/orca mrdnalex/orca sh -c "cd /home/orca && /Orca/orca {self.GetInputFileName()} > {self.GetOutputFileName()}"'
+        print(f"Running Calulation : {self.GetInputFileName()}")
 
-        result = subprocess.run(command, shell=True, text=True, capture_output=True)
-
+        # Kill and Remove qchemorca container if it doesn't exist yet
         subprocess.run("docker kill qchemorca" , shell=True)
         subprocess.run("docker rm qchemorca" , shell=True)
 
-        print(f"Calculation {self.GetInputFileName()} Complete")
+        # Run the Calculation in a Container and wait
+        subprocess.run(command, shell=True, text=True, capture_output=True)
 
-        orcaOutput = result.stdout
+        # Kill and Remove the Container
+        subprocess.run("docker kill qchemorca" , shell=True)
+        subprocess.run("docker rm qchemorca" , shell=True)
 
-        with open(f'{os.getcwd()}/{orcaCache}/{self.GetOutputFileName()}', 'r') as file:
+        print(f"Calculation Complete : {self.GetInputFileName()}")
+
+        # Open the Output File and Grab the Content
+        with open(self.OutputFilePath, 'r') as file:
             self.CalculationOutput = file.read()
 
-        self.FINISHED = True
-
-        # print(result.stdout)
-
     def GetInputFileName (self):
+        """Returns the Input File Name with it's extension"""
         return f"{self.CalculationMolecule.Name}.inp"
 
     def GetOutputFileName (self):
+        """Returns the Output File Name with it's extension"""
         return f"{self.CalculationMolecule.Name}.out"
 
     def GetInputFile (self):
@@ -114,21 +120,8 @@ class OrcaCalculation:
         inputFile = f"{firstLine}\n{xyzWrapperStart}\n{xyz.GetXYZBody()}\n{xyzWrapperEnd}"
 
         return inputFile
-    
 
     def SaveInputFile (self, filePath: str):
         """Saves a Input File using the Settings Provided to the Path Specified"""
         with open(os.path.join(filePath, self.GetInputFileName()), "w") as file:
             file.write(self.GetInputFile())
-        
-
-
-
-
-    
-
-
-    
-
-
-        
