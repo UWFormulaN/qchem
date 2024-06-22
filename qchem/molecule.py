@@ -1,16 +1,13 @@
 import copy
-import dis
 from math import pi
 import math
-from os import path
-import os
 import random
 from uu import Error
 import pandas as pd
 import numpy as np
 
 
-from .Data.constants import CovalentRadiiConstants
+from .Data.Constants import AtomicMassConstants, CovalentRadiiConstants
 
 # We will create molecule objects which will store information about the molecule
 # Includes coordinates, atom types, how optimization was performed, how energy calculations were performed, etc.
@@ -20,9 +17,6 @@ from .Data.constants import CovalentRadiiConstants
 class Molecule:
     """Class that represents an Entire Molecule. Stores information aboput Bonds, Atomic Positions unique Atom Properties and Allows for Specific Simulation Calculations"""
 
-    PositionSlice = slice(1, 4)
-    """Constant that Grabs a Array/List of the Atom Position. Used for the Function GetAtomPosition. Is global so that you can get the position using self.XYZCoordinates.iloc[atomIndex, self.PositionSlice]"""
-
     Name: str = ""
     """Name of the Molecule"""
 
@@ -31,6 +25,7 @@ class Molecule:
     """Data Frame of the XYZ Coordinates of the Atoms in the Molecule"""
 
     AtomCount: int = 0
+    """The Number of Atoms present in the Molecule"""
 
     # Atom Index, Atom Symbol, Array of Index of other Atoms it's bonded to, Array of Booleans determining if Bond is Rotatable
     Bonds: pd.core.frame.DataFrame
@@ -56,7 +51,7 @@ class Molecule:
         self.Name = name
 
         # Load the XYZ File from XYZ File
-        self.XYZCoordinates = self.ReadXYZ(path=XYZFilePath)
+        self.XYZCoordinates = self.SortAtomDataFrame(self.ReadXYZ(path=XYZFilePath))
         self.AtomCount = len(self.XYZCoordinates["Atom"].values)
 
         self.GetBonds()
@@ -272,7 +267,7 @@ class Molecule:
 
     def GetAtomPosition(self, atomIndex):
         """Returns a Numpy Array of the Atoms Position"""
-        return np.array(self.XYZCoordinates.iloc[atomIndex, self.PositionSlice], dtype=float)
+        return np.array(self.XYZCoordinates.iloc[atomIndex, slice(1, 4)], dtype=float)
 
     def GetDihedralAngle(self, atomIndex1, atomIndex2, atomIndex3, atomIndex4):
         """Returns the Dihedral Angle of between Atoms"""
@@ -439,5 +434,41 @@ class Molecule:
             )
 
         return z_matrix
+    
+    def SortAtomDataFrame (self, dataFrame : pd.core.frame.DataFrame):
+        """Sorts the Molecule Data Frame when initializing the Molecule to make sure the Heaviest Atoms are at the Top of the Data Frame"""
+        # Create a duplicate of the DataFrame
+        sorted_dataFrame = dataFrame.copy()
 
-   
+        atoms = []
+
+        for i in range(len(dataFrame["Atom"].values)):
+            atoms.append([i, AtomicMassConstants[dataFrame["Atom"][i]]])
+
+        # Sort atoms by atomic mass in descending order
+        sorted_atoms = sorted(atoms, key=lambda x: x[1], reverse=True)
+
+        # Extract the sorted indices from the sorted_atoms list
+        sorted_indices = [atom[0] for atom in sorted_atoms]
+
+        # Use the sorted indices to reindex the original DataFrame
+        sorted_dataFrame = dataFrame.iloc[sorted_indices]
+
+        # Replace rows in the duplicate DataFrame using the sorted indices
+        for new_index, (original_index, _) in enumerate(sorted_atoms):
+            sorted_dataFrame.iloc[new_index] = dataFrame.iloc[original_index]
+
+        # Resets the Now Sorted indexes so that they properly increment
+        sorted_dataFrame.reset_index(drop=True, inplace=True)
+
+        return sorted_dataFrame
+    
+    def GetMolecularWeight (self) -> float:
+        """Returns the Molecular Weight of the Molecule in g/mol"""
+        mw = 0
+
+        # Loop through all Atoms and Add their Individual Atomic Mass
+        for i in range(self.AtomCount):
+            mw += AtomicMassConstants[self.XYZCoordinates["Atom"][i]]
+
+        return mw

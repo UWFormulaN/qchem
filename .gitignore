@@ -7,6 +7,8 @@
 
 # Personal Workbooks
 /notebooks/*
+/dist
+/build
 !/notebooks/.env
 !/notebooks/qchem.py
 
@@ -18,3 +20,4 @@ tests/test_files/xyz
 
 # VS Code
 .vscode/
+/qchem.egg-info
