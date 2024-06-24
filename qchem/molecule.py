@@ -7,7 +7,7 @@ import pandas as pd
 import numpy as np
 
 
-from .Data.Constants import AtomicMassConstants, CovalentRadiiConstants
+from .Data.constants import AtomicMassConstants, CovalentRadiiConstants
 
 # We will create molecule objects which will store information about the molecule
 # Includes coordinates, atom types, how optimization was performed, how energy calculations were performed, etc.
