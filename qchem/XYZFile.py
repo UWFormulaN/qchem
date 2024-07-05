@@ -1,6 +1,6 @@
 import os
 import pandas as pd
-from qchem.molecule import Molecule
+from qchem.Molecule import Molecule
 
 class XYZFile:
     """Class that Describes a XYZ Molecule File"""

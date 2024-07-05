@@ -1,12 +1,13 @@
 from os import path
 import os
 import subprocess
+from textwrap import indent
 import comm
 from distutils import core
 from qchem.Enums.OrcaCalculationTypes import OrcaCalculationType
 from qchem.Enums.OrcaDensityFunctional import OrcaDensityFunctional
 from qchem.XYZFile import XYZFile
-from qchem.molecule import Molecule
+from qchem.Molecule import Molecule
 from qchem.Enums.OrcaBasisSet import OrcaBasisSet 
 
 class OrcaCalculation:
@@ -36,6 +37,9 @@ class OrcaCalculation:
     InputFilePath: str
     """The Path to the Input File on the Device"""
 
+    Index: int
+    """Container Index so that they can be run in parallel"""
+
     def __init__(self, molecule: Molecule, calculationType: OrcaCalculationType = None, basisSet: OrcaBasisSet = None, densityFunctional: OrcaDensityFunctional = None, cores : int = 1):
 
         self.CalculationMolecule = molecule
@@ -43,6 +47,7 @@ class OrcaCalculation:
         self.BasisSet = basisSet
         self.DensityFunctional = densityFunctional
         self.Cores = cores
+        self.Index = 1
 
     def RunCalculation(self):
         """Runs a Orca Calculation in a Docker Container """
@@ -63,20 +68,20 @@ class OrcaCalculation:
         self.SaveInputFile(orcaCachePath)
 
         # Create the Command String
-        command = f'docker run --name qchemorca -v "{orcaCachePath}":/home/orca mrdnalex/orca sh -c "cd /home/orca && /Orca/orca {self.GetInputFileName()} > {self.GetOutputFileName()}"'
+        command = f'docker run --name qchemorca{self.Index} -v "{orcaCachePath}":/home/orca mrdnalex/orca sh -c "cd /home/orca && /Orca/orca {self.GetInputFileName()} > {self.GetOutputFileName()}"'
 
         print(f"Running Calulation : {self.GetInputFileName()}")
 
         # Kill and Remove qchemorca container if it doesn't exist yet
-        subprocess.run("docker kill qchemorca" , shell=True)
-        subprocess.run("docker rm qchemorca" , shell=True)
+        subprocess.run(f"docker kill qchemorca{self.Index}" , shell=True)
+        subprocess.run(f"docker rm qchemorca{self.Index}" , shell=True)
 
         # Run the Calculation in a Container and wait
         subprocess.run(command, shell=True, text=True, capture_output=True)
 
         # Kill and Remove the Container
-        subprocess.run("docker kill qchemorca" , shell=True)
-        subprocess.run("docker rm qchemorca" , shell=True)
+        subprocess.run(f"docker kill qchemorca{self.Index}" , shell=True)
+        subprocess.run(f"docker rm qchemorca{self.Index}" , shell=True)
 
         print(f"Calculation Complete : {self.GetInputFileName()}")
 
