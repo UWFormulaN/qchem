@@ -7,7 +7,7 @@ from distutils import core
 from qchem.Enums.OrcaCalculationTypes import OrcaCalculationType
 from qchem.Enums.OrcaDensityFunctional import OrcaDensityFunctional
 from qchem.XYZFile import XYZFile
-from qchem.molecule import Molecule
+from qchem.Molecule import Molecule
 from qchem.Enums.OrcaBasisSet import OrcaBasisSet 
 
 class OrcaCalculation:
