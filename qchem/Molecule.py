@@ -5,8 +5,6 @@ import random
 from uu import Error
 import pandas as pd
 import numpy as np
-
-
 from .Data.Constants import AtomicMassConstants, CovalentRadiiConstants
 
 # We will create molecule objects which will store information about the molecule
