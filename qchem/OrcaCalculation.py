@@ -10,9 +10,6 @@ from qchem.Molecule import Molecule
 class OrcaCalculation:
     """Class capable of running an Orca Calculation"""
 
-    CalculationOutput: str
-    """The Entire Orca Output File in a single String"""
-
     CalculationMolecule: Molecule
     """Molecule that will have an Orca Calculation run on it"""
 
@@ -109,11 +106,8 @@ class OrcaCalculation:
             
             print(f"Calculation Complete : {self.GetInputFileName()}")
 
-            # Open the Output File and Grab the Content
-            with open(self.OutputFilePath, 'r') as file:
-                self.CalculationOutput = file.read()
         except:
-            print("Something Went Wrong! Could not complete Calculation")
+            print("Something Went Wrong! Could not complete Calculation!")
 
 
     def GetInputFileName (self):

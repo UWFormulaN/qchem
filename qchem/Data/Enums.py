@@ -1,7 +1,6 @@
 from enum import Enum
 
 class OrcaBasisSet(Enum):
-
     DEF2_SVP = "DEF2-SVP"
 
 class OrcaCalculationType(Enum):
