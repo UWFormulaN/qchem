@@ -1,11 +1,18 @@
 from enum import Enum
 
 class OrcaBasisSet(Enum):
-
     DEF2_SVP = "DEF2-SVP"
 
+class OrcaCalculationType(Enum):
+    OPTIMIZATION = "OPT"
+    INFRARED_SPECTRUM = "FREQ"
+    HARTREE_FOCK = "HF"
+    
+class OrcaDensityFunctional(Enum):
+    B3LYP = "B3LYP"
 
-
+class OrcaInputTemplate(Enum):
+    BASIC = "!&{calculation} &{basis} &{functional}\n*xyzfile 0 1 &{xyzfile}\n"
 
 #     Karlsruhe basis sets
 # Some of the various valence adaptations of Karlsruhe basis sets[9] are briefly described below.

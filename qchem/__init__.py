@@ -1,8 +1,5 @@
-# Import and expose the submodules and classes
-from .Parser import *
-from .Enums.OrcaDensityFunctional import OrcaDensityFunctional
-from .Enums.OrcaBasisSet import OrcaBasisSet
-from .Enums.OrcaCalculationTypes import OrcaCalculationType
+from . import Parser
+from .Data.Enums import OrcaBasisSet, OrcaDensityFunctional, OrcaCalculationType
 from .OrcaCalculation import OrcaCalculation
 from .XYZFile import XYZFile
 from .Molecule import Molecule
