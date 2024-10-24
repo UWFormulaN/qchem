@@ -4,28 +4,22 @@ import subprocess
 from textwrap import indent
 import comm
 from distutils import core
-from qchem.Enums.OrcaCalculationTypes import OrcaCalculationType
-from qchem.Enums.OrcaDensityFunctional import OrcaDensityFunctional
 from qchem.XYZFile import XYZFile
 from qchem.Molecule import Molecule
-from qchem.Enums.OrcaBasisSet import OrcaBasisSet 
 
 class OrcaCalculation:
     """Class capable of running an Orca Calculation"""
 
-    CalculationOutput: str
-    """The Entire Orca Output File in a single String"""
-
     CalculationMolecule: Molecule
     """Molecule that will have an Orca Calculation run on it"""
 
-    CalculationType : OrcaCalculationType
+    CalculationType : str
     """The Type of Calculation that will occur on the Molecule"""
     
-    BasisSet: OrcaBasisSet
+    BasisSet: str
     """Basis Set to use for the Calculation"""
 
-    DensityFunctional : OrcaDensityFunctional
+    DensityFunctional : str
     """The Density Functional to use for the Calculation"""
 
     Cores : int
@@ -36,58 +30,84 @@ class OrcaCalculation:
 
     InputFilePath: str
     """The Path to the Input File on the Device"""
+    
+    OrcaCachePath: str
+    """The Path to the Orca Cache on the Local Device"""
 
     Index: int
     """Container Index so that they can be run in parallel"""
 
-    def __init__(self, molecule: Molecule, calculationType: OrcaCalculationType = None, basisSet: OrcaBasisSet = None, densityFunctional: OrcaDensityFunctional = None, cores : int = 1):
+    def __init__(self, molecule: Molecule, calculationType: str = None, basisSet: str = None, densityFunctional: str = None, cores : int = 1, index: int = 1):
+        
+        if (molecule and isinstance(molecule, (Molecule))):
+            self.CalculationMolecule = molecule
+        else:
+            raise ValueError("Molecule is not defined or is Not of Type Molecule")
+        
+        if (isinstance(cores, (int))):
+            self.Cores = cores
+        else:
+            raise ValueError("Cores must be an Integer")
 
-        self.CalculationMolecule = molecule
-        self.CalculationType = calculationType
-        self.BasisSet = basisSet
-        self.DensityFunctional = densityFunctional
-        self.Cores = cores
-        self.Index = 1
+        if (calculationType):
+            if (isinstance(calculationType, (str))):
+                self.CalculationType = calculationType
+            else:
+                raise ValueError("Calculation Type must be a String")
+            
+        if (basisSet):
+            if (isinstance(basisSet, (str))):
+                self.BasisSet = basisSet
+            else:
+                raise ValueError("Basis Set Type must be a String")
+            
+        if (densityFunctional):
+            if (isinstance(densityFunctional, (str))):
+                self.DensityFunctional = densityFunctional
+            else:
+                raise ValueError("Density Functional Type must be a String")
+            
+        if (isinstance(index, (int))):
+            self.Index = index
+        else:
+            raise ValueError("Index must be an integer")
+        
+        orcaCache = "OrcaCache"
+        self.OrcaCachePath = f'{os.getcwd()}\\{orcaCache}\\{self.CalculationMolecule.Name.replace('.', '')}'
+        self.OutputFilePath = f'{self.OrcaCachePath}\\{self.GetOutputFileName()}'
+        self.InputFilePath = f'{self.OrcaCachePath}\\{self.GetInputFileName()}'
 
     def RunCalculation(self):
         """Runs a Orca Calculation in a Docker Container """
-        orcaCache = "OrcaCache"
-        orcaCachePath = f'{os.getcwd()}\\{orcaCache}\\{self.CalculationMolecule.Name.replace('.', '')}'
-        self.OutputFilePath = f'{orcaCachePath}\\{self.GetOutputFileName()}'
-        self.InputFilePath = f'{orcaCachePath}\\{self.GetInputFileName()}'
-
+        
         # Make Cache Folder if it doesn't Exist
-        if not os.path.exists(orcaCache):
-            os.makedirs(orcaCache)
+        if not os.path.exists(self.OrcaCachePath):
+            os.makedirs(self.OrcaCachePath)
 
         # Make a folder for the Specific Calculation
-        if not os.path.exists(orcaCachePath):
-            os.makedirs(orcaCachePath)
+        if not os.path.exists(self.OrcaCachePath):
+            os.makedirs(self.OrcaCachePath)
 
         # Save the Input File to the folder
-        self.SaveInputFile(orcaCachePath)
+        self.SaveInputFile(self.OrcaCachePath)
 
         # Create the Command String
-        command = f'docker run --name qchemorca{self.Index} -v "{orcaCachePath}":/home/orca mrdnalex/orca sh -c "cd /home/orca && /Orca/orca {self.GetInputFileName()} > {self.GetOutputFileName()}"'
+        command = f'docker run --name qchemorca{self.Index} -v "{self.OrcaCachePath}":/home/orca mrdnalex/orca sh -c "cd /home/orca && /Orca/orca {self.GetInputFileName()} > {self.GetOutputFileName()}"'
 
         print(f"Running Calulation : {self.GetInputFileName()}")
 
         # Kill and Remove qchemorca container if it doesn't exist yet
         subprocess.run(f"docker kill qchemorca{self.Index}" , shell=True)
         subprocess.run(f"docker rm qchemorca{self.Index}" , shell=True)
-
+        
         # Run the Calculation in a Container and wait
         subprocess.run(command, shell=True, text=True, capture_output=True)
 
         # Kill and Remove the Container
         subprocess.run(f"docker kill qchemorca{self.Index}" , shell=True)
         subprocess.run(f"docker rm qchemorca{self.Index}" , shell=True)
-
+        
         print(f"Calculation Complete : {self.GetInputFileName()}")
-
-        # Open the Output File and Grab the Content
-        with open(self.OutputFilePath, 'r') as file:
-            self.CalculationOutput = file.read()
 
     def GetInputFileName (self):
         """Returns the Input File Name with it's extension"""
@@ -104,13 +124,13 @@ class OrcaCalculation:
 
         # Check if the Properties are defined and Add them to the First line of the Input File
         if (self.DensityFunctional):
-            firstLine += f"{self.DensityFunctional.value}"
+            firstLine += f"{self.DensityFunctional}"
 
         if (self.BasisSet):
-            firstLine += f" {self.BasisSet.value}"
+            firstLine += f" {self.BasisSet}"
 
         if (self.CalculationType):
-            firstLine += f" {self.CalculationType.value}"
+            firstLine += f" {self.CalculationType}"
 
         if (self.Cores > 1):
             if (self.Cores < 9):

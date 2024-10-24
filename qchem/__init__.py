@@ -1,7 +1,5 @@
 from . import Parser
-from .Enums.OrcaDensityFunctional import OrcaDensityFunctional
-from .Enums.OrcaBasisSet import OrcaBasisSet
-from .Enums.OrcaCalculationTypes import OrcaCalculationType
+from .Data.Enums import OrcaBasisSet, OrcaDensityFunctional, OrcaCalculationType
 from .OrcaCalculation import OrcaCalculation
 from .XYZFile import XYZFile
 from .Molecule import Molecule
