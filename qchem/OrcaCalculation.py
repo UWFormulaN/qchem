@@ -30,6 +30,9 @@ class OrcaCalculation:
 
     InputFilePath: str
     """The Path to the Input File on the Device"""
+    
+    OrcaCachePath: str
+    """The Path to the Orca Cache on the Local Device"""
 
     Index: int
     """Container Index so that they can be run in parallel"""
@@ -68,47 +71,43 @@ class OrcaCalculation:
             self.Index = index
         else:
             raise ValueError("Index must be an integer")
+        
+        orcaCache = "OrcaCache"
+        self.OrcaCachePath = f'{os.getcwd()}\\{orcaCache}\\{self.CalculationMolecule.Name.replace('.', '')}'
+        self.OutputFilePath = f'{self.OrcaCachePath}\\{self.GetOutputFileName()}'
+        self.InputFilePath = f'{self.OrcaCachePath}\\{self.GetInputFileName()}'
 
     def RunCalculation(self):
         """Runs a Orca Calculation in a Docker Container """
-        orcaCache = "OrcaCache"
-        orcaCachePath = f'{os.getcwd()}\\{orcaCache}\\{self.CalculationMolecule.Name.replace('.', '')}'
-        self.OutputFilePath = f'{orcaCachePath}\\{self.GetOutputFileName()}'
-        self.InputFilePath = f'{orcaCachePath}\\{self.GetInputFileName()}'
-
+        
         # Make Cache Folder if it doesn't Exist
-        if not os.path.exists(orcaCache):
-            os.makedirs(orcaCache)
+        if not os.path.exists(self.OrcaCachePath):
+            os.makedirs(self.OrcaCachePath)
 
         # Make a folder for the Specific Calculation
-        if not os.path.exists(orcaCachePath):
-            os.makedirs(orcaCachePath)
+        if not os.path.exists(self.OrcaCachePath):
+            os.makedirs(self.OrcaCachePath)
 
         # Save the Input File to the folder
-        self.SaveInputFile(orcaCachePath)
+        self.SaveInputFile(self.OrcaCachePath)
 
         # Create the Command String
-        command = f'docker run --name qchemorca{self.Index} -v "{orcaCachePath}":/home/orca mrdnalex/orca sh -c "cd /home/orca && /Orca/orca {self.GetInputFileName()} > {self.GetOutputFileName()}"'
+        command = f'docker run --name qchemorca{self.Index} -v "{self.OrcaCachePath}":/home/orca mrdnalex/orca sh -c "cd /home/orca && /Orca/orca {self.GetInputFileName()} > {self.GetOutputFileName()}"'
 
         print(f"Running Calulation : {self.GetInputFileName()}")
 
-        try:
-            # Kill and Remove qchemorca container if it doesn't exist yet
-            subprocess.run(f"docker kill qchemorca{self.Index}" , shell=True)
-            subprocess.run(f"docker rm qchemorca{self.Index}" , shell=True)
-            
-            # Run the Calculation in a Container and wait
-            subprocess.run(command, shell=True, text=True, capture_output=True)
+        # Kill and Remove qchemorca container if it doesn't exist yet
+        subprocess.run(f"docker kill qchemorca{self.Index}" , shell=True)
+        subprocess.run(f"docker rm qchemorca{self.Index}" , shell=True)
+        
+        # Run the Calculation in a Container and wait
+        subprocess.run(command, shell=True, text=True, capture_output=True)
 
-            # Kill and Remove the Container
-            subprocess.run(f"docker kill qchemorca{self.Index}" , shell=True)
-            subprocess.run(f"docker rm qchemorca{self.Index}" , shell=True)
-            
-            print(f"Calculation Complete : {self.GetInputFileName()}")
-
-        except:
-            print("Something Went Wrong! Could not complete Calculation!")
-
+        # Kill and Remove the Container
+        subprocess.run(f"docker kill qchemorca{self.Index}" , shell=True)
+        subprocess.run(f"docker rm qchemorca{self.Index}" , shell=True)
+        
+        print(f"Calculation Complete : {self.GetInputFileName()}")
 
     def GetInputFileName (self):
         """Returns the Input File Name with it's extension"""

@@ -42,6 +42,7 @@ class ClusterCalculation:
             for p in processes[:]:
                 if not p.is_alive():
                     p.join()
+                    self.CompletedCalculations.append(p.calculation)
                     processes.remove(p)
                     self.UsedCores -= p.calculation.Cores
 
@@ -68,8 +69,7 @@ class ClusterCalculation:
 
             # Wait Half a Second before Checking Again
             time.sleep(0.5)
-
-
+                
     def RunIndividualCalculation(self, calculation: OrcaCalculation, message_queue: multiprocessing.Queue):
         """Runs an Individual Calculation and Provides Messages Saying it's Started and Finished"""
         message_queue.put(f"Starting Calculation {calculation.GetInputFileName()}")
