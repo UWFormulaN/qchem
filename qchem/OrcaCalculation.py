@@ -1,9 +1,5 @@
-from os import path
 import os
 import subprocess
-from textwrap import indent
-import comm
-from distutils import core
 from qchem.Enums.OrcaCalculationTypes import OrcaCalculationType
 from qchem.Enums.OrcaDensityFunctional import OrcaDensityFunctional
 from qchem.XYZFile import XYZFile
@@ -39,8 +35,11 @@ class OrcaCalculation:
 
     Index: int
     """Container Index so that they can be run in parallel"""
+    
+    IsLocal: bool
+    """Boolean Flag determining if the Calculation should be run locally or inside a Container"""
 
-    def __init__(self, molecule: Molecule, calculationType: OrcaCalculationType = None, basisSet: OrcaBasisSet = None, densityFunctional: OrcaDensityFunctional = None, cores : int = 1):
+    def __init__(self, molecule: Molecule, calculationType: OrcaCalculationType = None, basisSet: OrcaBasisSet = None, densityFunctional: OrcaDensityFunctional = None, cores : int = 1, islocal : bool = False):
 
         self.CalculationMolecule = molecule
         self.CalculationType = calculationType
@@ -48,13 +47,17 @@ class OrcaCalculation:
         self.DensityFunctional = densityFunctional
         self.Cores = cores
         self.Index = 1
+        self.IsLocal = islocal
 
     def RunCalculation(self):
         """Runs a Orca Calculation in a Docker Container """
         orcaCache = "OrcaCache"
-        orcaCachePath = f'{os.getcwd()}\\{orcaCache}\\{self.CalculationMolecule.Name.replace('.', '')}'
-        self.OutputFilePath = f'{orcaCachePath}\\{self.GetOutputFileName()}'
-        self.InputFilePath = f'{orcaCachePath}\\{self.GetInputFileName()}'
+        print(self.CalculationMolecule.Name)
+        orcaCachePath = os.path.join(os.getcwd(),orcaCache, self.CalculationMolecule.Name )
+        orcaCachePath = orcaCachePath.replace('.', '')
+        orcaCachePath = os.path.normpath(orcaCachePath)
+        self.OutputFilePath = os.path.normpath(os.path.join(orcaCachePath, self.GetOutputFileName()))
+        self.InputFilePath = os.path.normpath(os.path.join(orcaCachePath, self.GetInputFileName()))
 
         # Make Cache Folder if it doesn't Exist
         if not os.path.exists(orcaCache):
@@ -66,9 +69,39 @@ class OrcaCalculation:
 
         # Save the Input File to the folder
         self.SaveInputFile(orcaCachePath)
+        
+        result = ""
 
+        if (self.IsLocal):
+            result = self.RunLocally(orcaCachePath)
+        else:
+            result = self.RunDockerContainer(orcaCachePath)
+            
+        if (result.stderr.__len__() > 0):
+            print(f"WARNING Errors Maybe Occured : \n\n{result.stderr}")
+
+        print(f"Calculation Complete : {self.GetInputFileName()}")
+
+        # Open the Output File and Grab the Content
+        with open(self.OutputFilePath, 'r') as file:
+            self.CalculationOutput = file.read()
+        
+    def RunLocally (self, cachePath: str):
         # Create the Command String
-        command = f'docker run --name qchemorca{self.Index} -v "{orcaCachePath}":/home/orca mrdnalex/orca sh -c "cd /home/orca && /Orca/orca {self.GetInputFileName()} > {self.GetOutputFileName()}"'
+        command = ""
+        
+        if os.name == 'nt':
+            orcaPath = subprocess.run("where orca", shell=True, text=True, capture_output=True).stdout.strip(" \n\"").removesuffix(".exe")
+            command = f"cd /d {cachePath} && \"{orcaPath}\" \"{self.GetInputFileName()}\" > \"{self.GetOutputFileName()}\""
+        else:
+            command = f"cd \"{cachePath}\" && /Orca/orca {self.GetInputFileName()} > {self.GetOutputFileName()}"
+        
+        # Run the Orca Calculation locally
+        return subprocess.run(command, shell=True, text=True, capture_output=True)
+            
+    def RunDockerContainer (self, cachePath):
+        # Create the Command String
+        command = f'docker run --name qchemorca{self.Index} -v "{cachePath}":/home/orca mrdnalex/orca sh -c "cd /home/orca && /Orca/orca {self.GetInputFileName()} > {self.GetOutputFileName()}"'
 
         print(f"Running Calulation : {self.GetInputFileName()}")
 
@@ -77,17 +110,13 @@ class OrcaCalculation:
         subprocess.run(f"docker rm qchemorca{self.Index}" , shell=True)
 
         # Run the Calculation in a Container and wait
-        subprocess.run(command, shell=True, text=True, capture_output=True)
+        result = subprocess.run(command, shell=True, text=True, capture_output=True)
 
         # Kill and Remove the Container
         subprocess.run(f"docker kill qchemorca{self.Index}" , shell=True)
         subprocess.run(f"docker rm qchemorca{self.Index}" , shell=True)
-
-        print(f"Calculation Complete : {self.GetInputFileName()}")
-
-        # Open the Output File and Grab the Content
-        with open(self.OutputFilePath, 'r') as file:
-            self.CalculationOutput = file.read()
+        
+        return result
 
     def GetInputFileName (self):
         """Returns the Input File Name with it's extension"""
