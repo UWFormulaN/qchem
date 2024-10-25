@@ -1,10 +1,11 @@
 from . import Parser
-from .Data.Enums import OrcaBasisSet, OrcaDensityFunctional, OrcaCalculationType
+from .Data.Enums import OrcaBasisSet, OrcaDensityFunctional, OrcaCalculationType, OrcaInputTemplate
 from .OrcaCalculation import OrcaCalculation
 from .XYZFile import XYZFile
 from .Molecule import Molecule
 from .ClusterCalculation import ClusterCalculation
 from .Data.Constants import CovalentRadiiConstants, AtomicMassConstants
+from . import OrcaInputFile
 
 # Optionally, you can also expose submodules as needed
 from . import Enums

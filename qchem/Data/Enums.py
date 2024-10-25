@@ -1,16 +1,21 @@
 from enum import Enum
 
+# Enum for Orca Basis Sets
 class OrcaBasisSet(Enum):
     DEF2_SVP = "DEF2-SVP"
 
+# Enum for Orca Calculation Types
 class OrcaCalculationType(Enum):
     OPTIMIZATION = "OPT"
     INFRARED_SPECTRUM = "FREQ"
     HARTREE_FOCK = "HF"
-    
-class OrcaDensityFunctional(Enum):
-    B3LYP = "B3LYP"
 
+# Enum for Orca Density Functionals
+class OrcaDensityFunctional(Enum):
+    B3LYP = "B3LYP",
+    PBE = "PBE"
+
+# Enum for Orca Input File Templates
 class OrcaInputTemplate(Enum):
     BASIC = "!&{calculation} &{basis} &{functional}\n*xyzfile 0 1 &{xyzfile}\n"
 
