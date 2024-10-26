@@ -193,6 +193,11 @@ class Molecule:
         """Prints the XYZ File to the Terminal"""
         from qchem.XYZFile import XYZFile
         print(XYZFile(self).GetFileAsString())
+        
+    def DisplayXYZBody (self) -> str:
+        """Prints the XYZ File to the Terminal"""
+        from qchem.XYZFile import XYZFile
+        return XYZFile(self).GetXYZBody()
 
     def SaveAsXYZ (self, filePath):
         """Saves the Molecule to a XYZ File"""

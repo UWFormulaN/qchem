@@ -12,12 +12,15 @@ class OrcaCalculationType(Enum):
 
 # Enum for Orca Density Functionals
 class OrcaDensityFunctional(Enum):
-    B3LYP = "B3LYP",
+    B3LYP = "B3LYP"
     PBE = "PBE"
 
 # Enum for Orca Input File Templates
 class OrcaInputTemplate(Enum):
     BASIC = "!&{calculation} &{basis} &{functional}\n*xyzfile 0 1 &{xyzfile}\n"
+    BASICXYZ = "!&{calculation} &{basis} &{functional}\n* xyz 0 1 \n&{xyz}\n*"
+    BASICPARALLEL = "!&{calculation} &{basis} &{functional}\n%pal nprocs &{cores} end\n*xyzfile 0 1 &{xyzfile}\n"
+    BASICXYZPARALLEL = "!&{calculation} &{basis} &{functional}\n%pal nprocs &{cores} end\n* xyz 0 1 \n&{xyz}\n*"
 
 #     Karlsruhe basis sets
 # Some of the various valence adaptations of Karlsruhe basis sets[9] are briefly described below.

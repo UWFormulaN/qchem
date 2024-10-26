@@ -7,22 +7,22 @@ from .OrcaInputFile import OrcaInputFile
 class OrcaCalculation:
     """Class capable of running an Orca Calculation"""
 
-    CalculationMolecule: Molecule
-    """Molecule that will have an Orca Calculation run on it"""
-
-    CalculationType : str
-    """The Type of Calculation that will occur on the Molecule"""
-    
-    BasisSet: str
-    """Basis Set to use for the Calculation"""
-
-    DensityFunctional : str
-    """The Density Functional to use for the Calculation"""
-
+    #CalculationMolecule: Molecule
+    #"""Molecule that will have an Orca Calculation run on it"""
+#
+    #CalculationType : str
+    #"""The Type of Calculation that will occur on the Molecule"""
+    #
+    #BasisSet: str
+    #"""Basis Set to use for the Calculation"""
+#
+    #DensityFunctional : str
+    #"""The Density Functional to use for the Calculation"""
+#
     Cores : int
     """Number of Cores to use for the Calculation"""
 
-
+    CalculationName: str
 
     OutputFilePath: str
     """The Path to the Output File on the Device"""
@@ -42,9 +42,12 @@ class OrcaCalculation:
     IsLocal: bool
     """Boolean Flag determining if the Calculation should be run locally or inside a Container"""
 
-    def __init__ (self, inputFile: OrcaInputFile, index: int = 1, isLocal: bool = False):
+    def __init__ (self, name: str, inputFile: OrcaInputFile, index: int = 1, isLocal: bool = False):
         
         # Value Type Checking
+        if (not isinstance(name, (str)) or name == ""):
+            raise ValueError("Name of the Calculation must be specified ")
+        
         if (not isinstance(inputFile, (OrcaInputFile))):
             raise ValueError("Input File must be a OrcaInputFile")
         
@@ -54,13 +57,19 @@ class OrcaCalculation:
         if (not isinstance(isLocal, (bool))):
             raise ValueError("IsLocal must be a boolean")
         
+        self.CalculationName = name
         self.InputFile = inputFile
         self.Index = index
         self.IsLocal = isLocal
         orcaCache = "OrcaCache"
-        self.OrcaCachePath = f'{os.getcwd()}\\{orcaCache}\\{self.CalculationMolecule.Name.replace('.', '')}'
+        self.OrcaCachePath = f'{os.getcwd()}\\{orcaCache}\\{self.CalculationName}'
         self.OutputFilePath = f'{self.OrcaCachePath}\\{self.GetOutputFileName()}'
         self.InputFilePath = f'{self.OrcaCachePath}\\{self.GetInputFileName()}'
+        
+        if ("cores" in self.InputFile.variables):
+            self.Cores = self.InputFile.variables["cores"]
+        else:
+            self.Cores = 1
 
 
     #def __init__(self, molecule: Molecule, calculationType: str = "", basisSet: str = "", densityFunctional: str = "", cores : int = 1, index: int = 1, isLocal: bool = False):
@@ -109,17 +118,10 @@ class OrcaCalculation:
     def RunCalculation(self):
         """Runs a Orca Calculation in a Docker Container """
 
-        # Make Cache Folder if it doesn't Exist
-        if not os.path.exists(self.OrcaCachePath):
-            os.makedirs(self.OrcaCachePath)
-
-        # Make a folder for the Specific Calculation
-        if not os.path.exists(self.OrcaCachePath):
-            os.makedirs(self.OrcaCachePath)
+        self.CreateDirectories()
 
         # Save the Input File to the folder
-        self.InputFile.SaveInputFile(self.OrcaCachePath)
-        #self.SaveInputFile(self.OrcaCachePath)
+        self.InputFile.SaveInputFile(os.path.join(self.OrcaCachePath, self.CalculationName) + ".inp")
 
         if (self.IsLocal):
             result = self.RunLocally(self.OrcaCachePath)
@@ -169,14 +171,23 @@ class OrcaCalculation:
         
         return result
 
+    def CreateDirectories (self):
+        """Creates the necessary Cache Folders to store the Calculation"""
+        # Make Cache Folder if it doesn't Exist
+        if not os.path.exists(self.OrcaCachePath):
+            os.makedirs(self.OrcaCachePath)
+
+        # Make a folder for the Specific Calculation
+        if not os.path.exists(self.OrcaCachePath):
+            os.makedirs(self.OrcaCachePath)
 
     def GetInputFileName (self):
         """Returns the Input File Name with it's extension"""
-        return f"{self.InputFile.Name}.inp"
+        return f"{self.CalculationName}.inp"
 
     def GetOutputFileName (self):
         """Returns the Output File Name with it's extension"""
-        return f"{self.InputFile.Name}.out"
+        return f"{self.CalculationName}.out"
 
     #def GetInputFileName (self):
     #    """Returns the Input File Name with it's extension"""

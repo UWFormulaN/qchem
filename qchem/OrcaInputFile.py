@@ -18,16 +18,17 @@ class OrcaInputFile:
     #   , functional='PBE'
     #   , xyzfile='aspirin.xyz'
     #)
-    Name: str
+    #Name: str
     """Name of the Input File"""
     
     InputFileContents: str
     """The Generated Input File as a String"""
     
-    def __init__(self, template: str, name: str, **variables):
+    def __init__(self, template: str, **variables):
+        #self.Name = name
         self.template = template
         self.variables = variables
-        self.InputFile = self.GenerateInputFile()
+        self.InputFileContents = self.GenerateInputFile()
 
     def GenerateInputFile(self) -> str:
         """Generates the input file content by replacing placeholders with actual values."""
@@ -44,5 +45,5 @@ class OrcaInputFile:
 
     def SaveInputFile(self, file_path: str):
         """Saves the generated input file content to a specified path."""
-        with open(file_path + self.Name + ".inp", 'w') as file:
+        with open(file_path, 'w') as file:
             file.write(self.InputFileContents)
