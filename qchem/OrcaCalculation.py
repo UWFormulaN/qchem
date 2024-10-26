@@ -7,22 +7,11 @@ from .OrcaInputFile import OrcaInputFile
 class OrcaCalculation:
     """Class capable of running an Orca Calculation"""
 
-    #CalculationMolecule: Molecule
-    #"""Molecule that will have an Orca Calculation run on it"""
-#
-    #CalculationType : str
-    #"""The Type of Calculation that will occur on the Molecule"""
-    #
-    #BasisSet: str
-    #"""Basis Set to use for the Calculation"""
-#
-    #DensityFunctional : str
-    #"""The Density Functional to use for the Calculation"""
-#
     Cores : int
     """Number of Cores to use for the Calculation"""
 
     CalculationName: str
+    """Name of the Calculation. Saves the Input and Output File as the Name"""
 
     OutputFilePath: str
     """The Path to the Output File on the Device"""
@@ -57,86 +46,45 @@ class OrcaCalculation:
         if (not isinstance(isLocal, (bool))):
             raise ValueError("IsLocal must be a boolean")
         
+        # Set Values
         self.CalculationName = name
         self.InputFile = inputFile
         self.Index = index
         self.IsLocal = isLocal
+        
+        # Generate Cache Paths
         orcaCache = "OrcaCache"
         self.OrcaCachePath = f'{os.getcwd()}\\{orcaCache}\\{self.CalculationName}'
         self.OutputFilePath = f'{self.OrcaCachePath}\\{self.GetOutputFileName()}'
         self.InputFilePath = f'{self.OrcaCachePath}\\{self.GetInputFileName()}'
         
+        # Determine how many cores are used by the calculation
         if ("cores" in self.InputFile.variables):
             self.Cores = self.InputFile.variables["cores"]
         else:
             self.Cores = 1
 
-
-    #def __init__(self, molecule: Molecule, calculationType: str = "", basisSet: str = "", densityFunctional: str = "", cores : int = 1, index: int = 1, isLocal: bool = False):
-    #    
-    #    
-    #    if (not (molecule and isinstance(molecule, (Molecule)))):
-    #        raise ValueError("Molecule is not defined or is Not of Type Molecule")
-    #    
-    #    if (not isinstance(cores, (int))):
-    #        raise ValueError("Cores must be an Integer")
-#
-    #    if (calculationType and not isinstance(calculationType, (str))):
-    #        if (isinstance(calculationType, (str))):
-    #            self.CalculationType = calculationType
-    #        else:
-    #            raise ValueError("Calculation Type must be a String")
-    #        
-    #    if (basisSet):
-    #        if (isinstance(basisSet, (str))):
-    #            self.BasisSet = basisSet
-    #        else:
-    #            raise ValueError("Basis Set Type must be a String")
-    #        
-    #    if (densityFunctional):
-    #        if (isinstance(densityFunctional, (str))):
-    #            self.DensityFunctional = densityFunctional
-    #        else:
-    #            raise ValueError("Density Functional Type must be a String")
-    #        
-    #    if (not isinstance(index, (int))):
-    #        raise ValueError("Index must be an integer")
-    #    
-    #    if (not isinstance(isLocal, (bool))):
-    #        raise ValueError("IsLocal must be a boolean")
-    #    
-    #    
-    #    self.Index = index
-    #    self.Cores = cores
-    #    self.CalculationMolecule = molecule
-    #    self.IsLocal = isLocal
-    #    orcaCache = "OrcaCache"
-    #    self.OrcaCachePath = f'{os.getcwd()}\\{orcaCache}\\{self.CalculationMolecule.Name.replace('.', '')}'
-    #    self.OutputFilePath = f'{self.OrcaCachePath}\\{self.GetOutputFileName()}'
-    #    self.InputFilePath = f'{self.OrcaCachePath}\\{self.GetInputFileName()}'
-
     def RunCalculation(self):
         """Runs a Orca Calculation in a Docker Container """
 
+        # Create the Directories to Store Calculation info
         self.CreateDirectories()
 
         # Save the Input File to the folder
         self.InputFile.SaveInputFile(os.path.join(self.OrcaCachePath, self.CalculationName) + ".inp")
 
+        # Determine of running the 
         if (self.IsLocal):
             result = self.RunLocally(self.OrcaCachePath)
         else:
             result = self.RunDockerContainer(self.OrcaCachePath)
-            
+        
+        # Post a message that an Error may have Occured
         if (result.stderr.__len__() > 0):
             print(f"WARNING Errors Maybe Occured : \n\n{result.stderr}")
 
         print(f"Calculation Complete : {self.GetInputFileName()}")  
 
-        # Open the Output File and Grab the Content
-        with open(self.OutputFilePath, 'r') as file:
-            self.CalculationOutput = file.read()
-        
     def RunLocally (self, cachePath: str):
         # Create the Command String
         command = ""
@@ -188,52 +136,8 @@ class OrcaCalculation:
     def GetOutputFileName (self):
         """Returns the Output File Name with it's extension"""
         return f"{self.CalculationName}.out"
-
-    #def GetInputFileName (self):
-    #    """Returns the Input File Name with it's extension"""
-    #    return f"{self.CalculationMolecule.Name}.inp"
-#
-    #def GetOutputFileName (self):
-    #    """Returns the Output File Name with it's extension"""
-    #    return f"{self.CalculationMolecule.Name}.out"
-
-    #def GetInputFile (self):
-    #    """Generates a Input file in String format"""
-#
-    #    firstLine = "!"
-#
-    #    # Check if the Properties are defined and Add them to the First line of the Input File
-    #    if (self.DensityFunctional):
-    #        firstLine += f"{self.DensityFunctional}"
-#
-    #    if (self.BasisSet):
-    #        firstLine += f" {self.BasisSet}"
-#
-    #    if (self.CalculationType):
-    #        firstLine += f" {self.CalculationType}"
-#
-    #    if (self.Cores > 1):
-    #        if (self.Cores < 9):
-    #            firstLine += " " + f"PAL{self.Cores}"
-    #        else:
-    #            firstLine += f"\n%PAL NPROCS {self.Cores} END"
-#
-    #    # Generate XYZ Wrappers
-    #    xyzWrapperStart = "* xyz 0 1"
-    #    xyzWrapperEnd = "*"
-#
-    #    # Create a XYZ File for the Molecule
-    #    xyz = XYZFile(self.CalculationMolecule)
-#
-    #    # Generate the Entire Input File as a String
-    #    inputFile = f"{firstLine}\n{xyzWrapperStart}\n{xyz.GetXYZBody()}\n{xyzWrapperEnd}"
-#
-    #    return inputFile
-
-    #def SaveInputFile (self, filePath: str):
-    #    """Saves a Input File using the Settings Provided to the Path Specified"""
-    #    
-    #    
-    #    
-    #    with open(os.path.join(filePath, self.GetInputFileName()), "w") as file:
-    #        file.write(self.InputFile.InputFile)
+    
+    def GetOutput (self) -> str:
+        # Open the Output File and Grab the Content
+        with open(self.OutputFilePath, 'r') as file:
+            self.CalculationOutput = file.read()
