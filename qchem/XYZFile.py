@@ -22,7 +22,11 @@ class XYZFile:
         positionDF =  molecule.XYZCoordinates
 
         for i in range(self.AtomCount):
-            self.AtomPositions.append(f"{positionDF["Atom"][i]} {positionDF["X"][i]} {positionDF["Y"][i]} {positionDF["Z"][i]}")
+            atom = positionDF['Atom'][i]
+            xPos = positionDF['X'][i]
+            yPos = positionDF['Y'][i]
+            zPos = positionDF['Z'][i]
+            self.AtomPositions.append(f"{atom} {xPos} {yPos} {zPos}")
 
     def GetFileAsString(self):
         """Returns the Entire XYZ File as a String"""

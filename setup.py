@@ -11,11 +11,8 @@ setup(
     author_email='uwformulanano@gmail.com',
     url='https://github.com/UWFormulaN/qchem',
     install_requires=[
-        'numpy',  # Add your dependencies here
-        'os',
-        'pandas',
-        'math',
-        'subprocess',
+        'numpy>=1.26.4',  # Add your dependencies here
+        'pandas>=2.2.2',
 
     ],
 )
