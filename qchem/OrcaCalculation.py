@@ -1,5 +1,9 @@
 import os
 import subprocess
+from textwrap import indent
+import comm
+from distutils import core
+from qchem.Data.Enums import OrcaInputTemplate
 from qchem.XYZFile import XYZFile
 from qchem.Molecule import Molecule
 from .OrcaInputFile import OrcaInputFile
@@ -141,3 +145,4 @@ class OrcaCalculation:
         # Open the Output File and Grab the Content
         with open(self.OutputFilePath, 'r') as file:
             self.CalculationOutput = file.read()
+
