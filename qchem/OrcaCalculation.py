@@ -4,6 +4,7 @@ import subprocess
 from textwrap import indent
 import comm
 from distutils import core
+from qchem.Data.Enums import OrcaInputTemplate
 from qchem.XYZFile import XYZFile
 from qchem.Molecule import Molecule
 
