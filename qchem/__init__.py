@@ -6,6 +6,7 @@ from .XYZFile import XYZFile
 from .Molecule import Molecule
 from .ClusterCalculation import ClusterCalculation
 from .Data.Constants import CovalentRadiiConstants, AtomicMassConstants
+from .Pipelines.GeoOpt import GeoOpt
 
 # Optionally, you can also expose submodules as needed
 #from . import Enums

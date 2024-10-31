@@ -19,6 +19,12 @@ class OrcaDensityFunctional(Enum):
 class OrcaInputTemplate(Enum):
     BASIC = "!&{calculation} &{basis} &{functional}\n*xyzfile 0 1 &{xyzfile}\n"
     BASICXYZ = "!&{calculation} &{basis} &{functional}\n* xyz 0 1 \n&{xyz}\n*"
+    OPTIMIZE = "!OPT &{basis} &{functional}\n*xyzfile 0 1 &{xyzfile}\n"
+    OPTIMIZEXYZ = "!OPT &{basis} &{functional}\n* xyz 0 1 \n&{xyz}\n*"
+    OPTIMIZEPARALLEL = "!OPT &{basis} &{functional}\n%pal nprocs &{cores} end\n*xyzfile 0 1 &{xyzfile}\n"
+    OPTIMIZEXYZPARALLEL = "!OPT &{basis} &{functional}\n%pal nprocs &{cores} end\n* xyz 0 1 \n&{xyz}\n*"
+    GEOOPT = "!OPT FREQ &{basis} &{functional}\n%pal nprocs &{cores} end\n*xyzfile 0 1 &{xyzfile}\n"
+    GEOOPTXYZ = "!OPT FREQ &{basis} &{functional}\n%pal nprocs &{cores} end\n* xyz 0 1 \n&{xyz}\n*"
     BASICPARALLEL = "!&{calculation} &{basis} &{functional}\n%pal nprocs &{cores} end\n*xyzfile 0 1 &{xyzfile}\n"
     BASICXYZPARALLEL = "!&{calculation} &{basis} &{functional}\n%pal nprocs &{cores} end\n* xyz 0 1 \n&{xyz}\n*"
 
