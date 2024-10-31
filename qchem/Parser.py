@@ -277,13 +277,3 @@ class OrcaOutput:
                 file.write(self.chemical_shifts.to_string(index=False))
                 file.write("\n\n")
 
-
-# Example usage
-orca_output = OrcaOutput(r"output_files\aspirin_ftir.out")
-orca_output.save_freq_data(r"output_files\extracted\aspirin_ftir.txt")
-
-orca_output = OrcaOutput(r"output_files\CPDMSA_nmr.out")
-orca_output.save_nmr_data(r"output_files\extracted\CPDMSA_nmr.txt")
-
-orca_output = OrcaOutput(r"output_files\CPDMSA_opt (2).out")
-orca_output.save_to_txt(r"output_files\extracted\CPDMSA_opt (2).txt")
