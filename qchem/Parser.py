@@ -19,6 +19,8 @@ class OrcaOutput:
         self.energy = self.finalenergy()
         # Extract the name of the file without the path and extension
         self.name = re.search(r"[^\\]+$", self.file_path).group()[:-4]
+        self.frequencies = self.get_vibrational_frequencies() if self.calc_type() == "FREQ" else None
+        self.chemical_shifts = self.get_chemical_shifts() if self.calc_type() == "NMR" else None
 
     def read_xyz(self, path: str) -> pd.DataFrame:
         """Reads XYZ format file to extract atomic coordinates and returns it as a DataFrame."""
@@ -199,7 +201,89 @@ class OrcaOutput:
             if gibbs:
                 file.write(f"Final Gibbs Free Energy: {gibbs[0]} {gibbs[1]}\n")
 
+    def calc_type(self) -> str:
+        """Determine the type of ORCA calculation from the output file"""
+        for line in self.lines:
+            if "VIBRATIONAL FREQUENCIES" in line:
+                return "FREQ"
+            elif "NMR CHEMICAL SHIFTS" in line:
+                return "NMR"
+            elif "GEOMETRY OPTIMIZATION" in line:
+                return "OPT"
+        return "UNKNOWN"
+
+    def get_vibrational_frequencies(self) -> pd.DataFrame:
+        """Extract vibrational frequencies and IR intensities"""
+        freqs = []
+        for i, line in enumerate(self.lines):
+            if "IR SPECTRUM" in line:
+                start_idx = i + 4  # Skip header lines
+                while self.lines[start_idx].strip():
+                    parts = self.lines[start_idx].split()
+                    if len(parts) >= 7:  # Mode, freq, eps, Int, T**2, TX, TY, TZ
+                        freqs.append(
+                            {
+                                "mode": int(parts[0].strip(":")),
+                                "frequency": float(parts[1]),
+                                "IR_intensity": float(parts[3]),  # km/mol
+                            }
+                        )
+                    start_idx += 1
+
+        return pd.DataFrame(freqs)
+
+    def get_chemical_shifts(self) -> pd.DataFrame:
+        """Extract NMR chemical shifts"""
+        shifts = []
+        for i, line in enumerate(self.lines):
+            if "CHEMICAL SHIFTS" in line:
+                start_idx = i + 5
+                while self.lines[start_idx].strip():
+                    parts = self.lines[start_idx].split()
+                    if len(parts) >= 4:
+                        shifts.append(
+                            {
+                                "atom": parts[0],
+                                "nucleus": parts[1],
+                                "isotropic": float(parts[2]),
+                                "anisotropic": float(parts[3]),
+                            }
+                        )
+                    start_idx += 1
+        return pd.DataFrame(shifts)
+
+    def save_freq_data(self, output_path: str):
+        """Save frequency calculation results"""
+        with open(output_path, "w") as file:
+            file.write(f"Frequency Calculation Results for {self.file_path}\n\n")
+
+            if isinstance(self.frequencies, pd.DataFrame):
+                file.write("Vibrational Frequencies and IR Intensities:\n")
+                file.write(self.frequencies.to_string(index=False))
+                file.write("\n\n")
+
+            # Add thermochemistry data if available
+            gibbs = self.read_gibbs()
+            if gibbs:
+                file.write(f"Gibbs Free Energy: {gibbs[0]} {gibbs[1]}\n")
+
+    def save_nmr_data(self, output_path: str):
+        """Save NMR calculation results"""
+        with open(output_path, "w") as file:
+            file.write(f"NMR Calculation Results for {self.file_path}\n\n")
+
+            if isinstance(self.chemical_shifts, pd.DataFrame):
+                file.write("Chemical Shifts:\n")
+                file.write(self.chemical_shifts.to_string(index=False))
+                file.write("\n\n")
+
 
 # Example usage
-# orca_output = OrcaOutput(r"C:\path\to\your\ORCA\output\file.out")
-# orca_output.save_to_txt(r"C:\path\to\your\desired\output\file.txt")
+orca_output = OrcaOutput(r"output_files\aspirin_ftir.out")
+orca_output.save_freq_data(r"output_files\extracted\aspirin_ftir.txt")
+
+orca_output = OrcaOutput(r"output_files\CPDMSA_nmr.out")
+orca_output.save_nmr_data(r"output_files\extracted\CPDMSA_nmr.txt")
+
+orca_output = OrcaOutput(r"output_files\CPDMSA_opt (2).out")
+orca_output.save_to_txt(r"output_files\extracted\CPDMSA_opt (2).txt")
