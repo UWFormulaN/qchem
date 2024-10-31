@@ -21,3 +21,4 @@ tests/test_files/xyz
 # VS Code
 .vscode/
 /qchem.egg-info
+output_files/
