@@ -19,8 +19,8 @@ class OrcaOutput:
         self.energy = self.finalenergy()
         # Extract the name of the file without the path and extension
         self.name = re.search(r"[^\\]+$", self.file_path).group()[:-4]
-        self.frequencies = self.get_vibrational_frequencies() if self.calc_type() == "FREQ" else None
-        self.chemical_shifts = self.get_chemical_shifts() if self.calc_type() == "NMR" else None
+        self.frequencies = self.get_vibrational_frequencies() if "FREQ" in self.calc_type() else None
+        self.chemical_shifts = self.get_chemical_shifts() if "NMR" in self.calc_type() else None
 
     def read_xyz(self, path: str) -> pd.DataFrame:
         """Reads XYZ format file to extract atomic coordinates and returns it as a DataFrame."""
@@ -201,16 +201,18 @@ class OrcaOutput:
             if gibbs:
                 file.write(f"Final Gibbs Free Energy: {gibbs[0]} {gibbs[1]}\n")
 
-    def calc_type(self) -> str:
+    def calc_type(self) -> list[str]:
         """Determine the type of ORCA calculation from the output file"""
+        calc_types = []
+        
         for line in self.lines:
             if "VIBRATIONAL FREQUENCIES" in line:
-                return "FREQ"
+                calc_types.append("FREQ") if not "FREQ" in calc_types else None
             elif "NMR CHEMICAL SHIFTS" in line:
-                return "NMR"
+                calc_types.append("NMR") if not "NMR" in calc_types else None
             elif "GEOMETRY OPTIMIZATION" in line:
-                return "OPT"
-        return "UNKNOWN"
+                calc_types.append("OPT") if not "OPT" in calc_types else None
+        return calc_types
 
     def get_vibrational_frequencies(self) -> pd.DataFrame:
         """Extract vibrational frequencies and IR intensities"""

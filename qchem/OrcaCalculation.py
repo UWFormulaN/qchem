@@ -1,8 +1,6 @@
 import os
 import subprocess
-from textwrap import indent
-import comm
-from distutils import core
+import time
 from qchem.Data.Enums import OrcaInputTemplate
 from qchem.XYZFile import XYZFile
 from qchem.Molecule import Molecule
@@ -34,6 +32,9 @@ class OrcaCalculation:
     
     IsLocal: bool
     """Boolean Flag determining if the Calculation should be run locally or inside a Container"""
+    
+    CalculationTime: float
+    """The Time it took to run the Calculation (In Seconds)"""
 
     def __init__ (self, name: str, inputFile: OrcaInputFile, index: int = 1, isLocal: bool = False):
         
@@ -77,17 +78,23 @@ class OrcaCalculation:
         # Save the Input File to the folder
         self.InputFile.SaveInputFile(os.path.join(self.OrcaCachePath, self.CalculationName) + ".inp")
 
+        # Get the Start Time of the Calculation
+        startTimer = time.time()
+
         # Determine of running the 
         if (self.IsLocal):
             result = self.RunLocally(self.OrcaCachePath)
         else:
             result = self.RunDockerContainer(self.OrcaCachePath)
         
+        # Determine the Elapsed Time
+        self.CalculationTime = time.time() - startTimer
+        
         # Post a message that an Error may have Occured
         if (result.stderr.__len__() > 0):
             print(f"WARNING Errors Maybe Occured : \n\n{result.stderr}")
 
-        print(f"Calculation Complete : {self.GetInputFileName()}")  
+        print(f"Calculation Complete ({self.ClockTime(self.CalculationTime)}) : {self.GetInputFileName()}")  
 
     def RunLocally (self, cachePath: str):
         # Create the Command String
@@ -111,15 +118,15 @@ class OrcaCalculation:
         print(f"Running Calulation : {self.GetInputFileName()}")
 
         # Kill and Remove qchemorca container if it doesn't exist yet
-        subprocess.run(f"docker kill qchemorca{self.Index}" , shell=True)
-        subprocess.run(f"docker rm qchemorca{self.Index}" , shell=True)
+        subprocess.run(f"docker kill qchemorca{self.Index}" , shell=True, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+        subprocess.run(f"docker rm qchemorca{self.Index}" , shell=True, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
         
         # Run the Calculation in a Container and wait
         result = subprocess.run(command, shell=True, text=True, capture_output=True)
-
+        
         # Kill and Remove the Container
-        subprocess.run(f"docker kill qchemorca{self.Index}" , shell=True)
-        subprocess.run(f"docker rm qchemorca{self.Index}" , shell=True)
+        subprocess.run(f"docker kill qchemorca{self.Index}" , shell=True, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+        subprocess.run(f"docker rm qchemorca{self.Index}" , shell=True, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
         
         return result
 
@@ -145,4 +152,20 @@ class OrcaCalculation:
         # Open the Output File and Grab the Content
         with open(self.OutputFilePath, 'r') as file:
             self.CalculationOutput = file.read()
+            
+    def ClockTime(self, seconds):
+        hours = seconds // 3600
+        minutes = (seconds % 3600) // 60
+        remaining_seconds = seconds % 60
+        
+        parts = []
+        if hours > 0:
+            parts.append(f"{int(hours)} hour{'s' if hours > 1 else ''}")
+        if minutes > 0:
+            parts.append(f"{int(minutes)} minute{'s' if minutes > 1 else ''}")
+        if remaining_seconds > 0:
+            parts.append(f"{int(remaining_seconds)} second{'s' if remaining_seconds > 1 else ''}")
+        
+        return ", ".join(parts) if parts else "0 seconds"
+
 
