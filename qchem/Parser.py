@@ -19,7 +19,8 @@ class OrcaOutput:
         self.energy = self.finalenergy()
         # Extract the name of the file without the path and extension
         self.name = re.search(r"[^\\]+$", self.file_path).group()[:-4]
-        self.frequencies = self.get_vibrational_frequencies() if "FREQ" in self.calc_type() else None
+        self.vibrational_frequencies = self.get_vibrational_frequencies() if "FREQ" in self.calc_type() else None
+        self.IR_frequencies = self.get_IR_frequencies() if "FREQ" in self.calc_type() else None
         self.chemical_shifts = self.get_chemical_shifts() if "NMR" in self.calc_type() else None
 
     def read_xyz(self, path: str) -> pd.DataFrame:
@@ -215,7 +216,29 @@ class OrcaOutput:
         return calc_types
 
     def get_vibrational_frequencies(self) -> pd.DataFrame:
-        """Extract vibrational frequencies and IR intensities"""
+        """Extract vibrational frequencies"""
+        freqs = []
+        for i, line in enumerate(self.lines):
+            if "VIBRATIONAL FREQUENCIES" in line:
+                start_idx = i + 5  # Skip header lines
+                while self.lines[start_idx].strip():
+                    parts = self.lines[start_idx].split()
+                    if len(parts) >= 2:  # Mode, Frequency
+                        freqs.append(
+                            {
+                                "mode": int(parts[0].strip(":")),
+                                "frequency": float(parts[1]),
+                            }
+                        )
+                    start_idx += 1
+
+        if (len(freqs) == 0):
+            print("Returning empty DataFrame")
+            return pd.DataFrame(columns=["mode", "frequency"])
+        return pd.DataFrame(freqs)
+
+    def get_IR_frequencies(self) -> pd.DataFrame:
+        """Extract IR vibrational frequencies and IR intensities"""
         freqs = []
         for i, line in enumerate(self.lines):
             if "IR SPECTRUM" in line:
@@ -231,7 +254,6 @@ class OrcaOutput:
                             }
                         )
                     start_idx += 1
-
         return pd.DataFrame(freqs)
 
     def get_chemical_shifts(self) -> pd.DataFrame:

@@ -1,4 +1,5 @@
 import time
+import pandas as pd
 from qchem.Molecule import Molecule
 from qchem.OrcaInputFile import OrcaInputFile
 from qchem.Data.Enums import OrcaInputTemplate
@@ -27,6 +28,9 @@ class GeoOpt:
     
     optimizationTime : float
     """Time Elapsed for the Optimization to Complete"""
+    
+    optimizedMoleculePath: str
+    """Path to the Optimized Molecule File"""
     
     def __init__(self, molecule, basisSet, functional, cores:int = 1, isLocal:bool = False, name:str = ""):
         
@@ -59,12 +63,12 @@ class GeoOpt:
         else:
             self.name = name
             
+        # Set the Values
         self.molecule = molecule
         self.basisSet = basisSet
         self.functional = functional
         self.cores = cores
         self.isLocal = isLocal
-        
         
     def IsFileReference(self):
         """Determines if the Molecule is stored as a File Reference, or is a direct Molecule Object"""
@@ -74,10 +78,7 @@ class GeoOpt:
             return False
         
     def Optimize (self):
-        # Create proper input file for the Molecule
-        # Run the Optimization
-        # Perform FREQ Analysis, then check if all the Vibrational Frequencies are positive, if so we have a truly optimized molecule
-        
+        """Runs through a Geometry Optimization on the Molecule and repeats until properly converged"""
         # Get Default Values
         OPTtemplate = ""
         xyzMol = ""
@@ -123,25 +124,23 @@ class GeoOpt:
             outputFile = OrcaOutput(calculation.OutputFilePath)
             
             # Check if Frequencies are Empty and cannot be found
-            if (outputFile.frequencies.empty):
+            if outputFile.vibrational_frequencies is None or (isinstance(outputFile.vibrational_frequencies, pd.DataFrame) and outputFile.vibrational_frequencies.empty):
                 print("No Frequencies Found! Optimization Failed!")
                 freqFailCount += 1
                 if (freqFailCount >= 3):
                     print("Failed to Optimize Molecule after 3 Attempts! Aborting Optimization!")
                     return
-                continue
-            
-            print(outputFile.frequencies)
-            
-            # Check if the Molecule is Fully Optimized
-            if (self.IsOptimized(outputFile.frequencies["frequency"])):
-                calcTime = time.time() - startTime
-                print(f"Molecule {self.name} is Optimized! ({self.ClockTime(calcTime)})")
-                isOptimized = True
+            else:
+                # Check if the Molecule is Fully Optimized
+                if (self.IsOptimized(outputFile.vibrational_frequencies["frequency"])):
+                    calcTime = time.time() - startTime
+                    print(f"Molecule {self.name} is Optimized! ({self.ClockTime(calcTime)})")
+                    isOptimized = True
             
             # Update the Molecule and Optimization Template for the Next Iteration
+            self.optimizedMoleculePath = calculation.OrcaCachePath + f"\\{calculation.CalculationName}.xyz"
             OPTtemplate = OrcaInputTemplate.GEOOPTXYZ
-            xyzMol = Molecule(self.name, calculation.OrcaCachePath + f"\\{self.name}.xyz").XYZBody()
+            xyzMol = Molecule(self.name, self.optimizedMoleculePath).XYZBody()
             optIndex += 1
             
             # Generate the Input File
@@ -152,7 +151,7 @@ class GeoOpt:
                                     xyz=xyzMol)
             
             # Create the Calculation Object
-            calculation = OrcaCalculation(self.name, inputFile, isLocal=self.isLocal)
+            calculation = OrcaCalculation(self.name + f"_{optIndex}", inputFile, isLocal=self.isLocal)
             
     def IsOptimized(self, frequencies):
         """Determines if the Molecule is Optimized to the Valid Minimum"""
@@ -163,17 +162,21 @@ class GeoOpt:
         return True
     
     def ClockTime(self, seconds):
+        """Converts Seconds to a Human Readable Time String"""
+        # Convert Seconds to Hours, Minutes, and Seconds
         hours = seconds // 3600
         minutes = (seconds % 3600) // 60
-        remaining_seconds = seconds % 60
+        remainingSeconds = seconds % 60
         
+        # Generate the Time String
         parts = []
         if hours > 0:
             parts.append(f"{int(hours)} hour{'s' if hours > 1 else ''}")
         if minutes > 0:
             parts.append(f"{int(minutes)} minute{'s' if minutes > 1 else ''}")
-        if remaining_seconds > 0:
-            parts.append(f"{int(remaining_seconds)} second{'s' if remaining_seconds > 1 else ''}")
+        if remainingSeconds > 0:
+            parts.append(f"{int(remainingSeconds)} second{'s' if remainingSeconds > 1 else ''}")
         
+        # Return the Time String
         return ", ".join(parts) if parts else "0 seconds"
         

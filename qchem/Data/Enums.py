@@ -3,6 +3,7 @@ from enum import Enum
 # Enum for Orca Basis Sets
 class OrcaBasisSet(Enum):
     DEF2_SVP = "DEF2-SVP"
+    MINI = "MINI"
 
 # Enum for Orca Calculation Types
 class OrcaCalculationType(Enum):
@@ -24,9 +25,10 @@ class OrcaInputTemplate(Enum):
     OPTIMIZEPARALLEL = "!OPT &{basis} &{functional}\n%pal nprocs &{cores} end\n*xyzfile 0 1 &{xyzfile}\n"
     OPTIMIZEXYZPARALLEL = "!OPT &{basis} &{functional}\n%pal nprocs &{cores} end\n* xyz 0 1 \n&{xyz}\n*"
     GEOOPT = "!OPT FREQ &{basis} &{functional}\n%pal nprocs &{cores} end\n*xyzfile 0 1 &{xyzfile}\n"
-    GEOOPTXYZ = "!OPT FREQ &{basis} &{functional}\n%pal nprocs &{cores} end\n* xyz 0 1 \n&{xyz}\n*"
+    GEOOPTXYZ = '!OPT FREQ &{basis} &{functional}\n%pal nprocs &{cores} end\n* xyz 0 1 \n&{xyz}\n*' #%geom MaxIter 1 end\n
     BASICPARALLEL = "!&{calculation} &{basis} &{functional}\n%pal nprocs &{cores} end\n*xyzfile 0 1 &{xyzfile}\n"
     BASICXYZPARALLEL = "!&{calculation} &{basis} &{functional}\n%pal nprocs &{cores} end\n* xyz 0 1 \n&{xyz}\n*"
+    FREQXYZ = '!FREQ &{basis} &{functional}\n%pal nprocs &{cores} end\n* xyz 0 1 \n&{xyz}\n*'
 
 #     Karlsruhe basis sets
 # Some of the various valence adaptations of Karlsruhe basis sets[9] are briefly described below.

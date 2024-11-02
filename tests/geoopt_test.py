@@ -44,10 +44,10 @@ def Test2 ():
 #
 def Test3 ():
     # Load the Propane Molecule
-    mol = Molecule("Aspirin", "tests/test_files/aspirin_raw.xyz")
+    mol = Molecule("Caffeine", "tests/test_files/caffeine.xyz")
 
     # Create a GeoOpt Object
-    geoOpt = GeoOpt(mol, OrcaBasisSet.DEF2_SVP.value, OrcaDensityFunctional.B3LYP.value, 8)
+    geoOpt = GeoOpt(mol, OrcaBasisSet.MINI.value, OrcaDensityFunctional.B3LYP.value, 8)
 
     # Run the Optimization
     geoOpt.Optimize()
@@ -55,7 +55,6 @@ def Test3 ():
 #
 # Running Tests
 #
-
-#Test1()
-#Test2()
+Test1()
+Test2()
 Test3()
