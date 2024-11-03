@@ -19,8 +19,9 @@ class OrcaOutput:
         self.energy = self.finalenergy()
         # Extract the name of the file without the path and extension
         self.name = re.search(r"[^\\]+$", self.file_path).group()[:-4]
-        self.frequencies = self.get_vibrational_frequencies() if self.calc_type() == "FREQ" else None
-        self.chemical_shifts = self.get_chemical_shifts() if self.calc_type() == "NMR" else None
+        self.vibrational_frequencies = self.get_vibrational_frequencies() if "FREQ" in self.calc_type() else None
+        self.IR_frequencies = self.get_IR_frequencies() if "FREQ" in self.calc_type() else None
+        self.chemical_shifts = self.get_chemical_shifts() if "NMR" in self.calc_type() else None
 
     def read_xyz(self, path: str) -> pd.DataFrame:
         """Reads XYZ format file to extract atomic coordinates and returns it as a DataFrame."""
@@ -201,19 +202,43 @@ class OrcaOutput:
             if gibbs:
                 file.write(f"Final Gibbs Free Energy: {gibbs[0]} {gibbs[1]}\n")
 
-    def calc_type(self) -> str:
+    def calc_type(self) -> list[str]:
         """Determine the type of ORCA calculation from the output file"""
+        calc_types = []
+        
         for line in self.lines:
             if "VIBRATIONAL FREQUENCIES" in line:
-                return "FREQ"
+                calc_types.append("FREQ") if not "FREQ" in calc_types else None
             elif "NMR CHEMICAL SHIFTS" in line:
-                return "NMR"
+                calc_types.append("NMR") if not "NMR" in calc_types else None
             elif "GEOMETRY OPTIMIZATION" in line:
-                return "OPT"
-        return "UNKNOWN"
+                calc_types.append("OPT") if not "OPT" in calc_types else None
+        return calc_types
 
     def get_vibrational_frequencies(self) -> pd.DataFrame:
-        """Extract vibrational frequencies and IR intensities"""
+        """Extract vibrational frequencies"""
+        freqs = []
+        for i, line in enumerate(self.lines):
+            if "VIBRATIONAL FREQUENCIES" in line:
+                start_idx = i + 5  # Skip header lines
+                while self.lines[start_idx].strip():
+                    parts = self.lines[start_idx].split()
+                    if len(parts) >= 2:  # Mode, Frequency
+                        freqs.append(
+                            {
+                                "mode": int(parts[0].strip(":")),
+                                "frequency": float(parts[1]),
+                            }
+                        )
+                    start_idx += 1
+
+        if (len(freqs) == 0):
+            print("Returning empty DataFrame")
+            return pd.DataFrame(columns=["mode", "frequency"])
+        return pd.DataFrame(freqs)
+
+    def get_IR_frequencies(self) -> pd.DataFrame:
+        """Extract IR vibrational frequencies and IR intensities"""
         freqs = []
         for i, line in enumerate(self.lines):
             if "IR SPECTRUM" in line:
@@ -229,7 +254,6 @@ class OrcaOutput:
                             }
                         )
                     start_idx += 1
-
         return pd.DataFrame(freqs)
 
     def get_chemical_shifts(self) -> pd.DataFrame:
@@ -277,13 +301,3 @@ class OrcaOutput:
                 file.write(self.chemical_shifts.to_string(index=False))
                 file.write("\n\n")
 
-
-# Example usage
-orca_output = OrcaOutput(r"output_files\aspirin_ftir.out")
-orca_output.save_freq_data(r"output_files\extracted\aspirin_ftir.txt")
-
-orca_output = OrcaOutput(r"output_files\CPDMSA_nmr.out")
-orca_output.save_nmr_data(r"output_files\extracted\CPDMSA_nmr.txt")
-
-orca_output = OrcaOutput(r"output_files\CPDMSA_opt (2).out")
-orca_output.save_to_txt(r"output_files\extracted\CPDMSA_opt (2).txt")

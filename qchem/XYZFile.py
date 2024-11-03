@@ -47,7 +47,7 @@ class XYZFile:
         """Gets the XYZ Atom Position Body of the file as a String"""
         string = self.AtomPositions[0]
         
-        for i in range(2, self.AtomCount):
+        for i in range(1, self.AtomCount):
             string += f"\n{self.AtomPositions[i]}"
 
         return string

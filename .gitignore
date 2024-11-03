@@ -12,6 +12,9 @@
 !/notebooks/.env
 !/notebooks/qchem.py
 
+# Cache
+OrcaCache
+
 # Tests
 !tests/test_files/**
 tests/test_files/xyz
