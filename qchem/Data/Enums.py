@@ -8,7 +8,7 @@ class OrcaBasisSet(Enum):
 # Enum for Orca Calculation Types
 class OrcaCalculationType(Enum):
     OPTIMIZATION = "OPT"
-    INFRARED_SPECTRUM = "FREQ"
+    FREQUENCY = "FREQ"
     HARTREE_FOCK = "HF"
 
 # Enum for Orca Density Functionals
@@ -20,15 +20,8 @@ class OrcaDensityFunctional(Enum):
 class OrcaInputTemplate(Enum):
     BASIC = "!&{calculation} &{basis} &{functional}\n*xyzfile 0 1 &{xyzfile}\n"
     BASICXYZ = "!&{calculation} &{basis} &{functional}\n* xyz 0 1 \n&{xyz}\n*"
-    OPTIMIZE = "!OPT &{basis} &{functional}\n*xyzfile 0 1 &{xyzfile}\n"
-    OPTIMIZEXYZ = "!OPT &{basis} &{functional}\n* xyz 0 1 \n&{xyz}\n*"
-    OPTIMIZEPARALLEL = "!OPT &{basis} &{functional}\n%pal nprocs &{cores} end\n*xyzfile 0 1 &{xyzfile}\n"
-    OPTIMIZEXYZPARALLEL = "!OPT &{basis} &{functional}\n%pal nprocs &{cores} end\n* xyz 0 1 \n&{xyz}\n*"
-    GEOOPT = "!OPT FREQ &{basis} &{functional}\n%pal nprocs &{cores} end\n*xyzfile 0 1 &{xyzfile}\n"
-    GEOOPTXYZ = '!OPT FREQ &{basis} &{functional}\n%pal nprocs &{cores} end\n* xyz 0 1 \n&{xyz}\n*' #%geom MaxIter 1 end\n
     BASICPARALLEL = "!&{calculation} &{basis} &{functional}\n%pal nprocs &{cores} end\n*xyzfile 0 1 &{xyzfile}\n"
     BASICXYZPARALLEL = "!&{calculation} &{basis} &{functional}\n%pal nprocs &{cores} end\n* xyz 0 1 \n&{xyz}\n*"
-    FREQXYZ = '!FREQ &{basis} &{functional}\n%pal nprocs &{cores} end\n* xyz 0 1 \n&{xyz}\n*'
 
 #     Karlsruhe basis sets
 # Some of the various valence adaptations of Karlsruhe basis sets[9] are briefly described below.

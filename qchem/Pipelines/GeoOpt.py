@@ -2,7 +2,7 @@ import time
 import pandas as pd
 from qchem.Molecule import Molecule
 from qchem.OrcaInputFile import OrcaInputFile
-from qchem.Data.Enums import OrcaInputTemplate
+from qchem.Data.Enums import OrcaInputTemplate, OrcaCalculationType
 from qchem.OrcaCalculation import OrcaCalculation
 from qchem.Parser import OrcaOutput
 
@@ -85,24 +85,27 @@ class GeoOpt:
         optIndex = 1
         isOptimized = False
         freqFailCount = 0
+        calculationType = f"{OrcaCalculationType.OPTIMIZATION.value} {OrcaCalculationType.FREQUENCY.value}"
         
         startTime = time.time()
         
         # Determine the Proper Template to use based on the Molecule Type
         if (self.IsFileReference()):
-            OPTtemplate = OrcaInputTemplate.GEOOPT
+            OPTtemplate = OrcaInputTemplate.BASICPARALLEL
             xyzMol = self.molecule
             
-            inputFile = OrcaInputFile(OPTtemplate, 
+            inputFile = OrcaInputFile(OPTtemplate,
+                                    calculation = calculationType,
                                     basis=self.basisSet,
                                     functional=self.functional,
                                     cores = self.cores,
                                     xyzfile=xyzMol)
         else:
-            OPTtemplate = OrcaInputTemplate.GEOOPTXYZ
+            OPTtemplate = OrcaInputTemplate.BASICXYZPARALLEL
             xyzMol = self.molecule.XYZBody()
             
             inputFile = OrcaInputFile(OPTtemplate, 
+                                    calculation = calculationType,
                                     basis=self.basisSet,
                                     functional=self.functional,
                                     cores = self.cores,
