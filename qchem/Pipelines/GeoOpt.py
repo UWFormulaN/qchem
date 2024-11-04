@@ -32,6 +32,9 @@ class GeoOpt:
     optimizedMoleculePath: str
     """Path to the Optimized Molecule File"""
     
+    calculation: OrcaCalculation
+    """Reference to the Last Orca Calculation Object for the GeoOpt"""
+    
     def __init__(self, molecule, basisSet, functional, cores:int = 1, isLocal:bool = False, name:str = ""):
         
         # Check if Values are empty or of Wrong Type
@@ -141,6 +144,7 @@ class GeoOpt:
                     calcTime = time.time() - startTime
                     print(f"Molecule {self.name} is Optimized! ({self.ClockTime(calcTime)})")
                     isOptimized = True
+                    self.calculation = calculation
                     break
                 
             calcTime = time.time() - iterStartTime
