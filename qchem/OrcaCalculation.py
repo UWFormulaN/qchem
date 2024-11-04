@@ -66,9 +66,9 @@ class OrcaCalculation:
         
         # Generate Cache Paths
         orcaCache = "OrcaCache"
-        self.OrcaCachePath = f'{os.getcwd()}\\{orcaCache}\\{self.CalculationName}'
-        self.OutputFilePath = f'{self.OrcaCachePath}\\{self.GetOutputFileName()}'
-        self.InputFilePath = f'{self.OrcaCachePath}\\{self.GetInputFileName()}'
+        self.OrcaCachePath =  os.path.join(os.getcwd(), orcaCache, self.CalculationName)  #f'{os.getcwd()}\\{orcaCache}\\{self.CalculationName}'
+        self.OutputFilePath = os.path.join(self.OrcaCachePath, self.GetOutputFileName())  #f'{self.OrcaCachePath}\\{self.GetOutputFileName()}'
+        self.InputFilePath = os.path.join(self.OrcaCachePath, self.GetInputFileName()) #f'{self.OrcaCachePath}\\{self.GetInputFileName()}'
         
         # Determine how many cores are used by the calculation
         if ("cores" in self.InputFile.variables):
