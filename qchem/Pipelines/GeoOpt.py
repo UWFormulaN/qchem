@@ -112,7 +112,7 @@ class GeoOpt:
                                     xyz=xyzMol)
         
         # Create the Calculation Object
-        calculation = OrcaCalculation(self.name, inputFile, isLocal=self.isLocal)    
+        calculation = OrcaCalculation(self.name, inputFile, isLocal=self.isLocal, stdout=False)    
         
         # Start the Optimization Loop
         while (not isOptimized):
@@ -139,22 +139,27 @@ class GeoOpt:
                     calcTime = time.time() - startTime
                     print(f"Molecule {self.name} is Optimized! ({self.ClockTime(calcTime)})")
                     isOptimized = True
+                    break
+                
+            calcTime = time.time() - startTime
+            print(f"Finished Optimization Attempt 1 on Molecule {self.name} ({self.ClockTime(calcTime)})")
             
             # Update the Molecule and Optimization Template for the Next Iteration
             self.optimizedMoleculePath = calculation.OrcaCachePath + f"\\{calculation.CalculationName}.xyz"
-            OPTtemplate = OrcaInputTemplate.GEOOPTXYZ
+            OPTtemplate = OrcaInputTemplate.BASICXYZPARALLEL
             xyzMol = Molecule(self.name, self.optimizedMoleculePath).XYZBody()
             optIndex += 1
             
             # Generate the Input File
             inputFile = OrcaInputFile(OPTtemplate, 
+                                    calculation = calculationType,
                                     basis=self.basisSet,
                                     functional=self.functional,
                                     cores = self.cores,
                                     xyz=xyzMol)
             
             # Create the Calculation Object
-            calculation = OrcaCalculation(self.name + f"_{optIndex}", inputFile, isLocal=self.isLocal)
+            calculation = OrcaCalculation(self.name + f"_{optIndex}", inputFile, isLocal=self.isLocal, stdout=False)
             
     def IsOptimized(self, frequencies):
         """Determines if the Molecule is Optimized to the Valid Minimum"""
