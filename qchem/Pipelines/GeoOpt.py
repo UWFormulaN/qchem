@@ -117,6 +117,8 @@ class GeoOpt:
         # Start the Optimization Loop
         while (not isOptimized):
             
+            iterStartTime = time.time()
+            
             # Generate Print Statement for User on the Optimization Attempt
             print(f"Running Optimization Attempt {optIndex} on {self.name}")
             
@@ -141,8 +143,8 @@ class GeoOpt:
                     isOptimized = True
                     break
                 
-            calcTime = time.time() - startTime
-            print(f"Finished Optimization Attempt 1 on Molecule {self.name} ({self.ClockTime(calcTime)})")
+            calcTime = time.time() - iterStartTime
+            print(f"Finished Optimization Attempt {optIndex} on Molecule {self.name} ({self.ClockTime(calcTime)})")
             
             # Update the Molecule and Optimization Template for the Next Iteration
             self.optimizedMoleculePath = calculation.OrcaCachePath + f"\\{calculation.CalculationName}.xyz"
