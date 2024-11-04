@@ -144,7 +144,7 @@ class GeoOpt:
                     break
                 
             calcTime = time.time() - iterStartTime
-            print(f"Finished Optimization Attempt {optIndex} on Molecule {self.name} ({self.ClockTime(calcTime)})")
+            print(f"Finished Optimization Attempt {optIndex} on {self.name} ({self.ClockTime(calcTime)})")
             
             # Update the Molecule and Optimization Template for the Next Iteration
             self.optimizedMoleculePath = calculation.OrcaCachePath + f"\\{calculation.CalculationName}.xyz"
