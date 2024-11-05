@@ -1,4 +1,5 @@
 import time
+import os
 import pandas as pd
 from qchem.Molecule import Molecule
 from qchem.OrcaInputFile import OrcaInputFile
@@ -145,13 +146,15 @@ class GeoOpt:
                     print(f"Molecule {self.name} is Optimized! ({self.ClockTime(calcTime)})")
                     isOptimized = True
                     self.calculation = calculation
+                    self.optimizedMoleculePath = os.path.join(calculation.OrcaCachePath,calculation.CalculationName + ".xyz")
+                    self.optMolecule = Molecule(self.name, self.optimizedMoleculePath)
                     break
                 
             calcTime = time.time() - iterStartTime
             print(f"Finished Optimization Attempt {optIndex} on {self.name} ({self.ClockTime(calcTime)})")
             
             # Update the Molecule and Optimization Template for the Next Iteration
-            self.optimizedMoleculePath = calculation.OrcaCachePath + f"\\{calculation.CalculationName}.xyz"
+            self.optimizedMoleculePath = os.path.join(calculation.OrcaCachePath,calculation.CalculationName + ".xyz")
             OPTtemplate = OrcaInputTemplate.BASICXYZPARALLEL
             xyzMol = Molecule(self.name, self.optimizedMoleculePath).XYZBody()
             optIndex += 1
