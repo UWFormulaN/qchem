@@ -3,7 +3,7 @@ import re
 
 
 class OrcaOutput:
-    def __init__(self, file_path):
+    def __init__(self, file_path: str):
         """Initialize the OrcaOutput class with the path to the ORCA output file.
         Reads the file content and processes different properties such as final timings,
         Mayer population analysis, Loewdin charges, dipole moments, etc."""

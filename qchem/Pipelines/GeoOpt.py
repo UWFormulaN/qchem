@@ -36,7 +36,7 @@ class GeoOpt:
     calculation: OrcaCalculation
     """Reference to the Last Orca Calculation Object for the GeoOpt"""
     
-    def __init__(self, molecule, basisSet, functional, cores:int = 1, isLocal:bool = False, name:str = ""):
+    def __init__(self, molecule: str | Molecule, basisSet: str, functional: str, cores:int = 1, isLocal:bool = False, name:str = ""):
         
         # Check if Values are empty or of Wrong Type
         if (not (molecule and isinstance(molecule, (str, Molecule)))):
