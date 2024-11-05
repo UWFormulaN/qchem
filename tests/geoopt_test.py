@@ -5,7 +5,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 # Importing the required modules
 from qchem.Molecule import Molecule
-from qchem.Pipelines.GeoOpt import GeoOpt
+from qchem.Calculation.GeoOpt import GeoOpt
 from qchem.Data import OrcaBasisSet, OrcaDensityFunctional
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__))))
 

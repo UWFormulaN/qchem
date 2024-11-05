@@ -1,12 +1,9 @@
-from . import Parser
-from .Data.Enums import OrcaBasisSet, OrcaDensityFunctional, OrcaCalculationType, OrcaInputTemplate
-from .OrcaCalculation import OrcaCalculation
-from .OrcaInputFile import OrcaInputFile
+from .Parser import OrcaOutput
 from .XYZFile import XYZFile
 from .Molecule import Molecule
-from .ClusterCalculation import ClusterCalculation
 from .Data.Constants import CovalentRadiiConstants, AtomicMassConstants
-from .Pipelines.GeoOpt import GeoOpt
+from .Calculation import OrcaCalculation, ClusterCalculation, OrcaInputFile, GeoOpt
+from .Data.Enums import OrcaBasisSet, OrcaDensityFunctional, OrcaCalculationType, OrcaInputTemplate
 
 # Optionally, you can also expose submodules as needed
 #from . import Enums
@@ -27,5 +24,8 @@ __all__ = [
     "Enums",
     "Data",
     "Pipelines",
-    "GeoOpt"
+    "GeoOpt",
+    "OrcaInputFile",
+    "OrcaInputTemplate",
+    "OrcaOutput"
 ]

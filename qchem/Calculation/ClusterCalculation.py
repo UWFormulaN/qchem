@@ -1,4 +1,4 @@
-from qchem.OrcaCalculation import OrcaCalculation
+from qchem.Calculation.OrcaCalculation import OrcaCalculation
 import multiprocessing
 import time
 
