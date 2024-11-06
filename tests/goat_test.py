@@ -7,7 +7,6 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 # Importing the required modules
 from qchem.Molecule import Molecule
 from qchem.Calculation.GOAT import GOAT
-from qchem.Data import OrcaBasisSet, OrcaDensityFunctional
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__))))
 
 #
@@ -55,21 +54,7 @@ def Test2 ():
     goat.RunCalculation()
 
 #
-# Test 3 : Use a Molecule That doesn't Converge on the first Attempt
-#
-#def Test3 ():
-#    # Load the Propane Molecule
-#    mol = Molecule("Caffeine", os.path.join("tests", "test_files", "caffeine.xyz"))
-#
-#    # Create a GeoOpt Object
-#    geoOpt = GeoOpt(mol, OrcaBasisSet.MINI.value, OrcaDensityFunctional.B3LYP.value, Cores, isLocal=LocalTest)
-#
-#    # Run the Optimization
-#    geoOpt.Optimize()
-
-#
 # Running Tests
 #
 #Test1()
 Test2()
-#Test3()
