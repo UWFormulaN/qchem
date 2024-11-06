@@ -25,5 +25,7 @@ __all__ = [
     "CovalentRadiiConstants",
     "AtomicMassConstants",
     "Enums",
-    "Data"
+    "Data",
+    "Pipelines",
+    "GeoOpt"
 ]

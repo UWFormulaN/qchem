@@ -1,4 +1,5 @@
 import time
+import os
 import pandas as pd
 from qchem.Molecule import Molecule
 from qchem.OrcaInputFile import OrcaInputFile
@@ -32,7 +33,10 @@ class GeoOpt:
     optimizedMoleculePath: str
     """Path to the Optimized Molecule File"""
     
-    def __init__(self, molecule, basisSet, functional, cores:int = 1, isLocal:bool = False, name:str = ""):
+    calculation: OrcaCalculation
+    """Reference to the Last Orca Calculation Object for the GeoOpt"""
+    
+    def __init__(self, molecule: str | Molecule, basisSet: str, functional: str, cores:int = 1, isLocal:bool = False, name:str = ""):
         
         # Check if Values are empty or of Wrong Type
         if (not (molecule and isinstance(molecule, (str, Molecule)))):
@@ -141,13 +145,16 @@ class GeoOpt:
                     calcTime = time.time() - startTime
                     print(f"Molecule {self.name} is Optimized! ({self.ClockTime(calcTime)})")
                     isOptimized = True
+                    self.calculation = calculation
+                    self.optimizedMoleculePath = os.path.join(calculation.OrcaCachePath,calculation.CalculationName + ".xyz")
+                    self.optMolecule = Molecule(self.name, self.optimizedMoleculePath)
                     break
                 
             calcTime = time.time() - iterStartTime
             print(f"Finished Optimization Attempt {optIndex} on {self.name} ({self.ClockTime(calcTime)})")
             
             # Update the Molecule and Optimization Template for the Next Iteration
-            self.optimizedMoleculePath = calculation.OrcaCachePath + f"\\{calculation.CalculationName}.xyz"
+            self.optimizedMoleculePath = os.path.join(calculation.OrcaCachePath,calculation.CalculationName + ".xyz")
             OPTtemplate = OrcaInputTemplate.BASICXYZPARALLEL
             xyzMol = Molecule(self.name, self.optimizedMoleculePath).XYZBody()
             optIndex += 1

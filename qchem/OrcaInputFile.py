@@ -24,7 +24,7 @@ class OrcaInputFile:
     InputFileContents: str
     """The Generated Input File as a String"""
     
-    def __init__(self, template: str, **variables):
+    def __init__(self, template: str | OrcaInputTemplate, **variables):
         self.template = template
         self.variables = variables
         self.InputFileContents = self.GenerateInputFile()
