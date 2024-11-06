@@ -21,12 +21,6 @@ class GeoOpt:
     functional: str
     """The Density Functional to be used for the Optimization"""
     
-    isLocal : bool
-    """Boolean Flag to determine if the Optimization is Local or not (Local = Runs on Device, Non-Local = Runs in Docker Container)"""
-    
-    name: str
-    """Name of the Molecule being GeoOptimized"""
-    
     optimizationTime : float
     """Time Elapsed for the Optimization to Complete"""
     
@@ -35,6 +29,15 @@ class GeoOpt:
     
     calculation: OrcaCalculation
     """Reference to the Last Orca Calculation Object for the GeoOpt"""
+    
+    cores: int
+    """The Number of Cores the Geometry Optimization will Utilize"""
+    
+    isLocal : bool
+    """Boolean Flag to determine if the Optimization is Local or not (Local = Runs on Device, Non-Local = Runs in Docker Container)"""
+    
+    name: str
+    """Name of the Molecule being GeoOptimized"""
     
     def __init__(self, molecule: str | Molecule, basisSet: str, functional: str, cores:int = 1, isLocal:bool = False, name:str = ""):
         
@@ -124,7 +127,7 @@ class GeoOpt:
             iterStartTime = time.time()
             
             # Generate Print Statement for User on the Optimization Attempt
-            print(f"Running Optimization Attempt {optIndex} on {self.name}")
+            print(f"Running Optimization Attempt {optIndex} on {self.name}...")
             
             # Rune the Calculation
             calculation.RunCalculation()

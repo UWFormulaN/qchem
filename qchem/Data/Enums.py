@@ -10,6 +10,7 @@ class OrcaCalculationType(Enum):
     OPTIMIZATION = "OPT"
     FREQUENCY = "FREQ"
     HARTREE_FOCK = "HF"
+    GOAT = "GOAT XTB"
 
 # Enum for Orca Density Functionals
 class OrcaDensityFunctional(Enum):
