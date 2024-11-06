@@ -2,7 +2,7 @@ import time
 import pandas as pd
 from qchem.Molecule import Molecule
 from qchem.OrcaInputFile import OrcaInputFile
-from qchem.Data.Enums import OrcaInputTemplate
+from qchem.Data.Enums import OrcaInputTemplate, OrcaCalculationType
 from qchem.OrcaCalculation import OrcaCalculation
 from qchem.Parser import OrcaOutput
 
@@ -85,34 +85,39 @@ class GeoOpt:
         optIndex = 1
         isOptimized = False
         freqFailCount = 0
+        calculationType = f"{OrcaCalculationType.OPTIMIZATION.value} {OrcaCalculationType.FREQUENCY.value}"
         
         startTime = time.time()
         
         # Determine the Proper Template to use based on the Molecule Type
         if (self.IsFileReference()):
-            OPTtemplate = OrcaInputTemplate.GEOOPT
+            OPTtemplate = OrcaInputTemplate.BASICPARALLEL
             xyzMol = self.molecule
             
-            inputFile = OrcaInputFile(OPTtemplate, 
+            inputFile = OrcaInputFile(OPTtemplate,
+                                    calculation = calculationType,
                                     basis=self.basisSet,
                                     functional=self.functional,
                                     cores = self.cores,
                                     xyzfile=xyzMol)
         else:
-            OPTtemplate = OrcaInputTemplate.GEOOPTXYZ
+            OPTtemplate = OrcaInputTemplate.BASICXYZPARALLEL
             xyzMol = self.molecule.XYZBody()
             
             inputFile = OrcaInputFile(OPTtemplate, 
+                                    calculation = calculationType,
                                     basis=self.basisSet,
                                     functional=self.functional,
                                     cores = self.cores,
                                     xyz=xyzMol)
         
         # Create the Calculation Object
-        calculation = OrcaCalculation(self.name, inputFile, isLocal=self.isLocal)    
+        calculation = OrcaCalculation(self.name, inputFile, isLocal=self.isLocal, stdout=False)    
         
         # Start the Optimization Loop
         while (not isOptimized):
+            
+            iterStartTime = time.time()
             
             # Generate Print Statement for User on the Optimization Attempt
             print(f"Running Optimization Attempt {optIndex} on {self.name}")
@@ -136,22 +141,27 @@ class GeoOpt:
                     calcTime = time.time() - startTime
                     print(f"Molecule {self.name} is Optimized! ({self.ClockTime(calcTime)})")
                     isOptimized = True
+                    break
+                
+            calcTime = time.time() - iterStartTime
+            print(f"Finished Optimization Attempt {optIndex} on {self.name} ({self.ClockTime(calcTime)})")
             
             # Update the Molecule and Optimization Template for the Next Iteration
             self.optimizedMoleculePath = calculation.OrcaCachePath + f"\\{calculation.CalculationName}.xyz"
-            OPTtemplate = OrcaInputTemplate.GEOOPTXYZ
+            OPTtemplate = OrcaInputTemplate.BASICXYZPARALLEL
             xyzMol = Molecule(self.name, self.optimizedMoleculePath).XYZBody()
             optIndex += 1
             
             # Generate the Input File
             inputFile = OrcaInputFile(OPTtemplate, 
+                                    calculation = calculationType,
                                     basis=self.basisSet,
                                     functional=self.functional,
                                     cores = self.cores,
                                     xyz=xyzMol)
             
             # Create the Calculation Object
-            calculation = OrcaCalculation(self.name + f"_{optIndex}", inputFile, isLocal=self.isLocal)
+            calculation = OrcaCalculation(self.name + f"_{optIndex}", inputFile, isLocal=self.isLocal, stdout=False)
             
     def IsOptimized(self, frequencies):
         """Determines if the Molecule is Optimized to the Valid Minimum"""

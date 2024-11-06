@@ -35,8 +35,11 @@ class OrcaCalculation:
     
     CalculationTime: float
     """The Time it took to run the Calculation (In Seconds)"""
+    
+    STDOut: bool
+    """Boolean Flag Determining if Standard Output Messages will be displayed"""
 
-    def __init__ (self, name: str, inputFile: OrcaInputFile, index: int = 1, isLocal: bool = False):
+    def __init__ (self, name: str, inputFile: OrcaInputFile, index: int = 1, isLocal: bool = False, stdout : bool = True):
         
         # Value Type Checking
         if (not isinstance(name, (str)) or name == ""):
@@ -51,11 +54,15 @@ class OrcaCalculation:
         if (not isinstance(isLocal, (bool))):
             raise ValueError("IsLocal must be a boolean")
         
+        if (not isinstance(stdout, (bool))):
+            raise ValueError("STDOut must be a boolean")
+        
         # Set Values
         self.CalculationName = name
         self.InputFile = inputFile
         self.Index = index
         self.IsLocal = isLocal
+        self.STDOut = stdout
         
         # Generate Cache Paths
         orcaCache = "OrcaCache"
@@ -80,6 +87,9 @@ class OrcaCalculation:
 
         # Get the Start Time of the Calculation
         startTimer = time.time()
+        
+        if self.STDOut:
+            print(f"Running Calulation : {self.GetInputFileName()}")
 
         # Determine of running the 
         if (self.IsLocal):
@@ -93,8 +103,9 @@ class OrcaCalculation:
         # Post a message that an Error may have Occured
         if (result.stderr.__len__() > 0):
             print(f"WARNING Errors Maybe Occured : \n\n{result.stderr}")
-
-        print(f"Calculation Complete ({self.ClockTime(self.CalculationTime)}) : {self.GetInputFileName()}")  
+            
+        if self.STDOut:
+            print(f"Calculation Complete ({self.ClockTime(self.CalculationTime)}) : {self.GetInputFileName()}")  
 
     def RunLocally (self, cachePath: str):
         # Create the Command String
@@ -114,8 +125,6 @@ class OrcaCalculation:
     def RunDockerContainer (self, cachePath):
         # Create the Command String
         command = f'docker run --name qchemorca{self.Index} -v "{cachePath}":/home/orca mrdnalex/orca sh -c "cd /home/orca && /Orca/orca {self.GetInputFileName()} > {self.GetOutputFileName()}"'
-
-        print(f"Running Calulation : {self.GetInputFileName()}")
 
         # Kill and Remove qchemorca container if it doesn't exist yet
         subprocess.run(f"docker kill qchemorca{self.Index}" , shell=True, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
