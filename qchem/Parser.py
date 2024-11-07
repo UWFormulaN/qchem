@@ -22,6 +22,8 @@ class OrcaOutput:
         self.vibrational_frequencies = self.get_vibrational_frequencies() if "FREQ" in self.calc_type() else None
         self.IR_frequencies = self.get_IR_frequencies() if "FREQ" in self.calc_type() else None
         self.chemical_shifts = self.get_chemical_shifts() if "NMR" in self.calc_type() else None
+        self.conformers = self.get_conformer_info() if "GOAT" in self.calc_type() else None
+        self.goat_summary = self.get_goat_summary() if "GOAT" in self.calc_type() else None
 
     def read_xyz(self, path: str) -> pd.DataFrame:
         """Reads XYZ format file to extract atomic coordinates and returns it as a DataFrame."""
@@ -205,7 +207,7 @@ class OrcaOutput:
     def calc_type(self) -> list[str]:
         """Determine the type of ORCA calculation from the output file"""
         calc_types = []
-        
+
         for line in self.lines:
             if "VIBRATIONAL FREQUENCIES" in line:
                 calc_types.append("FREQ") if not "FREQ" in calc_types else None
@@ -213,6 +215,8 @@ class OrcaOutput:
                 calc_types.append("NMR") if not "NMR" in calc_types else None
             elif "GEOMETRY OPTIMIZATION" in line:
                 calc_types.append("OPT") if not "OPT" in calc_types else None
+            elif "GOAT Global Iter" in line:
+                calc_types.append("GOAT") if not "GOAT" in calc_types else None
         return calc_types
 
     def get_vibrational_frequencies(self) -> pd.DataFrame:
@@ -232,7 +236,7 @@ class OrcaOutput:
                         )
                     start_idx += 1
 
-        if (len(freqs) == 0):
+        if len(freqs) == 0:
             print("Returning empty DataFrame")
             return pd.DataFrame(columns=["mode", "frequency"])
         return pd.DataFrame(freqs)
@@ -301,3 +305,61 @@ class OrcaOutput:
                 file.write(self.chemical_shifts.to_string(index=False))
                 file.write("\n\n")
 
+    def get_conformer_info(self) -> pd.DataFrame:
+        """Extract conformer information from GOAT calculation"""
+        conformers = []
+        for i, line in enumerate(self.lines):
+            if "# Final ensemble info #" in line:
+                start_idx = i + 2  # Skip header
+                while "------" not in self.lines[start_idx]:
+                    start_idx += 1
+                start_idx += 1  # Skip separator line
+
+                while self.lines[start_idx].strip() and not "Conformers below" in self.lines[start_idx]:
+                    parts = self.lines[start_idx].split()
+                    if len(parts) >= 5:
+                        conformers.append(
+                            {
+                                "conformer": int(parts[0]),
+                                "energy": float(parts[1]),
+                                "degeneracy": int(parts[2]),
+                                "total_percent": float(parts[3]),
+                                "cumulative_percent": float(parts[4]),
+                            }
+                        )
+                    start_idx += 1
+
+        return pd.DataFrame(conformers)
+
+    def get_goat_summary(self) -> dict:
+        """Extract GOAT calculation summary information"""
+        summary = {}
+        for line in self.lines:
+            if "Conformers below" in line:
+                summary["conformers_below_3kcal"] = int(line.split(":")[1])
+            elif "Lowest energy conformer" in line:
+                summary["lowest_energy"] = float(line.split(":")[1].split()[0])
+            elif "Sconf at" in line:
+                summary["sconf"] = float(line.split(":")[1].split()[0])
+            elif "Gconf at" in line:
+                summary["gconf"] = float(line.split(":")[1].split()[0])
+        return summary
+
+    def save_goat_data(self, output_path: str):
+        """Save GOAT calculation results"""
+        with open(output_path, "w") as file:
+            file.write(f"GOAT Calculation Results for {self.file_path}\n\n")
+
+            file.write("Conformer Analysis:\n")
+            conformers = self.get_conformer_info()
+            if not conformers.empty:
+                file.write(conformers.to_string(index=False))
+                file.write("\n\n")
+
+            summary = self.get_goat_summary()
+            if summary:
+                file.write("Summary:\n")
+                file.write(f"Conformers below 3 kcal/mol: {summary['conformers_below_3kcal']}\n")
+                file.write(f"Lowest energy conformer: {summary['lowest_energy']} Eh\n")
+                file.write(f"Sconf at 298.15 K: {summary['sconf']} cal/(molK)\n")
+                file.write(f"Gconf at 298.15 K: {summary['gconf']} kcal/mol\n")
