@@ -36,10 +36,9 @@ def Test1 ():
 # Test 2 : Use File Reference as Input for Molecular Geometry
 #
 def Test2 ():
-    # Create a GeoOpt Object (NOTE : You need to Create the OrcaCache Folder and the Propane_Ref Folder and paste the propane.xyz file into the folder for this test to work)\
     # Create the Orca Cache Directory
     if os.path.exists(os.path.join("OrcaCache", "Propane_GOAT_Ref")):
-        os.rmdir(os.path.join("OrcaCache", "Propane_GOAT_Ref"))
+        shutil.rmtree(os.path.join("OrcaCache", "Propane_GOAT_Ref"))
     os.mkdir(os.path.join("OrcaCache", "Propane_GOAT_Ref"))
     
     # Copy the Proper XYZ File to be used
