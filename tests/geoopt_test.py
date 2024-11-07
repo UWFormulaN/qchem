@@ -11,10 +11,8 @@ from qchem.Data import OrcaBasisSet, OrcaDensityFunctional
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__))))
 
 #
-# File for Testing GEO OPT
+# GeoOpt Tests
 #
-
-# GeoOpt Test
 
 #
 # SETTINGS : Modify these as needed for Testing

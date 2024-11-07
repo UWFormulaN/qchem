@@ -10,10 +10,8 @@ from qchem.Calculation.GOAT import GOAT
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__))))
 
 #
-# File for Testing GOAT
+# GOAT Tests
 #
-
-# GOAT Test
 
 #
 # SETTINGS : Modify these as needed for Testing
@@ -53,10 +51,8 @@ def Test2 ():
     # Run the GOAT Calculation
     goat.RunCalculation()
     
-    
-
 #
 # Running Tests
 #
-#Test1()
+Test1()
 Test2()
