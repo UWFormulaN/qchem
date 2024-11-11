@@ -1,5 +1,6 @@
 import time
 import os
+import pandas as pd
 from qchem.Molecule import Molecule
 from qchem.XYZFile import XYZFile
 from qchem.Parser import OrcaOutput
@@ -7,7 +8,7 @@ from qchem.Calculation.OrcaInputFile import OrcaInputFile
 from qchem.Calculation.OrcaCalculation import OrcaCalculation
 from qchem.Data.Enums import OrcaInputTemplate, OrcaCalculationType
 
-class GOAT:
+class Freqeuncy:
     
     # Most of this is Boilerplate, Should make a Abstract class to inherit this boilerplate logic
     
@@ -32,17 +33,29 @@ class GOAT:
     outputFilePath : str
     """The Path to the Output File"""
     
-    conformers: list[Molecule]
-    """List of Conformer Molecules Calculated from GOAT"""
+    basisSet: str
+    """The Basis Set to be used for the Optimization"""
     
-    conformerContribution : list[float] # Switch to DataFrame?
-    """A List of the Contributions each Conformer provides to the Ensemble"""
+    functional: str
+    """The Density Functional to be used for the Optimization"""
     
-    def __init__(self, molecule: str | Molecule, cores:int = 1, isLocal:bool = False, name:str = ""):
+    vibrationalFrequencies : pd.DataFrame
+    """Vibrational Frequencies of the Molecule"""
+    
+    IRFrequencies : pd.DataFrame
+    """IR Frequencies of the Molecule"""
+    
+    def __init__(self, molecule: str | Molecule, basisSet: str, functional: str, cores:int = 1, isLocal:bool = False, name:str = ""):
         
         # Check if Values are empty or of Wrong Type
         if (not (molecule and isinstance(molecule, (str, Molecule)))):
             raise ValueError("Molecule is not defined! Provide a Path to the XYZ file or a Molecule Object")
+        
+        if (not (basisSet and isinstance(basisSet, (str)))):
+            raise ValueError("BasisSet is not defined! Provide the Name of the Basis Set as a String")
+        
+        if (not functional and isinstance(functional, (str))):
+            raise ValueError("Functional is not defined! Provide the Name of the Functional as a String")
         
         if (not isinstance(cores, (int))):
             raise ValueError("Cores is not an Integer! Provide an Integer Value")
@@ -65,6 +78,8 @@ class GOAT:
         
         # Set the Values
         self.molecule = molecule
+        self.basisSet = basisSet
+        self.functional = functional
         self.cores = cores
         self.isLocal = isLocal
         self.conformers = []
@@ -79,8 +94,8 @@ class GOAT:
     def RunCalculation (self):
         """Runs through the GOAT Calculation"""
         
-        #GOATTemplate: OrcaInputTemplate | str
-        calculationType = f"GOAT XTB PAL{self.cores}"
+        # Define the Calculation Type
+        calculationType = f"FREQ"
         
         # Start the Clock
         startTime = time.time()
@@ -89,78 +104,81 @@ class GOAT:
         if (self.IsFileReference()):
             inputFile = OrcaInputFile(OrcaInputTemplate.BASIC,
                                       calculation = calculationType,
-                                      basis = "",
-                                      functional = "",
+                                      basis = self.basisSet,
+                                      functional = self.functional,
                                       xyzfile = self.molecule)
             
         else:
             inputFile = OrcaInputFile(OrcaInputTemplate.BASICXYZ,
                                       calculation = calculationType,
-                                      basis = "",
-                                      functional = "",
+                                      basis = self.basisSet,
+                                      functional = self.functional,
                                       xyz = self.molecule.XYZBody())
+        
         
         # Create the Calculation Object
         calculation = OrcaCalculation(self.name, inputFile, isLocal=self.isLocal, stdout=False)
         
         # Add a Print Statement to say we are running
-        print(f"Running GOAT (Global Optimizer Algorithm) on {self.name}...")
+        print(f"Running Frequency Analysis on {self.name}...")
         
         # Run the Calculation
         calculation.RunCalculation()
         
         # Get the Calculation Time
         self.calculationTime = time.time() - startTime
-    
+        
         # Save the Output File Path
         self.outputFilePath = calculation.OutputFilePath
         self.orcaCachePath = calculation.OrcaCachePath
         
-        # Extract the Conformer Molecules from the Resulting XYZ File
-        self.ExtractConformers()
+        # Load the Output File
+        outputFile = OrcaOutput(calculation.OutputFilePath)
         
-        # Extract the Contributions
-        conformerOutput = OrcaOutput(calculation.OutputFilePath).conformers
-        self.conformerContribution = conformerOutput[conformerOutput.columns[3]].values
+        # Extract the Vibrational Frequency from the Output File
+        self.vibrationalFrequencies = outputFile.get_vibrational_frequencies()
         
-        # Display a Print Statement for the GOAT Completion
-        print(f"Finished GOAT (Global Optimizer Algorithm) on {self.name}! ({self.ClockTime(self.calculationTime)})")
+        # Load the IR Frequency from the 
+        self.IRFrequencies = outputFile.get_IR_frequencies()
+        
+        # Display a Print Statement for the Frequency Completion
+        print(f"Finished Running Freqency Analysis on {self.name}! ({self.ClockTime(self.calculationTime)})")
     
-    def ExtractConformers (self):
-        """Extracts all the Conformer Molecules"""
-        # Get the Number of Atoms we should Expect
-        if (self.IsFileReference()):
-            atomNum = XYZFile(self.molecule).AtomCount
-        else:
-            atomNum = self.molecule.AtomCount
-        
-        # Open the File
-        ensembleXYZFile = open(os.path.join(self.orcaCachePath, f"{self.name}.finalensemble.xyz"))
-        
-        # Get all the Lines from the File
-        allLines = ensembleXYZFile.readlines()
-        
-        # Get the Expected Length of a XYZ File
-        XYZLength = atomNum + 2
-        
-        # Calculate the Number of 
-        moleculeCount = int((len(allLines))/(XYZLength))
-        
-        for i in range(moleculeCount):
-            # Get the Lines for a Single XYZ File
-            molLines = allLines[i*XYZLength:(i+1)*XYZLength:]
-            
-            # Make the Name
-            moleculeName = f"{self.name}_Conf_{i}"
-            
-            # Load as a XYZ File
-            xyz = XYZFile(molecule=molLines, name=moleculeName)
-            
-            # Convert to a Molecule
-            molecule = Molecule(moleculeName, xyz)
-            
-            # Add to the Conformer List
-            self.conformers.append(molecule)
+    #def ExtractConformers (self):
+    #    """Extracts all the Conformer Molecules"""
+    #    # Get the Number of Atoms we should Expect
+    #    if (self.IsFileReference()):
+    #        atomNum = XYZFile(self.molecule).AtomCount
+    #    else:
+    #        atomNum = self.molecule.AtomCount
+    #    
+    #    # Open the File
+    #    ensembleXYZFile = open(os.path.join(self.orcaCachePath, f"{self.name}.finalensemble.xyz"))
+    #    
+    #    # Get all the Lines from the File
+    #    allLines = ensembleXYZFile.readlines()
+    #    
+    #    # Get the Expected Length of a XYZ File
+    #    XYZLength = atomNum + 2
+    #    
+    #    # Calculate the Number of 
+    #    moleculeCount = int((len(allLines))/(XYZLength))
+    #    
+    #    for i in range(moleculeCount):
+    #        # Get the Lines for a Single XYZ File
+    #        molLines = allLines[i*XYZLength:(i+1)*XYZLength:]
+    #        
+    #        # Make the Name
+    #        moleculeName = f"{self.name}_Conf_{i}"
+    #        
+    #        # Load as a XYZ File
+    #        xyz = XYZFile(molecule=molLines, name=moleculeName)
+    #        
+    #        # Convert to a Molecule
+    #        molecule = Molecule(moleculeName, xyz)
+    #        
+    #        # Add to the Conformer List
+    #        self.conformers.append(molecule)
             
     def ClockTime(self, seconds):
         """Converts Seconds to a Human Readable Time String"""
