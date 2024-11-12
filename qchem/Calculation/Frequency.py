@@ -8,7 +8,7 @@ from qchem.Calculation.OrcaInputFile import OrcaInputFile
 from qchem.Calculation.OrcaCalculation import OrcaCalculation
 from qchem.Data.Enums import OrcaInputTemplate, OrcaCalculationType
 
-class Freqeuncy:
+class Frequency:
     
     # Most of this is Boilerplate, Should make a Abstract class to inherit this boilerplate logic
     
