@@ -1,7 +1,6 @@
 import pandas as pd
 import re
 
-
 class OrcaOutput:
     def __init__(self, file_path: str):
         """Initialize the OrcaOutput class with the path to the ORCA output file.
