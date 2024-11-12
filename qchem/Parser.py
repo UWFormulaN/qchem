@@ -155,14 +155,25 @@ class OrcaOutput:
 
     def find_partition(self, gibbs_1: tuple, gibbs_2: tuple, temp=293.15) -> float:
         """Calculates the partition coefficient between two Gibbs free energies at a given temperature."""
-        delta_gibbs = gibbs_1[0] * self.convert_energy(gibbs_1[1], "Eh") - gibbs_2[0] * self.convert_energy(gibbs_2[1], "Eh")
-        delta_gibbs = delta_gibbs * self.convert_energy("Eh", "J/mol")
+        delta_gibbs = gibbs_1[0] * self.convert_energy(1.0, gibbs_1[1], "Eh") - gibbs_2[0] * self.convert_energy(1.0, gibbs_2[1], "Eh")
+        delta_gibbs = delta_gibbs * self.convert_energy(1.0, "Eh", "J/mol")
         return -delta_gibbs / (8.314 * temp)
 
-    def convert_energy(self, unit1: str, unit2: str) -> float:
-        """Converts energy values between different units such as Eh, eV, kJ/mol, kcal/mol, and J/mol."""
-        energy = {"Eh": 1, "eV": 27.2107, "kJ/mol": 2625.5, "kcal/mol": 627.503, "J/mol": 2625500}
-        return energy[unit2] / energy[unit1]
+    def convert_energy(self, energy: float, initial_unit: str, final_unit: str) -> float:
+        """Converts energy of unit1 to unit2. Can handle different units such as Eh, eV, kJ/mol, kcal/mol, and J/mol.
+        
+        Params:
+            energy        (float): Initial Energy
+            initial_unit  (str): Units of initial energy
+            final_unit    (str): Desired units after conversion
+            
+        Returns:
+            converted_energy (float): Initial energy expressed in units of final_unit
+        """
+        units = {"Eh": 1, "eV": 27.2107, "kJ/mol": 2625.5, "kcal/mol": 627.503, "J/mol": 2625500}
+        factor = units[final_unit] / units[initial_unit]
+        converted_energy = energy*factor
+        return converted_energy
 
     def relative_polarity(self):
         """Placeholder for a function to calculate relative polarity."""
