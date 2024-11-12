@@ -144,42 +144,6 @@ class Freqeuncy:
         # Display a Print Statement for the Frequency Completion
         print(f"Finished Running Freqency Analysis on {self.name}! ({self.ClockTime(self.calculationTime)})")
     
-    #def ExtractConformers (self):
-    #    """Extracts all the Conformer Molecules"""
-    #    # Get the Number of Atoms we should Expect
-    #    if (self.IsFileReference()):
-    #        atomNum = XYZFile(self.molecule).AtomCount
-    #    else:
-    #        atomNum = self.molecule.AtomCount
-    #    
-    #    # Open the File
-    #    ensembleXYZFile = open(os.path.join(self.orcaCachePath, f"{self.name}.finalensemble.xyz"))
-    #    
-    #    # Get all the Lines from the File
-    #    allLines = ensembleXYZFile.readlines()
-    #    
-    #    # Get the Expected Length of a XYZ File
-    #    XYZLength = atomNum + 2
-    #    
-    #    # Calculate the Number of 
-    #    moleculeCount = int((len(allLines))/(XYZLength))
-    #    
-    #    for i in range(moleculeCount):
-    #        # Get the Lines for a Single XYZ File
-    #        molLines = allLines[i*XYZLength:(i+1)*XYZLength:]
-    #        
-    #        # Make the Name
-    #        moleculeName = f"{self.name}_Conf_{i}"
-    #        
-    #        # Load as a XYZ File
-    #        xyz = XYZFile(molecule=molLines, name=moleculeName)
-    #        
-    #        # Convert to a Molecule
-    #        molecule = Molecule(moleculeName, xyz)
-    #        
-    #        # Add to the Conformer List
-    #        self.conformers.append(molecule)
-            
     def ClockTime(self, seconds):
         """Converts Seconds to a Human Readable Time String"""
         # Convert Seconds to Hours, Minutes, and Seconds
