@@ -1,5 +1,7 @@
 import time
+import os
 from qchem.Molecule import Molecule
+from qchem.XYZFile import XYZFile
 from qchem.Parser import OrcaOutput
 from qchem.Calculation.OrcaInputFile import OrcaInputFile
 from qchem.Calculation.OrcaCalculation import OrcaCalculation
@@ -23,6 +25,18 @@ class GOAT:
     
     calculationTime: float
     """Time Elapsed for the GOAT Optimization to Complete"""
+    
+    orcaCachePath : str
+    """The Path to the Orca Cache folder for the Calculation"""
+    
+    outputFilePath : str
+    """The Path to the Output File"""
+    
+    conformers: list[Molecule]
+    """List of Conformer Molecules Calculated from GOAT"""
+    
+    conformerContribution : list[float]
+    """A List of the Contributions each Conformer provides to the Ensemble"""
     
     def __init__(self, molecule: str | Molecule, cores:int = 1, isLocal:bool = False, name:str = ""):
         
@@ -53,6 +67,7 @@ class GOAT:
         self.molecule = molecule
         self.cores = cores
         self.isLocal = isLocal
+        self.conformers = []
         
     def IsFileReference(self):
         """Determines if the Molecule is stored as a File Reference, or is a direct Molecule Object"""
@@ -96,11 +111,57 @@ class GOAT:
         
         # Get the Calculation Time
         self.calculationTime = time.time() - startTime
+    
+        # Save the Output File Path
+        self.outputFilePath = calculation.OutputFilePath
+        self.orcaCachePath = calculation.OrcaCachePath
+        
+        # Extract the Conformer Molecules from the Resulting XYZ File
+        self.ExtractConformers()
+        
+        # Extract the Contributions
+        conformerOutput = OrcaOutput(calculation.OutputFilePath).conformers
+        self.conformerContribution = conformerOutput[conformerOutput.columns[3]].values
         
         # Display a Print Statement for the GOAT Completion
         print(f"Finished GOAT (Global Optimizer Algorithm) on {self.name}! ({self.ClockTime(self.calculationTime)})")
+    
+    def ExtractConformers (self):
+        """Extracts all the Conformer Molecules"""
+        # Get the Number of Atoms we should Expect
+        if (self.IsFileReference()):
+            atomNum = XYZFile(self.molecule).AtomCount
+        else:
+            atomNum = self.molecule.AtomCount
         
-                
+        # Open the File
+        ensembleXYZFile = open(os.path.join(self.orcaCachePath, f"{self.name}.finalensemble.xyz"))
+        
+        # Get all the Lines from the File
+        allLines = ensembleXYZFile.readlines()
+        
+        # Get the Expected Length of a XYZ File
+        XYZLength = atomNum + 2
+        
+        # Calculate the Number of 
+        moleculeCount = int((len(allLines))/(XYZLength))
+        
+        for i in range(moleculeCount):
+            # Get the Lines for a Single XYZ File
+            molLines = allLines[i*XYZLength:(i+1)*XYZLength:]
+            
+            # Make the Name
+            moleculeName = f"{self.name}_Conf_{i}"
+            
+            # Load as a XYZ File
+            xyz = XYZFile(molecule=molLines, name=moleculeName)
+            
+            # Convert to a Molecule
+            molecule = Molecule(moleculeName, xyz)
+            
+            # Add to the Conformer List
+            self.conformers.append(molecule)
+            
     def ClockTime(self, seconds):
         """Converts Seconds to a Human Readable Time String"""
         # Convert Seconds to Hours, Minutes, and Seconds

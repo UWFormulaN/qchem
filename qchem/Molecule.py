@@ -5,6 +5,7 @@ import random
 from uu import Error
 import pandas as pd
 import numpy as np
+from typing import Union
 from .Data.Constants import AtomicMassConstants, CovalentRadiiConstants
 
 # We will create molecule objects which will store information about the molecule
@@ -44,13 +45,22 @@ class Molecule:
     energy_method = None
     """Energy Method used for the Molecule"""
 
-    def __init__(self, name: str, XYZFilePath: str):
-        """Initializes a New Molecule Object"""
+    def __init__(self, name: str, XYZ):
+        """Initializes a New Molecule Object\n
+            name : str
+            XYZ : str | XYZFile
+        """
+        from qchem.XYZFile import XYZFile # <-- To Avoid Circular Imports
         self.Name = name
-
-        # Load the XYZ File from XYZ File
-        self.XYZCoordinates = self.SortAtomDataFrame(self.ReadXYZ(path=XYZFilePath))
-        self.AtomCount = len(self.XYZCoordinates["Atom"].values)
+        
+        if (isinstance(XYZ, (str))):
+            # Load the XYZ File from XYZ File
+            self.XYZCoordinates = self.SortAtomDataFrame(self.ReadXYZ(path=XYZ))
+            self.AtomCount = len(self.XYZCoordinates["Atom"].values)
+        elif (isinstance(XYZ, (XYZFile))):
+            # Load from the XYZ File Class
+            self.AtomCount = XYZ.AtomCount
+            self.XYZCoordinates = XYZ.AtomPositions
 
         self.GetBonds()
         self.FindRotatableBonds()

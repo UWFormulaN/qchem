@@ -2,7 +2,6 @@ import os
 import subprocess
 import time
 from qchem.Data.Enums import OrcaInputTemplate
-from qchem.XYZFile import XYZFile
 from qchem.Molecule import Molecule
 from .OrcaInputFile import OrcaInputFile
 
