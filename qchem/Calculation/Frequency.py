@@ -107,14 +107,12 @@ class Frequency:
                                       basis = self.basisSet,
                                       functional = self.functional,
                                       xyzfile = self.molecule)
-            
         else:
             inputFile = OrcaInputFile(OrcaInputTemplate.BASICXYZ,
                                       calculation = calculationType,
                                       basis = self.basisSet,
                                       functional = self.functional,
                                       xyz = self.molecule.XYZBody())
-        
         
         # Create the Calculation Object
         calculation = OrcaCalculation(self.name, inputFile, isLocal=self.isLocal, stdout=False)
