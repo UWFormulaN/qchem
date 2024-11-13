@@ -1,12 +1,10 @@
 import time
-import os
 import pandas as pd
 from qchem.Molecule import Molecule
-from qchem.XYZFile import XYZFile
 from qchem.Parser import OrcaOutput
 from qchem.Calculation.OrcaInputFile import OrcaInputFile
 from qchem.Calculation.OrcaCalculation import OrcaCalculation
-from qchem.Data.Enums import OrcaInputTemplate, OrcaCalculationType
+from qchem.Data.Enums import OrcaInputTemplate
 
 class Frequency:
     

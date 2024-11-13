@@ -1,8 +1,6 @@
 import os
 import subprocess
 import time
-from qchem.Data.Enums import OrcaInputTemplate
-from qchem.Molecule import Molecule
 from .OrcaInputFile import OrcaInputFile
 
 class OrcaCalculation:
