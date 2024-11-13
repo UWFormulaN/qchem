@@ -37,9 +37,11 @@ class OrcaInputFile:
         """Generates the input file content by replacing placeholders with actual values."""
         if isinstance(self.template, OrcaInputTemplate):
             input_content=self.template.value    
-        else:
+        elif self.template[-4:] == '.inp':
             with open(self.template, 'r') as file:
                 input_content = file.read()
+        else:
+            input_content = self.template
         
         for key, value in self.variables.items():
             placeholder = f'&{{{key}}}'
