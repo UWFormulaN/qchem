@@ -6,6 +6,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 # Importing the required modules
 from qchem.Molecule import Molecule
+from qchem.Pipelines.Spectra import Spectra
 from qchem.Calculation.GOAT import GOAT
 from qchem.Calculation.Frequency import Frequency
 from qchem.Data import OrcaBasisSet, OrcaDensityFunctional
@@ -13,7 +14,7 @@ from qchem.Parser import OrcaOutput
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__))))
 
 #
-# Frequency Tests
+# GOAT Tests
 #
 
 #
@@ -26,14 +27,21 @@ Cores = 8
 # Test 1 : Load Molecule and Use Molecule as Input
 #
 def Test1 ():
-    # Load the Propane Molecule
-    mol = Molecule("PropaneFREQ", os.path.join("tests", "test_files", "propane.xyz"))
-
+    
+    # Load the Ethane Molecule
+    mol = Molecule("Ethane", os.path.join("tests", "test_files", "ethane.xyz"))
+    
+    spectra = Spectra(mol, OrcaBasisSet.DEF2_SVP.value, OrcaDensityFunctional.B3LYP.value, Cores, LocalTest)
+    
+    spectra.RunCalculation()
+    
+    spectra.PlotSpectra()
+    
     # Define the Frequency Object
-    frequency = Frequency(mol, OrcaBasisSet.DEF2_SVP.value, OrcaDensityFunctional.B3LYP.value, Cores, LocalTest)
+    #frequency = Frequency(mol, OrcaBasisSet.DEF2_SVP.value, OrcaDensityFunctional.B3LYP.value, Cores, LocalTest)
     
     # Run the Frequency Calculation
-    frequency.RunCalculation()
+    #frequency.RunCalculation()
 
 #
 # Test 2 : Use File Reference as Input for Molecular Geometry
@@ -57,4 +65,4 @@ def Test2 ():
 # Running Tests
 #
 Test1()
-Test2()
+#Test2()
