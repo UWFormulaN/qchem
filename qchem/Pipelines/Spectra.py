@@ -86,18 +86,27 @@ class Spectra:
     def RunCalculation (self):
         """Runs through all Calculations required to produce a Spectra Graph"""
     
-
+        print("\nRunning GeoOpt\n")
+    
         # Create a Geo Opt Calculation Object
         geoOptCalc = GeoOpt(self.molecule, self.basisSet, self.functional, self.cores, self.isLocal, f"{self.name}_GEOOPT")
     
         # Run the GeoOptimization on the Molecule
         geoOptCalc.RunCalculation()
         
+        print("\nFinished GeoOpt\n")
+        
+        print("\nRunning GOAT\n")
+        
         # Create GOAT Calculation Object 
         goatCalc = GOAT(geoOptCalc.optMolecule, self.cores, self.isLocal, f"{self.name}_GOAT")
         
         # Run the GOAT Calculation
         goatCalc.RunCalculation()
+        
+        print("\nFinished GeoOpt\n")
+        
+        print("\nRunning Frequency Analysis\n")
         
         # Get the Number of Conformers Created
         conformersNum = len(goatCalc.conformers)
@@ -126,7 +135,11 @@ class Spectra:
                     IRFreqDict[frequency] += intensity
                 else:
                     IRFreqDict[frequency] = intensity
-                
+        
+        print("\nFinished Frequency Analysis\n")
+        
+        print("\nMaking Final Touches\n")
+        
         # Extract the Sorted Frequencies
         Frequencies = sorted(IRFreqDict.keys(), reverse=True)
         
@@ -141,6 +154,8 @@ class Spectra:
             "Frequency" : Frequencies,
             "IRIntensity" : IRIntensities
         })
+        
+        print("\nFinished Making Spectra\n")
 
     def PlotSpectra (self):
         # Plots the Spectra
