@@ -114,6 +114,10 @@ class Spectra:
         # Create a Dictionary for the Frequency and IR Intensity Key Pairs
         IRFreqDict = { }
         
+        # Add a bunch of Dummy Data
+        for i in range(0, 4000, 10):
+            IRFreqDict[i] = 0
+        
         # Loop through all the Conformers and Run a Frequency Calculation
         for i in range(conformersNum):
             
@@ -122,6 +126,8 @@ class Spectra:
             
             # Run the Frequency Calculation
             freqCalc.RunCalculation()
+            
+            print(freqCalc.IRFrequencies)
             
             # Extract the Frequency Values
             frequencies = freqCalc.IRFrequencies["frequency"].values 
@@ -154,6 +160,10 @@ class Spectra:
             "Frequency" : Frequencies,
             "IRIntensity" : IRIntensities
         })
+        
+        print("Final Spectra")
+        
+        print(self.IRSpectra)
         
         print("\nFinished Making Spectra\n")
 
