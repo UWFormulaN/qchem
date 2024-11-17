@@ -1,4 +1,5 @@
 import time
+import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from qchem.Molecule import Molecule
@@ -155,6 +156,14 @@ class Spectra:
         # Normalize and Reverse the Intensity
         IRIntensities =  1 - (IRIntensities / max(IRIntensities))
         
+        
+        kernelSize = int(len(IRIntensities)/8) + 1 if (int(len(IRIntensities)/8) % 2 == 0) else int(len(IRIntensities)/8)
+        sigma = 2
+        
+        kernel = self.gaussianKernel(kernelSize, sigma)
+
+        IRIntensities = self.gaussianBlur(IRIntensities, kernel)
+        
         # Add the Values to a Data Frame
         self.IRSpectra = pd.DataFrame({
             "Frequency" : Frequencies,
@@ -166,6 +175,16 @@ class Spectra:
         print(self.IRSpectra)
         
         print("\nFinished Making Spectra\n")
+
+    def gaussianKernel(self, size, sigma):
+        kernel = np.exp(-np.linspace(-size // 2, size // 2, size)**2 / (2 * sigma**2))
+        return kernel / kernel.sum()
+
+    def gaussianBlur (self, data, kernel):
+        padded_data = np.pad(data, len(kernel) // 2, mode='reflect')  # Handle edges
+        blurred_data = np.convolve(padded_data, kernel, mode='valid')
+        return blurred_data
+        
 
     def PlotSpectra (self):
         # Plots the Spectra
