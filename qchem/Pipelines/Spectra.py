@@ -116,8 +116,10 @@ class Spectra:
         IRFreqDict = { }
         
         # Add a bunch of Dummy Data
-        for i in range(0, 4000, 10):
-            IRFreqDict[i] = 0
+        #for i in range(0, 4000, 10):
+        #    IRFreqDict[i] = 0
+        
+        # Convert this to a cluster calculation
         
         # Loop through all the Conformers and Run a Frequency Calculation
         for i in range(conformersNum):
@@ -151,29 +153,38 @@ class Spectra:
         # Extract the Resulting Sorted IR Intensity
         IRIntensities = [IRFreqDict[freq] for freq in Frequencies]
         
-        # I think these are good settings
-        kernelSize = int(len(IRIntensities)/8) + 1 if (int(len(IRIntensities)/8) % 2 == 0) else int(len(IRIntensities)/8)
-        print(kernelSize)
-        sigma = 5 # 10
-        
-        kernel = self.gaussianKernel(kernelSize, sigma)
-
-        IRIntensities = self.gaussianBlur(IRIntensities, kernel)
-        
-        # Normalize and Reverse the Intensity
-        IRIntensities =  1 - (IRIntensities / max(IRIntensities))
-        
         # Add the Values to a Data Frame
         self.IRSpectra = pd.DataFrame({
             "Frequency" : Frequencies,
             "IRIntensity" : IRIntensities
         })
         
+        self.IRSpectra.to_csv(f"{self.name}_Spectra.csv", index=False)
+        
         print("Final Spectra")
         
         print(self.IRSpectra)
         
         print("\nFinished Making Spectra\n")
+        
+        # I think these are good settings
+        #kernelSize = int(len(IRIntensities)/8) + 1 if (int(len(IRIntensities)/8) % 2 == 0) else int(len(IRIntensities)/8)
+        #print(kernelSize)
+        #sigma = 5 # 10
+        
+        #kernel = self.gaussianKernel(kernelSize, sigma)
+
+        #IRIntensities = self.gaussianBlur(IRIntensities, kernel)
+        
+        # Normalize and Reverse the Intensity
+        #IRIntensities =  1 - (IRIntensities / max(IRIntensities))
+        
+        
+        
+        # Store the Raw DataFrame
+        # Add a function to save Spectrum locally
+        # Add a function to parse the spectrum
+        
 
     def gaussianKernel(self, size, sigma):
         kernel = np.exp(-np.linspace(-size // 2, size // 2, size)**2 / (2 * sigma**2))
