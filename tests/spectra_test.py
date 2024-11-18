@@ -31,17 +31,14 @@ def Test1 ():
     # Load the Ethane Molecule
     mol = Molecule("Ethane", os.path.join("tests", "test_files", "ethane.xyz"))
     
+    # Create a Spectra Object
     spectra = Spectra(mol, OrcaBasisSet.DEF2_SVP.value, OrcaDensityFunctional.B3LYP.value, Cores, LocalTest)
     
+    # Run the Spectra Calculation
     spectra.RunCalculation()
     
+    # Display the Plot in a Tab
     spectra.PlotSpectra()
-    
-    # Define the Frequency Object
-    #frequency = Frequency(mol, OrcaBasisSet.DEF2_SVP.value, OrcaDensityFunctional.B3LYP.value, Cores, LocalTest)
-    
-    # Run the Frequency Calculation
-    #frequency.RunCalculation()
 
 #
 # Test 2 : Use File Reference as Input for Molecular Geometry
@@ -62,7 +59,25 @@ def Test2 ():
     frequency.RunCalculation()
     
 #
+# Test 1 : Load Molecule and Use Molecule as Input
+#
+def Test3 ():
+    
+    # Load the Aspirin Molecule
+    mol = Molecule("Aspirin", os.path.join("tests", "test_files", "aspirin_raw.xyz"))
+    
+    # Create a Spectra Object
+    spectra = Spectra(mol, OrcaBasisSet.DEF2_SVP.value, OrcaDensityFunctional.B3LYP.value, Cores, LocalTest)
+    
+    # Run the Spectra Calculation
+    spectra.RunCalculation()
+    
+    # Display the Plot in a Tab
+    spectra.PlotSpectra()
+    
+#
 # Running Tests
 #
-Test1()
+#Test1()
 #Test2()
+Test3()

@@ -128,8 +128,6 @@ class Spectra:
             # Run the Frequency Calculation
             freqCalc.RunCalculation()
             
-            print(freqCalc.IRFrequencies)
-            
             # Extract the Frequency Values
             frequencies = freqCalc.IRFrequencies["frequency"].values 
             
@@ -153,16 +151,17 @@ class Spectra:
         # Extract the Resulting Sorted IR Intensity
         IRIntensities = [IRFreqDict[freq] for freq in Frequencies]
         
-        # Normalize and Reverse the Intensity
-        IRIntensities =  1 - (IRIntensities / max(IRIntensities))
-        
-        
+        # I think these are good settings
         kernelSize = int(len(IRIntensities)/8) + 1 if (int(len(IRIntensities)/8) % 2 == 0) else int(len(IRIntensities)/8)
-        sigma = 2
+        print(kernelSize)
+        sigma = 5 # 10
         
         kernel = self.gaussianKernel(kernelSize, sigma)
 
         IRIntensities = self.gaussianBlur(IRIntensities, kernel)
+        
+        # Normalize and Reverse the Intensity
+        IRIntensities =  1 - (IRIntensities / max(IRIntensities))
         
         # Add the Values to a Data Frame
         self.IRSpectra = pd.DataFrame({
@@ -192,6 +191,7 @@ class Spectra:
         plt.plot(self.IRSpectra["Frequency"], self.IRSpectra["IRIntensity"])
         plt.xlabel("Frequency (1/cm)")
         plt.ylabel("IR Intensity")
+        plt.gca().invert_xaxis()
         plt.show()
         
         
