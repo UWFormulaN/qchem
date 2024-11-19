@@ -159,7 +159,7 @@ class Spectra:
             "IRIntensity" : IRIntensities
         })
         
-        self.IRSpectra.to_csv(f"{self.name}_Spectra.csv", index=False)
+        self.IRSpectra.to_csv(f"{self.name}_Spectra.csv", index=False, header=None)
         
         print("Final Spectra")
         
