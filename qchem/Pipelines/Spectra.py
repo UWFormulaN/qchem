@@ -205,6 +205,19 @@ class Spectra:
         plt.gca().invert_xaxis()
         plt.show()
         
+    @staticmethod
+    def PlotSpectra (self, path: str, sigma: int = 5):
+        spectra = pd.read_csv(path, header=["Frequency", "IR Intensity"])
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
         
         
         
