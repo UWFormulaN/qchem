@@ -112,8 +112,17 @@ class Spectra:
         # Get the Number of Conformers Created
         conformersNum = len(goatCalc.conformers)
         
+        
+        self.IRSpectra = pd.DataFrame({
+            "Wavenumber" : [],
+            "IRIntensity" : []
+        })
+        
+        
         # Create a Dictionary for the Frequency and IR Intensity Key Pairs
         IRFreqDict = { }
+        
+        
         
         # Add a bunch of Dummy Data
         #for i in range(0, 4000, 10):
@@ -137,11 +146,17 @@ class Spectra:
             IRIntensity = freqCalc.IRFrequencies["IR_intensity"].values * goatCalc.conformerContribution[i]
             
             # Add the Values to the Dictionary
-            for frequency, intensity in zip(frequencies, IRIntensity):
-                if frequency in IRFreqDict:
-                    IRFreqDict[frequency] += intensity
+            for wavenumber, intensity in zip(frequencies, IRIntensity):
+                
+                if wavenumber in self.IRSpectra["Wavenumber"].values:
+                    self.IRSpectra[wavenumber] += intensity
                 else:
-                    IRFreqDict[frequency] = intensity
+                    self.IRSpectra.loc[len(self.IRSpectra)] = [wavenumber, intensity]
+                
+                if wavenumber in IRFreqDict:
+                    IRFreqDict[wavenumber] += intensity
+                else:
+                    IRFreqDict[wavenumber] = intensity
         
         print("\nFinished Frequency Analysis\n")
         
@@ -153,11 +168,14 @@ class Spectra:
         # Extract the Resulting Sorted IR Intensity
         IRIntensities = [IRFreqDict[freq] for freq in Frequencies]
         
+        
+        self.IRSpectra.sort_values(by="Wavenumber")
+        
         # Add the Values to a Data Frame
-        self.IRSpectra = pd.DataFrame({
-            "Frequency" : Frequencies,
-            "IRIntensity" : IRIntensities
-        })
+       # self.IRSpectra = pd.DataFrame({
+       #     "Wavenumber" : Frequencies,
+       #     "IRIntensity" : IRIntensities
+       # })
         
         self.IRSpectra.to_csv(f"{self.name}_Spectra.csv", index=False, header=None)
         
@@ -168,18 +186,18 @@ class Spectra:
         print("\nFinished Making Spectra\n")
         
         # I think these are good settings
-        #kernelSize = int(len(IRIntensities)/8) + 1 if (int(len(IRIntensities)/8) % 2 == 0) else int(len(IRIntensities)/8)
+        kernelSize = int(len(IRIntensities)/8) + 1 if (int(len(IRIntensities)/8) % 2 == 0) else int(len(IRIntensities)/8)
         #print(kernelSize)
-        #sigma = 5 # 10
+        sigma = 5 # 10
         
-        #kernel = self.gaussianKernel(kernelSize, sigma)
+        kernel = self.gaussianKernel(kernelSize, sigma)
 
-        #IRIntensities = self.gaussianBlur(IRIntensities, kernel)
+        IRIntensities = self.gaussianBlur(IRIntensities, kernel)
         
         # Normalize and Reverse the Intensity
-        #IRIntensities =  1 - (IRIntensities / max(IRIntensities))
+        IRIntensities =  1 - (IRIntensities / max(IRIntensities))
         
-        
+        self.PlotSpectra()
         
         # Store the Raw DataFrame
         # Add a function to save Spectrum locally
@@ -195,19 +213,85 @@ class Spectra:
         blurred_data = np.convolve(padded_data, kernel, mode='valid')
         return blurred_data
         
-
     def PlotSpectra (self):
         # Plots the Spectra
         plt.figure()
-        plt.plot(self.IRSpectra["Frequency"], self.IRSpectra["IRIntensity"])
-        plt.xlabel("Frequency (1/cm)")
+        plt.plot(self.IRSpectra["Wavenumber"], self.IRSpectra["IRIntensity"])
+        plt.xlabel("Wavenumber (1/cm)")
         plt.ylabel("IR Intensity")
         plt.gca().invert_xaxis()
         plt.show()
-        
+    
     @staticmethod
-    def PlotSpectra (self, path: str, sigma: int = 5):
-        spectra = pd.read_csv(path, header=["Frequency", "IR Intensity"])
+    def LoadSpectra (spectra : str | pd.DataFrame):
+        
+        # Check if the file is a DataFrame or Path
+        if not isinstance(spectra, (str, pd.DataFrame)):
+            raise ValueError("Spectra is not a Path to a DataFrame file or a DataFrame Object")
+        
+        # Determine the dataFrame Type
+        if (isinstance(spectra, str)):
+            # Read the Dataframe with no Header
+            spectraNoHeader = pd.read_csv(spectra, header=None)
+            
+            # Extract the first Rows Values
+            firstRow = spectraNoHeader.iloc[0].values
+            
+            # Make Bool Array
+            isHeader = [isinstance(i, str) for i in firstRow]
+            
+            # Determine if the First Row is a Header or Not
+            if isHeader: # First Line is the Header, we can Load it
+                return pd.read_csv(spectra)
+            else: # No Header, manually add them
+                return pd.read_csv(spectra, names=["Wavenumber", "IRIntensity"])
+            
+        elif (isinstance(spectra, pd.DataFrame)):
+            # Is a Dataframe, do nothing
+            
+            # Determine the Columns to check for
+            columns = ["Wavenumber", "IRIntensity"]
+            
+            # Make sure all Columns are present and correctly Named
+            if not all(i in spectra for i in columns):
+                raise ValueError("The DataFrame provided doesn't have columns named \"Wavenumber\" and \"IRIntensity\"")
+    
+            return spectra.copy()
+                
+
+    @staticmethod
+    def PlotSpectra (spectra: str | pd.DataFrame, sigma: int = 5, maxWaveNum = 4000):
+        
+        ColumnNum = 2
+        
+        # Load the Spectra
+        IRSpectra = Spectra.LoadSpectra(spectra)
+        
+        
+        
+        
+        
+        
+        
+        # Create a Dictionary for the Frequency and IR Intensity Key Pairs
+        IRFreqDict = { }
+        
+        
+        
+        
+        # Add a bunch of Dummy Data
+        for i in range(0, maxWaveNum, 1):
+            IRSpectra.loc[ColumnNum] = [i, 0]
+            
+            #IRFreqDict[i] = 0
+            
+        # Add the Spectra DF Data
+        
+        
+        
+        
+        
+        
         
         
         
