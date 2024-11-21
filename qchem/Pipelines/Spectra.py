@@ -191,7 +191,7 @@ class Spectra:
         
         kernel = self.gaussianKernel(kernelSize, sigma)
 
-        IRIntensities = self.gaussianBlur(IRIntensities, kernel)
+        IRIntensities =  Spectra.GaussianBlur(IRIntensities, sigma)
         
         # Normalize and Reverse the Intensity
         IRIntensities =  1 - (IRIntensities / max(IRIntensities))
@@ -295,12 +295,23 @@ class Spectra:
         IRSpectra.sort_values(by="Wavenumber", ascending=False) #Reversing?
         
         # Apply a Gaussian Blurring to the Intensities
-        IRIntensity = Spectra.GaussianBlur(IRSpectra["Wavenumber"], sigma)
+        IRSpectra["IRIntensity"] = Spectra.GaussianBlur(IRSpectra["Wavenumber"], sigma)
+        
+        #IRIntensity = Spectra.GaussianBlur(IRSpectra["Wavenumber"], sigma)
+        
         
         # Normalize and Reverse Intensities
-        IRIntensity = 1 - (IRIntensity / max(IRIntensity))
+        IRSpectra["IRIntensity"] = 1 - (IRSpectra["IRIntensity"] / max(IRSpectra["IRIntensity"].values))
+        
+        #IRIntensity = 1 - (IRIntensity / max(IRIntensity))
             
-        # Add the Spectra DF Data
+        # Plots the Spectra
+        plt.figure()
+        plt.plot(IRSpectra["Wavenumber"], IRSpectra["IRIntensity"])
+        plt.xlabel("Wavenumber (1/cm)")
+        plt.ylabel("IR Intensity")
+        plt.gca().invert_xaxis()
+        plt.show()
         
         
         
