@@ -196,7 +196,7 @@ class Spectra:
         # Normalize and Reverse the Intensity
         IRIntensities =  1 - (IRIntensities / max(IRIntensities))
         
-        self.PlotSpectra()
+        self.PlotSpectra2()
         
         # Store the Raw DataFrame
         # Add a function to save Spectrum locally
@@ -231,7 +231,7 @@ class Spectra:
         
         return blurred_data
         
-    def PlotSpectra (self):
+    def PlotSpectra2 (self):
         # Plots the Spectra
         plt.figure()
         plt.plot(self.IRSpectra["Wavenumber"], self.IRSpectra["IRIntensity"])
