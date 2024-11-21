@@ -122,8 +122,6 @@ class Spectra:
         # Create a Dictionary for the Frequency and IR Intensity Key Pairs
         IRFreqDict = { }
         
-        
-        
         # Add a bunch of Dummy Data
         #for i in range(0, 4000, 10):
         #    IRFreqDict[i] = 0
@@ -149,7 +147,8 @@ class Spectra:
             for wavenumber, intensity in zip(frequencies, IRIntensity):
                 
                 if wavenumber in self.IRSpectra["Wavenumber"].values:
-                    self.IRSpectra[wavenumber] += intensity
+                    index = self.IRSpectra[self.IRSpectra["Wavenumber"] == wavenumber].index
+                    self.IRSpectra["IRIntensity"][index] += intensity
                 else:
                     self.IRSpectra.loc[len(self.IRSpectra)] = [wavenumber, intensity]
                 
@@ -205,12 +204,31 @@ class Spectra:
         
 
     def gaussianKernel(self, size, sigma):
+        if size % 2 == 0:
+            size -= 1
         kernel = np.exp(-np.linspace(-size // 2, size // 2, size)**2 / (2 * sigma**2))
         return kernel / kernel.sum()
 
-    def gaussianBlur (self, data, kernel):
+    @staticmethod
+    def GaussianBlur ( data, sigma):
+        
+        # Get Size
+        size = len(data)
+        
+        # Make sure Size is Inpair
+        if size % 2 == 0:
+            size -= 1
+        
+        # Generate Kernel
+        kernel = np.exp(-np.linspace(-size // 2, size // 2, size)**2 / (2 * sigma**2))
+        kernel =  kernel / kernel.sum()
+        
+        # Pad the Data
         padded_data = np.pad(data, len(kernel) // 2, mode='reflect')  # Handle edges
+        
+        # Blurr the Data by Applying Gaussian Blurring
         blurred_data = np.convolve(padded_data, kernel, mode='valid')
+        
         return blurred_data
         
     def PlotSpectra (self):
@@ -267,23 +285,20 @@ class Spectra:
         # Load the Spectra
         IRSpectra = Spectra.LoadSpectra(spectra)
         
-        
-        
-        
-        
-        
-        
-        # Create a Dictionary for the Frequency and IR Intensity Key Pairs
-        IRFreqDict = { }
-        
-        
-        
-        
         # Add a bunch of Dummy Data
         for i in range(0, maxWaveNum, 1):
             IRSpectra.loc[ColumnNum] = [i, 0]
             
             #IRFreqDict[i] = 0
+        
+        # Sort the Columns
+        IRSpectra.sort_values(by="Wavenumber", ascending=False) #Reversing?
+        
+        # Apply a Gaussian Blurring to the Intensities
+        IRIntensity = Spectra.GaussianBlur(IRSpectra["Wavenumber"], sigma)
+        
+        # Normalize and Reverse Intensities
+        IRIntensity = 1 - (IRIntensity / max(IRIntensity))
             
         # Add the Spectra DF Data
         
