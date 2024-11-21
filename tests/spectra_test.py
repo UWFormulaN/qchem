@@ -38,7 +38,7 @@ def Test1 ():
     spectra.RunCalculation()
     
     # Display the Plot in a Tab
-    spectra.PlotSpectra()
+    Spectra.PlotSpectra(spectra.IRSpectra)
 
 #
 # Test 2 : Use File Reference as Input for Molecular Geometry
@@ -78,6 +78,6 @@ def Test3 ():
 #
 # Running Tests
 #
-#Test1()
+Test1()
 #Test2()
-Test3()
+#Test3()

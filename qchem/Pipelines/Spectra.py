@@ -112,19 +112,17 @@ class Spectra:
         # Get the Number of Conformers Created
         conformersNum = len(goatCalc.conformers)
         
-        
         self.IRSpectra = pd.DataFrame({
             "Wavenumber" : [],
             "IRIntensity" : []
         })
         
-        
         # Create a Dictionary for the Frequency and IR Intensity Key Pairs
         IRFreqDict = { }
         
         # Add a bunch of Dummy Data
-        #for i in range(0, 4000, 10):
-        #    IRFreqDict[i] = 0
+        for i in range(0, 4000, 10):
+            IRFreqDict[i] = 0
         
         # Convert this to a cluster calculation
         
@@ -167,14 +165,13 @@ class Spectra:
         # Extract the Resulting Sorted IR Intensity
         IRIntensities = [IRFreqDict[freq] for freq in Frequencies]
         
-        
-        self.IRSpectra.sort_values(by="Wavenumber")
-        
         # Add the Values to a Data Frame
-       # self.IRSpectra = pd.DataFrame({
-       #     "Wavenumber" : Frequencies,
-       #     "IRIntensity" : IRIntensities
-       # })
+        self.IRSpectra = pd.DataFrame({
+            "Wavenumber" : Frequencies,
+            "IRIntensity" : IRIntensities
+        })
+        
+        self.IRSpectra = self.IRSpectra.sort_values(by="Wavenumber", ascending=False)
         
         self.IRSpectra.to_csv(f"{self.name}_Spectra.csv", index=False, header=None)
         
@@ -196,11 +193,21 @@ class Spectra:
         # Normalize and Reverse the Intensity
         IRIntensities =  1 - (IRIntensities / max(IRIntensities))
         
-        self.PlotSpectra2()
+        #Spectra.PlotSpectra(self.IRSpectra)
+        
+        # Plots the Spectra
+        plt.figure()
+        plt.plot(self.IRSpectra["Wavenumber"], IRIntensities)
+        plt.xlabel("Wavenumber (1/cm)")
+        plt.ylabel("IR Intensity")
+        plt.gca().invert_xaxis()
+        plt.show()
         
         # Store the Raw DataFrame
         # Add a function to save Spectrum locally
         # Add a function to parse the spectrum
+        
+        # Ok so Old Method is Working Properly
         
 
     def gaussianKernel(self, size, sigma):
@@ -213,7 +220,7 @@ class Spectra:
     def GaussianBlur ( data, sigma):
         
         # Get Size
-        size = len(data)
+        size = int(len(data))
         
         # Make sure Size is Inpair
         if size % 2 == 0:
@@ -274,34 +281,37 @@ class Spectra:
             if not all(i in spectra for i in columns):
                 raise ValueError("The DataFrame provided doesn't have columns named \"Wavenumber\" and \"IRIntensity\"")
     
+            print("Exists")
+    
             return spectra.copy()
                 
 
     @staticmethod
     def PlotSpectra (spectra: str | pd.DataFrame, sigma: int = 5, maxWaveNum = 4000):
         
-        ColumnNum = 2
-        
         # Load the Spectra
         IRSpectra = Spectra.LoadSpectra(spectra)
         
         # Add a bunch of Dummy Data
-        for i in range(0, maxWaveNum, 1):
-            IRSpectra.loc[ColumnNum] = [i, 0]
+        #for i in range(0, maxWaveNum, 10):
+        #    IRSpectra.loc[len(IRSpectra)] = [i, 0]
             
             #IRFreqDict[i] = 0
         
+        print("Printing Spectra")
+        print(IRSpectra)
+        
         # Sort the Columns
-        IRSpectra.sort_values(by="Wavenumber", ascending=False) #Reversing?
+        IRSpectra = IRSpectra.sort_values(by="Wavenumber", ascending=False) #Reversing?
         
         # Apply a Gaussian Blurring to the Intensities
-        IRSpectra["IRIntensity"] = Spectra.GaussianBlur(IRSpectra["Wavenumber"], sigma)
+        IRSpectra["IRIntensity"] = Spectra.GaussianBlur(IRSpectra["IRIntensity"], sigma)
         
         #IRIntensity = Spectra.GaussianBlur(IRSpectra["Wavenumber"], sigma)
         
         
         # Normalize and Reverse Intensities
-        IRSpectra["IRIntensity"] = 1 - (IRSpectra["IRIntensity"] / max(IRSpectra["IRIntensity"].values))
+        IRSpectra["IRIntensity"] = 1 - (IRSpectra["IRIntensity"].values / max(IRSpectra["IRIntensity"].values))
         
         #IRIntensity = 1 - (IRIntensity / max(IRIntensity))
             
