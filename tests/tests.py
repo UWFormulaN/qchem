@@ -19,6 +19,6 @@ def test_input_file(test_input):
             basis="def2-SVP",
             functional="PBE",
             xyzfile="aspirin.xyz",
-        ).GenerateInputFile()
+        ).generateInputFile()
         == "!OPT def2-SVP PBE\n*xyzfile 0 1 aspirin.xyz\n"
     )
