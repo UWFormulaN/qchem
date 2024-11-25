@@ -121,8 +121,8 @@ class Spectra:
         IRFreqDict = { }
         
         # Add a bunch of Dummy Data
-        for i in range(0, 4000, 10):
-            IRFreqDict[i] = 0
+        #for i in range(0, 4000, 10):
+        #    IRFreqDict[i] = 0
         
         # Convert this to a cluster calculation
         
@@ -192,6 +192,9 @@ class Spectra:
         
         # Normalize and Reverse the Intensity
         IRIntensities =  1 - (IRIntensities / max(IRIntensities))
+        
+        print("Plotting")
+        Spectra.PlotSpectra(self.IRSpectra)
         
         #Spectra.PlotSpectra(self.IRSpectra)
         
@@ -293,8 +296,8 @@ class Spectra:
         IRSpectra = Spectra.LoadSpectra(spectra)
         
         # Add a bunch of Dummy Data
-        #for i in range(0, maxWaveNum, 10):
-        #    IRSpectra.loc[len(IRSpectra)] = [i, 0]
+        for i in range(0, maxWaveNum, 10):
+            IRSpectra.loc[len(IRSpectra)] = [i, 0]
             
             #IRFreqDict[i] = 0
         
@@ -322,24 +325,4 @@ class Spectra:
         plt.ylabel("IR Intensity")
         plt.gca().invert_xaxis()
         plt.show()
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         
