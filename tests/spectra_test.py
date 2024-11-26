@@ -38,7 +38,7 @@ def Test1 ():
     spectra.RunCalculation()
     
     # Display the Plot in a Tab
-    Spectra.PlotSpectra(spectra.IRSpectra)
+    Spectra.PlotSpectra(spectra.IRSpectra, "Ethane Test")
 
 #
 # Test 2 : Use File Reference as Input for Molecular Geometry

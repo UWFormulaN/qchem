@@ -117,29 +117,25 @@ class Spectra:
             "IRIntensity" : []
         })
         
+        IRSpec = pd.DataFrame({
+            "Wavenumber" : [],
+            "IRIntensity" : []
+        })
+        
+        IRContribution = pd.DataFrame({
+            "Name" : [],
+            "Contribution" : []
+        })
+
+        for i in range(conformersNum):
+            IRContribution.loc[len(IRContribution)] = [f"{self.name} {i}", goatCalc.conformerContribution[i]]
+
+        IRContribution.to_csv(f"{self.name}_Contributions.csv")
+        
         # Create a Dictionary for the Frequency and IR Intensity Key Pairs
         IRFreqDict = { }
         
         # Convert this to a cluster calculation
-        
-        #calcs = []
-        #
-        #inputFile = OrcaInputFile(OrcaInputTemplate.BASICXYZ,
-        #                              calculation = "FREQ",
-        #                              basis = self.basisSet,
-        #                              functional = self.functional,
-        #                              xyz = self.molecule.XYZBody())
-        #
-        ## Create the Calculation Object
-        #calculation = OrcaCalculation(self.name, inputFile, isLocal=self.isLocal, stdout=False)
-        #
-        #calcs.append(calculation)
-        
-        
-        
-        
-        
-        
         
         # Loop through all the Conformers and Run a Frequency Calculation
         for i in range(conformersNum):
@@ -156,14 +152,20 @@ class Spectra:
             # Extract the IR Intensity Values and Multiply by the conformer Contribution
             IRIntensity = freqCalc.IRFrequencies["IR_intensity"].values * goatCalc.conformerContribution[i]
             
+            FreqSpectra = pd.DataFrame({
+                "Wavenumber" : freqCalc.IRFrequencies["frequency"].values,
+                "IRIntensity" : freqCalc.IRFrequencies["IR_intensity"].values
+            })
+            
+            FreqSpectra.to_csv(f"{self.name}_IRIntensity_{i}.csv", index=False, )
+            
+            FreqSpectra["IRIntensity"] = FreqSpectra["IRIntensity"].values * goatCalc.conformerContribution[i]
+            
+            # This Method Works, no need for a Dictionary and all that
+            IRSpec = pd.concat([IRSpec, FreqSpectra], ignore_index=True)
+            
             # Add the Values to the Dictionary
             for wavenumber, intensity in zip(frequencies, IRIntensity):
-                
-                #if wavenumber in self.IRSpectra["Wavenumber"].values:
-                #    index = self.IRSpectra[self.IRSpectra["Wavenumber"] == wavenumber].index
-                #    self.IRSpectra["IRIntensity"][index] += intensity
-                #else:
-                #    self.IRSpectra.loc[len(self.IRSpectra)] = [wavenumber, intensity]
                 
                 if wavenumber in IRFreqDict:
                     IRFreqDict[wavenumber] += intensity
@@ -180,6 +182,10 @@ class Spectra:
         # Extract the Resulting Sorted IR Intensity
         IRIntensities = [IRFreqDict[freq] for freq in Frequencies]
         
+        IRSpec.groupby("Wavenumber", as_index=False).agg({
+            "IRIntensity" : "sum"
+        })
+        
         # Add the Values to a Data Frame
         self.IRSpectra = pd.DataFrame({
             "Wavenumber" : Frequencies,
@@ -188,7 +194,7 @@ class Spectra:
         
         self.IRSpectra = self.IRSpectra.sort_values(by="Wavenumber", ascending=False)
         
-        self.IRSpectra.to_csv(f"{self.name}_Spectra.csv", index=False, header=None)
+        self.IRSpectra.to_csv(f"{self.name}_Spectra.csv", index=False)
         
         print("Final Spectra")
         
@@ -196,30 +202,10 @@ class Spectra:
         
         print("\nFinished Making Spectra\n")
         
-        # I think these are good settings
-        kernelSize = int(len(IRIntensities)/8) + 1 if (int(len(IRIntensities)/8) % 2 == 0) else int(len(IRIntensities)/8)
-        #print(kernelSize)
-        sigma = 5 # 10
-        
-        kernel = self.gaussianKernel(kernelSize, sigma)
-
-        IRIntensities =  Spectra.GaussianBlur(IRIntensities, sigma)
-        
-        # Normalize and Reverse the Intensity
-        IRIntensities =  1 - (IRIntensities / max(IRIntensities))
-        
         print("Plotting")
-        Spectra.PlotSpectra(self.IRSpectra)
+        Spectra.PlotSpectra(self.IRSpectra, "First")
         
-        #Spectra.PlotSpectra(self.IRSpectra)
-        
-        # Plots the Spectra
-        plt.figure()
-        plt.plot(self.IRSpectra["Wavenumber"], IRIntensities)
-        plt.xlabel("Wavenumber (1/cm)")
-        plt.ylabel("IR Intensity")
-        plt.gca().invert_xaxis()
-        plt.show()
+        Spectra.PlotSpectra(IRSpec, "SpecTest")
         
         # Store the Raw DataFrame
         # Add a function to save Spectrum locally
@@ -305,7 +291,7 @@ class Spectra:
                 
 
     @staticmethod
-    def PlotSpectra (spectra: str | pd.DataFrame, sigma: int = 5, maxWaveNum = 4000):
+    def PlotSpectra (spectra: str | pd.DataFrame, plotName : str = "Spectra", sigma: int = 5, maxWaveNum = 4000):
         
         # Load the Spectra
         IRSpectra = Spectra.LoadSpectra(spectra)
@@ -332,5 +318,6 @@ class Spectra:
         plt.xlabel("Wavenumber (1/cm)")
         plt.ylabel("IR Intensity")
         plt.gca().invert_xaxis()
+        plt.savefig(f"{plotName}.png")
         plt.show()
         
