@@ -120,17 +120,32 @@ class Spectra:
         # Create a Dictionary for the Frequency and IR Intensity Key Pairs
         IRFreqDict = { }
         
-        # Add a bunch of Dummy Data
-        #for i in range(0, 4000, 10):
-        #    IRFreqDict[i] = 0
-        
         # Convert this to a cluster calculation
+        
+        #calcs = []
+        #
+        #inputFile = OrcaInputFile(OrcaInputTemplate.BASICXYZ,
+        #                              calculation = "FREQ",
+        #                              basis = self.basisSet,
+        #                              functional = self.functional,
+        #                              xyz = self.molecule.XYZBody())
+        #
+        ## Create the Calculation Object
+        #calculation = OrcaCalculation(self.name, inputFile, isLocal=self.isLocal, stdout=False)
+        #
+        #calcs.append(calculation)
+        
+        
+        
+        
+        
+        
         
         # Loop through all the Conformers and Run a Frequency Calculation
         for i in range(conformersNum):
             
             # Create the Frequency Calculation
-            freqCalc = Frequency(self.molecule, self.basisSet, self.functional, self.cores, self.isLocal, f"{self.name}_FREQ_{i}")
+            freqCalc = Frequency(goatCalc.conformers[i], self.basisSet, self.functional, self.cores, self.isLocal, f"{self.name}_FREQ_{i}")
             
             # Run the Frequency Calculation
             freqCalc.RunCalculation()
@@ -144,11 +159,11 @@ class Spectra:
             # Add the Values to the Dictionary
             for wavenumber, intensity in zip(frequencies, IRIntensity):
                 
-                if wavenumber in self.IRSpectra["Wavenumber"].values:
-                    index = self.IRSpectra[self.IRSpectra["Wavenumber"] == wavenumber].index
-                    self.IRSpectra["IRIntensity"][index] += intensity
-                else:
-                    self.IRSpectra.loc[len(self.IRSpectra)] = [wavenumber, intensity]
+                #if wavenumber in self.IRSpectra["Wavenumber"].values:
+                #    index = self.IRSpectra[self.IRSpectra["Wavenumber"] == wavenumber].index
+                #    self.IRSpectra["IRIntensity"][index] += intensity
+                #else:
+                #    self.IRSpectra.loc[len(self.IRSpectra)] = [wavenumber, intensity]
                 
                 if wavenumber in IRFreqDict:
                     IRFreqDict[wavenumber] += intensity
@@ -299,8 +314,6 @@ class Spectra:
         for i in range(0, maxWaveNum, 10):
             IRSpectra.loc[len(IRSpectra)] = [i, 0]
             
-            #IRFreqDict[i] = 0
-        
         print("Printing Spectra")
         print(IRSpectra)
         
@@ -310,14 +323,9 @@ class Spectra:
         # Apply a Gaussian Blurring to the Intensities
         IRSpectra["IRIntensity"] = Spectra.GaussianBlur(IRSpectra["IRIntensity"], sigma)
         
-        #IRIntensity = Spectra.GaussianBlur(IRSpectra["Wavenumber"], sigma)
-        
-        
         # Normalize and Reverse Intensities
         IRSpectra["IRIntensity"] = 1 - (IRSpectra["IRIntensity"].values / max(IRSpectra["IRIntensity"].values))
         
-        #IRIntensity = 1 - (IRIntensity / max(IRIntensity))
-            
         # Plots the Spectra
         plt.figure()
         plt.plot(IRSpectra["Wavenumber"], IRSpectra["IRIntensity"])
