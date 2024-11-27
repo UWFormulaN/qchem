@@ -117,10 +117,10 @@ class Spectra:
             "IRIntensity" : []
         })
         
-        IRSpec = pd.DataFrame({
-            "Wavenumber" : [],
-            "IRIntensity" : []
-        })
+        #IRSpec = pd.DataFrame({
+        #    "Wavenumber" : [],
+        #    "IRIntensity" : []
+        #})
         
         IRContribution = pd.DataFrame({
             "Name" : [],
@@ -133,7 +133,7 @@ class Spectra:
         IRContribution.to_csv(f"{self.name}_Contributions.csv")
         
         # Create a Dictionary for the Frequency and IR Intensity Key Pairs
-        IRFreqDict = { }
+        #IRFreqDict = { }
         
         # Convert this to a cluster calculation
         
@@ -147,10 +147,10 @@ class Spectra:
             freqCalc.RunCalculation()
             
             # Extract the Frequency Values
-            frequencies = freqCalc.IRFrequencies["frequency"].values 
+            #frequencies = freqCalc.IRFrequencies["frequency"].values 
             
             # Extract the IR Intensity Values and Multiply by the conformer Contribution
-            IRIntensity = freqCalc.IRFrequencies["IR_intensity"].values * goatCalc.conformerContribution[i]
+            #IRIntensity = freqCalc.IRFrequencies["IR_intensity"].values * goatCalc.conformerContribution[i]
             
             FreqSpectra = pd.DataFrame({
                 "Wavenumber" : freqCalc.IRFrequencies["frequency"].values,
@@ -162,35 +162,35 @@ class Spectra:
             FreqSpectra["IRIntensity"] = FreqSpectra["IRIntensity"].values * goatCalc.conformerContribution[i]
             
             # This Method Works, no need for a Dictionary and all that
-            IRSpec = pd.concat([IRSpec, FreqSpectra], ignore_index=True)
+            self.IRSpectra = pd.concat([self.IRSpectra, FreqSpectra], ignore_index=True)
             
             # Add the Values to the Dictionary
-            for wavenumber, intensity in zip(frequencies, IRIntensity):
-                
-                if wavenumber in IRFreqDict:
-                    IRFreqDict[wavenumber] += intensity
-                else:
-                    IRFreqDict[wavenumber] = intensity
+            #for wavenumber, intensity in zip(frequencies, IRIntensity):
+            #    
+            #    if wavenumber in IRFreqDict:
+            #        IRFreqDict[wavenumber] += intensity
+            #    else:
+            #        IRFreqDict[wavenumber] = intensity
         
         print("\nFinished Frequency Analysis\n")
         
         print("\nMaking Final Touches\n")
         
         # Extract the Sorted Frequencies
-        Frequencies = sorted(IRFreqDict.keys(), reverse=True)
+        #Frequencies = sorted(IRFreqDict.keys(), reverse=True)
         
         # Extract the Resulting Sorted IR Intensity
-        IRIntensities = [IRFreqDict[freq] for freq in Frequencies]
+        #IRIntensities = [IRFreqDict[freq] for freq in Frequencies]
         
-        IRSpec.groupby("Wavenumber", as_index=False).agg({
+        self.IRSpectra.groupby("Wavenumber", as_index=False).agg({
             "IRIntensity" : "sum"
         })
         
         # Add the Values to a Data Frame
-        self.IRSpectra = pd.DataFrame({
-            "Wavenumber" : Frequencies,
-            "IRIntensity" : IRIntensities
-        })
+        #self.IRSpectra = pd.DataFrame({
+        #    "Wavenumber" : Frequencies,
+        #    "IRIntensity" : IRIntensities
+        #})
         
         self.IRSpectra = self.IRSpectra.sort_values(by="Wavenumber", ascending=False)
         
@@ -205,7 +205,7 @@ class Spectra:
         print("Plotting")
         Spectra.PlotSpectra(self.IRSpectra, "First")
         
-        Spectra.PlotSpectra(IRSpec, "SpecTest")
+        #Spectra.PlotSpectra(IRSpec, "SpecTest")
         
         # Store the Raw DataFrame
         # Add a function to save Spectrum locally
