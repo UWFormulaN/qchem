@@ -1,8 +1,14 @@
 import pandas as pd
 import re
+import os
+import sys
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from qchem.Molecule import Molecule
 from qchem.XYZFile import XYZFile
-import os
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__))))
 
 
 class OrcaOutput:
@@ -20,6 +26,7 @@ class OrcaOutput:
         self.determine_calculation_type()
 
         # Extract basic calculation data
+        self.scf_energies = self.get_scf_energies()
         self.final_timings = self.get_final_timings()
         self.mayer_population = self.get_mayer_population()
         self.loedwin = self.get_loewdin_charges()
@@ -34,105 +41,6 @@ class OrcaOutput:
         self.conformers = self.get_conformer_info() if "GOAT" in self.calc_types else None
         self.goat_summary = self.get_goat_summary() if "GOAT" in self.calc_types else None
 
-    # Energy-related methods
-    def get_final_energy(self) -> float:
-        """Extract final single-point energy from output."""
-        for line in self.lines:
-            if line.strip()[0:25] == "FINAL SINGLE POINT ENERGY":
-                return float(line.split()[-1])
-
-    def get_scf_energies(self) -> list:
-        """Extract SCF iteration energies and convergence data."""
-        scf_energies = []
-        start_switch = False
-        end_switch = False
-
-        # Look for SCF iteration block
-        for i, line in enumerate(self.lines):
-            if line.strip() == "SCF ITERATIONS":
-                start_index = i + 1
-                start_switch = True
-            if line.strip() == "***Rediagonalizing the Fockian in SOSCF/NRSCF***":
-                end_index = i + 1
-                end_switch = True
-
-            # Process block when found
-            if start_switch & end_switch:
-                SCF_lines = self.lines[start_index:end_index]
-                # Convert to DataFrame with energy convergence data
-                df = pd.DataFrame([line.split()[0:3] for line in SCF_lines], columns=["ITER", "Energy", "Delta-E"])
-                df = df.apply(pd.to_numeric, errors="coerce").dropna()
-                scf_energies.append(df)
-                start_switch = False
-                end_switch = False
-
-        return scf_energies
-
-    # Population and charge analysis methods
-    def get_mayer_population(self) -> list:
-        """Extract Mayer population analysis data for atomic properties."""
-        # Get total number of atoms
-        for line in self.lines:
-            if line.strip()[0:15] == "Number of atoms":
-                atom_count = int(line.split()[-1])
-
-        mayer_populations = []
-        # Look for Mayer population blocks
-        for i, line in enumerate(self.lines):
-            if line.strip() == "ATOM       NA         ZA         QA         VA         BVA        FA":
-                start_index = i + 1
-                end_index = i + atom_count + 1
-                mayer_lines = self.lines[start_index:end_index]
-
-                # Convert to DataFrame with atomic properties
-                df = pd.DataFrame(
-                    [line.split()[1:8] for line in mayer_lines],
-                    columns=["ATOM", "NA", "ZA", "QA", "VA", "BVA", "FA"],
-                )
-                # Convert numeric columns
-                df[["NA", "ZA", "QA", "VA", "BVA", "FA"]] = df[["NA", "ZA", "QA", "VA", "BVA", "FA"]].astype(float)
-                mayer_populations.append(df)
-
-        return mayer_populations
-
-    # Dipole moment methods
-    def get_dipole_vector(self) -> tuple:
-        """Extract x, y, z components of dipole moment vector."""
-        for line in self.lines:
-            if line.strip()[0:19] == "Total Dipole Moment":
-                return tuple(map(float, line.split()[4:]))  # Convert to floats
-
-    def get_dipole_magnitude(self) -> float:
-        """Extract magnitude of total dipole moment."""
-        for line in self.lines:
-            if line.strip()[0:15] == "Magnitude (a.u.)":
-                return float(line.split()[2])
-
-    # Frequency analysis methods
-    def get_vibrational_frequencies(self) -> pd.DataFrame:
-        """Extract vibrational frequencies from frequency calculation."""
-        freqs = []
-        for i, line in enumerate(self.lines):
-            if "VIBRATIONAL FREQUENCIES" in line:
-                start_idx = i + 5  # Skip header lines
-                # Process each frequency line
-                while self.lines[start_idx].strip():
-                    parts = self.lines[start_idx].split()
-                    if len(parts) >= 2:
-                        freqs.append(
-                            {
-                                "mode": int(parts[0].strip(":")),
-                                "frequency": float(parts[1]),
-                            }
-                        )
-                    start_idx += 1
-
-        # Return empty DataFrame if no frequencies found
-        if len(freqs) == 0:
-            return pd.DataFrame(columns=["mode", "frequency"])
-        return pd.DataFrame(freqs)
-
-    # File output methods
     def save_to_txt(self, output_path: str):
         """Save all extracted data to formatted text file."""
         with open(output_path, "w") as file:
@@ -142,9 +50,8 @@ class OrcaOutput:
 
             # Write SCF convergence data
             file.write("SCF Energies:\n")
-            for df in self.get_scf_energies():
-                file.write(df.to_string(index=False))
-                file.write("\n\n")
+            for energy in self.scf_energies:
+                file.write(f"{energy}\n\n")
 
             # Write timing information
             file.write("Final Timings:\n")
@@ -196,6 +103,20 @@ class OrcaOutput:
         """Read XYZ format atomic coordinates."""
         return pd.read_csv(path, sep=r"\s+", skiprows=1, names=["Atom", "X", "Y", "Z"], engine="python")
 
+    def determine_calculation_type(self) -> list[str]:
+        """Determine types of calculations in output file."""
+        self.calc_types = []
+
+        for line in self.lines:
+            if "VIBRATIONAL FREQUENCIES" in line:
+                self.calc_types.append("FREQ") if not "FREQ" in self.calc_types else None
+            elif "CHEMICAL SHIELDINGS (ppm)" in line:
+                self.calc_types.append("NMR") if not "NMR" in self.calc_types else None
+            elif "GEOMETRY OPTIMIZATION" in line:
+                self.calc_types.append("OPT") if not "OPT" in self.calc_types else None
+            elif "GOAT Global Iter" in line:
+                self.calc_types.append("GOAT") if not "GOAT" in self.calc_types else None
+
     def get_final_timings(self) -> pd.DataFrame:
         """Extract computational timing information."""
         for i, line in enumerate(self.lines[-20:]):
@@ -208,6 +129,97 @@ class OrcaOutput:
                 df[["Time", "B"]] = df["Time"].str.split("sec", n=1, expand=True)
                 return df.drop(["B"], axis=1)
 
+    def get_final_energy(self) -> float:
+        """Extract final single-point energy from output."""
+        for line in self.lines:
+            if line.strip().startswith("FINAL SINGLE POINT ENERGY"):
+                return float(line.split()[-1])
+
+    def get_scf_energies(self) -> list:
+        """Extract SCF iteration energies and convergence data."""
+        scf_energies = []
+
+        # Look for SCF energy blocks
+        for i, line in enumerate(self.lines):
+            # Look for headers indicating SCF energy sections
+            if "TOTAL SCF ENERGY" in line or "FINAL SINGLE POINT ENERGY" in line:
+                # Skip header lines to get to actual energy value
+                for j in range(i + 1, min(i + 5, len(self.lines))):
+                    if "Total Energy" in self.lines[j]:
+                        # Extract energy value
+                        print(self.lines[j].split())
+                        energy = float(self.lines[j].split()[-2])
+                        scf_energies.append(energy)
+                        break
+                    elif any(char.isdigit() for char in self.lines[j]):
+                        # Direct energy value line
+                        energy = float(self.lines[j].split()[-2])
+                        scf_energies.append(energy)
+                        break
+
+        return scf_energies
+
+    def get_mayer_population(self) -> list:
+        """Extract Mayer population analysis data for atomic properties."""
+        # Get total number of atoms
+        for line in self.lines:
+            if line.strip().startswith("Number of atoms"):
+                atom_count = int(line.split()[-1])
+
+        mayer_populations = []
+        # Look for Mayer population blocks
+        for i, line in enumerate(self.lines):
+            if line.strip() == "ATOM       NA         ZA         QA         VA         BVA        FA":
+                start_index = i + 1
+                end_index = i + atom_count + 1
+                mayer_lines = self.lines[start_index:end_index]
+
+                # Convert to DataFrame with atomic properties
+                df = pd.DataFrame(
+                    [line.split()[1:8] for line in mayer_lines],
+                    columns=["ATOM", "NA", "ZA", "QA", "VA", "BVA", "FA"],
+                )
+                # Convert numeric columns
+                df[["NA", "ZA", "QA", "VA", "BVA", "FA"]] = df[["NA", "ZA", "QA", "VA", "BVA", "FA"]].astype(float)
+                mayer_populations.append(df)
+
+        return mayer_populations
+
+    def get_dipole_vector(self) -> tuple:
+        """Extract x, y, z components of dipole moment vector."""
+        for line in self.lines:
+            if line.strip().startswith("Total Dipole Moment"):
+                return tuple(map(float, line.split()[4:]))  # Convert to floats
+
+    def get_dipole_magnitude(self) -> float:
+        """Extract magnitude of total dipole moment."""
+        for line in self.lines:
+            if line.strip().startswith("Magnitude (a.u.)"):
+                return float(line.split()[3])
+
+    def get_vibrational_frequencies(self) -> pd.DataFrame:
+        """Extract vibrational frequencies from frequency calculation."""
+        freqs = []
+        for i, line in enumerate(self.lines):
+            if "VIBRATIONAL FREQUENCIES" in line:
+                start_idx = i + 5  # Skip header lines
+                # Process each frequency line
+                while self.lines[start_idx].strip():
+                    parts = self.lines[start_idx].split()
+                    if len(parts) >= 2:
+                        freqs.append(
+                            {
+                                "mode": int(parts[0].strip(":")),
+                                "frequency": float(parts[1]),
+                            }
+                        )
+                    start_idx += 1
+
+        # Return empty DataFrame if no frequencies found
+        if len(freqs) == 0:
+            return pd.DataFrame(columns=["mode", "frequency"])
+        return pd.DataFrame(freqs)
+
     def get_gibbs_energy(self) -> tuple:
         """Extract Gibbs free energy and units."""
         for i, line in enumerate(self.lines):
@@ -215,50 +227,6 @@ class OrcaOutput:
                 gibbs = float(re.search(r"-?\d+\.\d+", line).group())
                 unit = re.search(r"\b\w+\b$", line).group()
                 return gibbs, unit
-
-    def calculate_partition_coefficient(self, gibbs_1: tuple, gibbs_2: tuple, temp=293.15) -> float:
-        """Calculate partition coefficient between two Gibbs energies."""
-        delta_gibbs = gibbs_1[0] * self.convert_energy_units(1.0, gibbs_1[1], "Eh") - gibbs_2[0] * self.convert_energy_units(
-            1.0, gibbs_2[1], "Eh"
-        )
-        delta_gibbs = delta_gibbs * self.convert_energy_units(1.0, "Eh", "J/mol")
-        return -delta_gibbs / (8.314 * temp)
-
-    def convert_energy_units(self, energy: float, initial_unit: str, final_unit: str) -> float:
-        """Convert between energy units (Eh, eV, kJ/mol, etc)."""
-        units = {"Eh": 1, "eV": 27.2107, "kJ/mol": 2625.5, "kcal/mol": 627.503, "J/mol": 2625500}
-        factor = units[final_unit] / units[initial_unit]
-        converted_energy = energy * factor
-        return converted_energy
-
-    def relative_polarity(self):
-        """Placeholder for a function to calculate relative polarity."""
-        return
-
-    def save_frequency_data(self, output_path: str):
-        """Save frequency calculation results."""
-        with open(output_path, "w") as file:
-            file.write(f"Frequency Calculation Results for {self.file_path}\n\n")
-
-            if isinstance(self.frequencies, pd.DataFrame):
-                file.write("Vibrational Frequencies and IR Intensities:\n")
-                file.write(self.frequencies.to_string(index=False))
-                file.write("\n\n")
-
-            # Add thermochemistry data if available
-            gibbs = self.get_gibbs_energy()
-            if gibbs:
-                file.write(f"Gibbs Free Energy: {gibbs[0]} {gibbs[1]}\n")
-
-    def save_nmr_data(self, output_path: str):
-        """Save NMR calculation results."""
-        with open(output_path, "w") as file:
-            file.write(f"NMR Calculation Results for {self.file_path}\n\n")
-
-            if isinstance(self.chemical_shifts, pd.DataFrame):
-                file.write("Chemical Shifts:\n")
-                file.write(self.chemical_shifts.to_string(index=False))
-                file.write("\n\n")
 
     def get_conformer_info(self) -> pd.DataFrame:
         """Extract conformer energies and populations."""
@@ -300,6 +268,63 @@ class OrcaOutput:
                 summary["gconf"] = float(line.split(":")[1].split()[0])
         return summary
 
+    def get_ir_frequencies(self) -> pd.DataFrame:
+        """Extract IR frequencies and intensities."""
+        freqs = []
+        for i, line in enumerate(self.lines):
+            if "IR SPECTRUM" in line:
+                start_idx = i + 4  # Skip header lines
+                while self.lines[start_idx].strip():
+                    parts = self.lines[start_idx].split()
+                    if len(parts) >= 7:  # Mode, freq, eps, Int, T**2, TX, TY, TZ
+                        freqs.append(
+                            {
+                                "mode": int(parts[0].strip(":")),
+                                "frequency": float(parts[1]),
+                                "IR_intensity": float(parts[3]),  # km/mol
+                            }
+                        )
+                    start_idx += 1
+        return pd.DataFrame(freqs)
+
+    def get_chemical_shifts(self) -> pd.DataFrame:
+        """Extract NMR chemical shifts."""
+        shifts = []
+        for i, line in enumerate(self.lines):
+            if "CHEMICAL SHIELDING SUMMARY (ppm)" in line:
+                start_idx = i + 6
+                while self.lines[start_idx].strip():
+                    parts = self.lines[start_idx].split()
+                    if len(parts) >= 4:
+                        shifts.append(
+                            {
+                                "atom": parts[0],
+                                "nucleus": parts[1],
+                                "isotropic": float(parts[2]),
+                                "anisotropic": float(parts[3]),
+                            }
+                        )
+                    start_idx += 1
+        return pd.DataFrame(shifts)
+
+    def get_loewdin_charges(self) -> list:
+        """Extract Loewdin atomic charges."""
+        charges = []
+        for i, line in enumerate(self.lines):
+            if "LOEWDIN ATOMIC CHARGES" in line:
+                start_idx = i + 2
+                current_charges = []
+                # Read charges until blank line
+                while self.lines[start_idx].strip():
+                    parts = self.lines[start_idx].split()
+                    for i, part in enumerate(parts):
+                        if part == ":":
+                            parts = parts[:i] + parts[i + 1 :]
+                    current_charges.append({"atom_num": int(parts[0]), "atom": parts[1], "charge": float(parts[2])})
+                    start_idx += 1
+                charges.append(pd.DataFrame(current_charges))
+        return charges
+
     def extract_conformers(self):
         """Extract conformer molecular structures."""
         # Get the Number of Atoms we should Expect
@@ -336,70 +361,13 @@ class OrcaOutput:
             # Add to the Conformer List
             self.conformers.append(molecule)
 
-    def determine_calculation_type(self) -> list[str]:
-        """Determine types of calculations in output file."""
-        self.calc_types = []
 
-        for line in self.lines:
-            if "VIBRATIONAL FREQUENCIES" in line:
-                self.calc_types.append("FREQ") if not "FREQ" in self.calc_types else None
-            elif "NMR CHEMICAL SHIFTS" in line:
-                self.calc_types.append("NMR") if not "NMR" in self.calc_types else None
-            elif "GEOMETRY OPTIMIZATION" in line:
-                self.calc_types.append("OPT") if not "OPT" in self.calc_types else None
-            elif "GOAT Global Iter" in line:
-                self.calc_types.append("GOAT") if not "GOAT" in self.calc_types else None
-
-    def get_ir_frequencies(self) -> pd.DataFrame:
-        """Extract IR frequencies and intensities."""
-        freqs = []
-        for i, line in enumerate(self.lines):
-            if "IR SPECTRUM" in line:
-                start_idx = i + 4  # Skip header lines
-                while self.lines[start_idx].strip():
-                    parts = self.lines[start_idx].split()
-                    if len(parts) >= 7:  # Mode, freq, eps, Int, T**2, TX, TY, TZ
-                        freqs.append(
-                            {
-                                "mode": int(parts[0].strip(":")),
-                                "frequency": float(parts[1]),
-                                "IR_intensity": float(parts[3]),  # km/mol
-                            }
-                        )
-                    start_idx += 1
-        return pd.DataFrame(freqs)
-
-    def get_chemical_shifts(self) -> pd.DataFrame:
-        """Extract NMR chemical shifts."""
-        shifts = []
-        for i, line in enumerate(self.lines):
-            if "CHEMICAL SHIFTS" in line:
-                start_idx = i + 5
-                while self.lines[start_idx].strip():
-                    parts = self.lines[start_idx].split()
-                    if len(parts) >= 4:
-                        shifts.append(
-                            {
-                                "atom": parts[0],
-                                "nucleus": parts[1],
-                                "isotropic": float(parts[2]),
-                                "anisotropic": float(parts[3]),
-                            }
-                        )
-                    start_idx += 1
-        return pd.DataFrame(shifts)
-
-    def get_loewdin_charges(self) -> list:
-        """Extract Loewdin atomic charges."""
-        charges = []
-        for i, line in enumerate(self.lines):
-            if "LOEWDIN ATOMIC CHARGES" in line:
-                start_idx = i + 2
-                current_charges = []
-                # Read charges until blank line
-                while self.lines[start_idx].strip():
-                    parts = self.lines[start_idx].split()
-                    current_charges.append({"atom": parts[0], "charge": float(parts[1])})
-                    start_idx += 1
-                charges.append(pd.DataFrame(current_charges))
-        return charges
+if __name__ == "__main__":
+    for file in os.listdir(os.path.join(os.getcwd(), "tests", "test_files", "output_files")):
+        if file.endswith(".out"):
+            load_path = os.path.join(os.getcwd(), "tests", "test_files", "output_files", file)
+            save_path = os.path.join(
+                os.getcwd(), "tests", "test_files", "output_files", "extracted", f"{file[:-4]}_parsed.txt"
+            )
+            output = OrcaOutput(load_path)
+            output.save_to_txt(save_path)
