@@ -3,14 +3,9 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 from qchem.Molecule import Molecule
-from qchem.Parser import OrcaOutput
 from qchem.Calculation.GeoOpt import GeoOpt
 from qchem.Calculation.GOAT import GOAT
 from qchem.Calculation.Frequency import Frequency
-from qchem.Calculation.OrcaInputFile import OrcaInputFile
-from qchem.Calculation.OrcaCalculation import OrcaCalculation
-from qchem.Data.Enums import OrcaInputTemplate
-
 
 class Spectra:
 
@@ -104,6 +99,9 @@ class Spectra:
     def RunCalculation(self):
         """Runs through all Calculations required to produce a Spectra Graph"""
 
+        # Start the Timer
+        startTime = time.time()
+
         print("\nRunning GeoOpt\n")
 
         # Create a Geo Opt Calculation Object
@@ -131,22 +129,15 @@ class Spectra:
         # Run the GOAT Calculation
         goatCalc.RunCalculation()
 
-        print("\nFinished GeoOpt\n")
+        print("\nFinished GOAT\n")
 
         print("\nRunning Frequency Analysis\n")
 
         # Get the Number of Conformers Created
         conformersNum = len(goatCalc.conformers)
 
+        # Create Blank DataFrame
         self.IRSpectra = pd.DataFrame({"Wavenumber": [], "IRIntensity": []})
-
-        # IRContribution = pd.DataFrame({
-        #    "Name" : [],
-        #    "Contribution" : []
-        # })
-        #
-        # for i in range(conformersNum):
-        #    IRContribution.loc[len(IRContribution)] = [f"{self.name} {i}", goatCalc.conformerContribution[i]]
 
         # Load the IR Contributions
         IRContribution = pd.DataFrame(
@@ -158,8 +149,6 @@ class Spectra:
 
         # Save the Contributions to Excel File
         IRContribution.to_csv(f"{self.name}_Contributions.csv", index=False)
-
-        # Convert this to a cluster calculation
 
         # Loop through all the Conformers and Run a Frequency Calculation
         for i in range(conformersNum):
@@ -177,6 +166,7 @@ class Spectra:
             # Run the Frequency Calculation
             freqCalc.RunCalculation()
 
+            # Load Individual Spectra Results
             FreqSpectra = pd.DataFrame(
                 {
                     "Wavenumber": freqCalc.IRFrequencies["frequency"].values,
@@ -184,11 +174,10 @@ class Spectra:
                 }
             )
 
-            FreqSpectra.to_csv(
-                f"{self.name}_IRIntensity_{i}.csv",
-                index=False,
-            )
+            # Save Individual Spectra
+            FreqSpectra.to_csv(f"{self.name}_IRIntensity_{i}.csv", index=False)
 
+            # Multiply Spectra by Contribution
             FreqSpectra["IRIntensity"] = (
                 FreqSpectra["IRIntensity"].values * goatCalc.conformerContribution[i]
             )
@@ -200,34 +189,25 @@ class Spectra:
 
         print("\nMaking Final Touches\n")
 
+        # Group Common Wavenumbers and Sum their Values
         self.IRSpectra.groupby("Wavenumber", as_index=False).agg({"IRIntensity": "sum"})
 
+        # Sort Wavenumbers from Largest Wavenumber -> Lowest Wavenumber
         self.IRSpectra = self.IRSpectra.sort_values(by="Wavenumber", ascending=False)
 
+        # Save Full Spectra
         self.IRSpectra.to_csv(f"{self.name}_Spectra.csv", index=False)
 
-        print("Final Spectra")
+        # Get Total Time for Spectra
+        calcTime = time.time() - startTime
 
-        print(self.IRSpectra)
+        print(f"\nFinished Making Spectra ({self.ClockTime(calcTime)})\n")
 
-        print("\nFinished Making Spectra\n")
-
-        print("Plotting")
-        Spectra.PlotSpectra(self.IRSpectra, "First")
-
-        # Spectra.PlotSpectra(IRSpec, "SpecTest")
-
-        # Store the Raw DataFrame
-        # Add a function to save Spectrum locally
-        # Add a function to parse the spectrum
-
-        # Ok so Old Method is Working Properly
-
-    def gaussianKernel(self, size, sigma):
-        if size % 2 == 0:
-            size -= 1
-        kernel = np.exp(-np.linspace(-size // 2, size // 2, size) ** 2 / (2 * sigma**2))
-        return kernel / kernel.sum()
+    #def gaussianKernel(self, size, sigma):
+    #    if size % 2 == 0:
+    #        size -= 1
+    #    kernel = np.exp(-np.linspace(-size // 2, size // 2, size) ** 2 / (2 * sigma**2))
+    #    return kernel / kernel.sum()
 
     @staticmethod
     def GaussianBlur(data, sigma):
@@ -250,15 +230,6 @@ class Spectra:
         blurred_data = np.convolve(padded_data, kernel, mode="valid")
 
         return blurred_data
-
-    def PlotSpectra2(self):
-        # Plots the Spectra
-        plt.figure()
-        plt.plot(self.IRSpectra["Wavenumber"], self.IRSpectra["IRIntensity"])
-        plt.xlabel("Wavenumber (1/cm)")
-        plt.ylabel("IR Intensity")
-        plt.gca().invert_xaxis()
-        plt.show()
 
     @staticmethod
     def LoadSpectra(spectra: str | pd.DataFrame):
@@ -298,8 +269,6 @@ class Spectra:
                     'The DataFrame provided doesn\'t have columns named "Wavenumber" and "IRIntensity"'
                 )
 
-            print("Exists")
-
             return spectra.copy()
 
     @staticmethod
@@ -308,27 +277,27 @@ class Spectra:
         plotName: str = "Spectra",
         sigma: int = 5,
         maxWaveNum=4000,
+        spacing=10,
     ):
+        """Create and Plots an IR Spectra, takes a path to a CSV or Pandas Dataframe with the Calculated """
 
         # Load the Spectra
         IRSpectra = Spectra.LoadSpectra(spectra)
 
         # Add a bunch of Dummy Data
-        for i in range(0, maxWaveNum, 10):
+        for i in range(0, maxWaveNum, spacing):
             IRSpectra.loc[len(IRSpectra)] = [i, 0]
 
-        print("Printing Spectra")
-        print(IRSpectra)
+        # Group Duplicate Wavenumbers if they Appear
+        IRSpectra.groupby("Wavenumber", as_index=False).agg({"IRIntensity": "sum"})
 
-        # Sort the Columns
-        IRSpectra = IRSpectra.sort_values(
-            by="Wavenumber", ascending=False
-        )  # Reversing?
+        # Sort the Columns from Largest Wavenumber -> Smallest Wavenumber
+        IRSpectra = IRSpectra.sort_values(by="Wavenumber", ascending=False)
 
         # Apply a Gaussian Blurring to the Intensities
         IRSpectra["IRIntensity"] = Spectra.GaussianBlur(IRSpectra["IRIntensity"], sigma)
 
-        # Normalize and Reverse Intensities
+        # Normalize and Inverse Intensity
         IRSpectra["IRIntensity"] = 1 - (
             IRSpectra["IRIntensity"].values / max(IRSpectra["IRIntensity"].values)
         )
@@ -341,3 +310,27 @@ class Spectra:
         plt.gca().invert_xaxis()
         plt.savefig(f"{plotName}.png")
         plt.show()
+
+    def ClockTime(self, seconds):
+        """Converts Seconds to a Human Readable Time String"""
+        # Convert Seconds to Hours, Minutes, and Seconds
+        days = seconds // 86400
+        hours = (seconds % 86400) // 3600
+        minutes = (seconds % 3600) // 60
+        remainingSeconds = seconds % 60
+
+        # Generate the Time String
+        parts = []
+        if days > 0:
+            parts.append(f"{int(hours)} day{'s' if days > 1 else ''}")
+        if hours > 0:
+            parts.append(f"{int(hours)} hour{'s' if hours > 1 else ''}")
+        if minutes > 0:
+            parts.append(f"{int(minutes)} minute{'s' if minutes > 1 else ''}")
+        if remainingSeconds > 0:
+            parts.append(
+                f"{int(remainingSeconds)} second{'s' if remainingSeconds > 1 else ''}"
+            )
+
+        # Return the Time String
+        return ", ".join(parts) if parts else "0 seconds"
