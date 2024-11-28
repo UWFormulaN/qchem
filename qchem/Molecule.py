@@ -2,10 +2,8 @@ import copy
 from math import pi
 import math
 import random
-from uu import Error
 import pandas as pd
 import numpy as np
-from typing import Union
 from .Data.Constants import AtomicMassConstants, CovalentRadiiConstants
 
 # We will create molecule objects which will store information about the molecule
@@ -87,7 +85,7 @@ class Molecule:
     def GetAllAtomsAfterBond(self, atomIndex1, atomIndex2) -> list[int]:
         """Starts a Recursive Search to find all the Atoms Present after a Bond"""
         if (atomIndex2 not in self.Bonds["Bonds"][atomIndex1]):
-            raise Error("These Atoms are not Bonded Together")
+            raise Exception("These Atoms are not Bonded Together")
 
         return self.BranchSearch(atomIndex2, [] , atomIndex1)
 

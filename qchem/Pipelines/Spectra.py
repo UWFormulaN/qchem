@@ -219,12 +219,6 @@ class Spectra:
 
         print(f"\nFinished Making Spectra ({self.ClockTime(calcTime)})\n")
 
-    # def gaussianKernel(self, size, sigma):
-    #    if size % 2 == 0:
-    #        size -= 1
-    #    kernel = np.exp(-np.linspace(-size // 2, size // 2, size) ** 2 / (2 * sigma**2))
-    #    return kernel / kernel.sum()
-
     @staticmethod
     def GaussianBlur(data, sigma):
 
@@ -294,6 +288,7 @@ class Spectra:
         sigma: int = 5,
         maxWaveNum=4000,
         spacing=10,
+        showPlot = True
     ):
         """Create and Plots an IR Spectra, takes a path to a CSV or Pandas Dataframe with the Calculated"""
 
@@ -325,7 +320,9 @@ class Spectra:
         plt.ylabel("IR Intensity")
         plt.gca().invert_xaxis()
         plt.savefig(f"{plotName}.png")
-        plt.show()
+        
+        if showPlot:
+            plt.show()
 
     def ClockTime(self, seconds):
         """Converts Seconds to a Human Readable Time String"""
