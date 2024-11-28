@@ -84,7 +84,7 @@ class GeoOpt:
         else:
             return False
         
-    def Optimize (self):
+    def RunCalculation (self):
         """Runs through a Geometry Optimization on the Molecule and repeats until properly converged"""
         # Get Default Values
         OPTtemplate = ""
