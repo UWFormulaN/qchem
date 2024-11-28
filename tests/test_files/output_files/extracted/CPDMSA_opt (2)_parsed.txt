@@ -2,6 +2,22 @@ File: C:\Users\Cameron\Desktop\Coding\Python\qchem\tests\test_files\output_files
 Final Single Point Energy: -657.117868134476
 
 SCF Energies:
+-17881.08625
+
+-17881.13073
+
+-17881.14304
+
+-17881.14382
+
+-17881.1441
+
+-17881.1442
+
+-17881.14427
+
+-17881.14428
+
 Final Timings:
                            Timing           Time
 Sum of individual times                 460.169 
