@@ -260,9 +260,9 @@ class Spectra:
 
             # Make Bool Array
             isHeader = [isinstance(i, str) for i in firstRow]
-
+            
             # Determine if the First Row is a Header or Not
-            if isHeader:  # First Line is the Header, we can Load it
+            if all(isHeader):  # First Line is the Header, we can Load it
                 return pd.read_csv(spectra)
             else:  # No Header, manually add them
                 return pd.read_csv(spectra, names=["Wavenumber", "IRIntensity"])
