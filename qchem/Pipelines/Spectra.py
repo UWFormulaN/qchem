@@ -1,4 +1,5 @@
 import time
+import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -102,6 +103,14 @@ class Spectra:
         # Start the Timer
         startTime = time.time()
 
+        # Create a Cache Folder Path
+        orcaCache = "OrcaCache"
+        orcaCachePath = os.path.join(os.getcwd(), orcaCache, self.name)
+        
+        # Make Cache Folder if it doesn't Exist
+        if not os.path.exists(orcaCachePath):
+            os.makedirs(orcaCachePath)
+
         print("\nRunning GeoOpt\n")
 
         # Create a Geo Opt Calculation Object
@@ -148,7 +157,9 @@ class Spectra:
         )
 
         # Save the Contributions to Excel File
-        IRContribution.to_csv(f"{self.name}_Contributions.csv", index=False)
+        IRContribution.to_csv(
+            os.path.join(orcaCachePath, f"{self.name}_Contributions.csv"), index=False
+        )
 
         # Loop through all the Conformers and Run a Frequency Calculation
         for i in range(conformersNum):
@@ -175,7 +186,10 @@ class Spectra:
             )
 
             # Save Individual Spectra
-            FreqSpectra.to_csv(f"{self.name}_IRIntensity_{i}.csv", index=False)
+            FreqSpectra.to_csv(
+                os.path.join(orcaCachePath, f"{self.name}_IRIntensity_{i}.csv"),
+                index=False,
+            )
 
             # Multiply Spectra by Contribution
             FreqSpectra["IRIntensity"] = (
@@ -196,14 +210,16 @@ class Spectra:
         self.IRSpectra = self.IRSpectra.sort_values(by="Wavenumber", ascending=False)
 
         # Save Full Spectra
-        self.IRSpectra.to_csv(f"{self.name}_Spectra.csv", index=False)
+        self.IRSpectra.to_csv(
+            os.path.join(orcaCachePath, f"{self.name}_Spectra.csv"), index=False
+        )
 
         # Get Total Time for Spectra
         calcTime = time.time() - startTime
 
         print(f"\nFinished Making Spectra ({self.ClockTime(calcTime)})\n")
 
-    #def gaussianKernel(self, size, sigma):
+    # def gaussianKernel(self, size, sigma):
     #    if size % 2 == 0:
     #        size -= 1
     #    kernel = np.exp(-np.linspace(-size // 2, size // 2, size) ** 2 / (2 * sigma**2))
@@ -224,7 +240,7 @@ class Spectra:
         kernel = kernel / kernel.sum()
 
         # Pad the Data
-        padded_data = np.pad(data, len(kernel) // 2, mode="reflect")  # Handle edges
+        padded_data = np.pad(data, len(kernel) // 2, mode="reflect")
 
         # Blurr the Data by Applying Gaussian Blurring
         blurred_data = np.convolve(padded_data, kernel, mode="valid")
@@ -258,8 +274,7 @@ class Spectra:
                 return pd.read_csv(spectra, names=["Wavenumber", "IRIntensity"])
 
         elif isinstance(spectra, pd.DataFrame):
-            # Is a Dataframe, do nothing
-
+            
             # Determine the Columns to check for
             columns = ["Wavenumber", "IRIntensity"]
 
@@ -269,6 +284,7 @@ class Spectra:
                     'The DataFrame provided doesn\'t have columns named "Wavenumber" and "IRIntensity"'
                 )
 
+            # Return a Copy so that Original isn't destroyed
             return spectra.copy()
 
     @staticmethod
@@ -279,7 +295,7 @@ class Spectra:
         maxWaveNum=4000,
         spacing=10,
     ):
-        """Create and Plots an IR Spectra, takes a path to a CSV or Pandas Dataframe with the Calculated """
+        """Create and Plots an IR Spectra, takes a path to a CSV or Pandas Dataframe with the Calculated"""
 
         # Load the Spectra
         IRSpectra = Spectra.LoadSpectra(spectra)
