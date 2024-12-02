@@ -135,7 +135,7 @@ class Frequency:
         self.vibrationalFrequencies = outputFile.get_vibrational_frequencies()
         
         # Load the IR Frequency from the 
-        self.IRFrequencies = outputFile.get_IR_frequencies()
+        self.IRFrequencies = outputFile.get_ir_frequencies()
         
         # Display a Print Statement for the Frequency Completion
         print(f"Finished Running Freqency Analysis on {self.name}! ({self.ClockTime(self.calculationTime)})")

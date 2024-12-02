@@ -147,7 +147,6 @@ class OrcaOutput:
                 for j in range(i + 1, min(i + 5, len(self.lines))):
                     if "Total Energy" in self.lines[j]:
                         # Extract energy value
-                        print(self.lines[j].split())
                         energy = float(self.lines[j].split()[-2])
                         scf_energies.append(energy)
                         break

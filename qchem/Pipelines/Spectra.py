@@ -217,7 +217,7 @@ class Spectra:
         # Get Total Time for Spectra
         calcTime = time.time() - startTime
 
-        print(f"\nFinished Making Spectra ({self.ClockTime(calcTime)})\n")
+        print(f"\nFinished Making {self.name} Spectra ({self.ClockTime(calcTime)})\n")
 
     @staticmethod
     def GaussianBlur(data, sigma):

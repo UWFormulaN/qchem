@@ -38,25 +38,29 @@ def Test1 ():
     spectra.RunCalculation()
     
     # Display the Plot in a Tab
-    Spectra.PlotSpectra(spectra.IRSpectra, "Ethane Test")
+    Spectra.PlotSpectra(spectra.IRSpectra, "Ethane Test", showPlot=False)
 
 #
 # Test 2 : Use File Reference as Input for Molecular Geometry
 #
 def Test2 ():
     # Create the Orca Cache Directory
-    if os.path.exists(os.path.join("OrcaCache", "Propane_FREQ_Ref")):
-        shutil.rmtree(os.path.join("OrcaCache", "Propane_FREQ_Ref"))
-    os.mkdir(os.path.join("OrcaCache", "Propane_FREQ_Ref"))
+    if os.path.exists(os.path.join("OrcaCache", "Propane_Spectra_Ref_GEOOPT")):
+        shutil.rmtree(os.path.join("OrcaCache", "Propane_Spectra_Ref_GEOOPT"))
+    os.mkdir(os.path.join("OrcaCache", "Propane_Spectra_Ref_GEOOPT"))
     
     # Copy the Proper XYZ File to be used
-    shutil.copy(os.path.join("tests", "test_files", "propane.xyz"), os.path.join("OrcaCache", "Propane_FREQ_Ref", "propane.xyz"))
+    shutil.copy(os.path.join("tests", "test_files", "propane.xyz"), os.path.join("OrcaCache", "Propane_Spectra_Ref_GEOOPT", "propane.xyz"))
     
-    # Define the Frequency Object
-    frequency = Frequency("propane.xyz", OrcaBasisSet.DEF2_SVP.value, OrcaDensityFunctional.B3LYP.value, Cores, LocalTest, name="Propane_FREQ_Ref")
+     # Create a Spectra Object
+    spectra = Spectra("propane.xyz", OrcaBasisSet.DEF2_SVP.value, OrcaDensityFunctional.B3LYP.value, Cores, LocalTest, name="Propane_Spectra_Ref")
     
-    # Run the Frequency Calculation
-    frequency.RunCalculation()
+    # Run the Spectra Calculation
+    spectra.RunCalculation()
+    
+    # Display the Plot in a Tab
+    Spectra.PlotSpectra(spectra.IRSpectra, "Propane", showPlot=False)
+    
     
 #
 # Test 1 : Load Molecule and Use Molecule as Input
@@ -73,11 +77,29 @@ def Test3 ():
     spectra.RunCalculation()
     
     # Display the Plot in a Tab
-    spectra.PlotSpectra()
+    spectra.PlotSpectra(spectra.IRSpectra, "Aspirin", showPlot=False)
+
+#
+# Test 1 : Load Molecule and Use Molecule as Input
+#
+def Test4 ():
     
+    # Load the Aspirin Molecule
+    mol = Molecule("Dypyrro", os.path.join("tests", "test_files", "dypyrroMethane.xyz"))
+    
+    # Create a Spectra Object
+    spectra = Spectra(mol, OrcaBasisSet.DEF2_SVP.value, OrcaDensityFunctional.B3LYP.value, Cores, LocalTest)
+    
+    # Run the Spectra Calculation
+    spectra.RunCalculation()
+    
+    # Display the Plot in a Tab
+    spectra.PlotSpectra(spectra.IRSpectra, "Dypyrro", showPlot=False)
+
 #
 # Running Tests
 #
 Test1()
-#Test2()
-#Test3()
+Test2()
+Test3()
+Test4()
