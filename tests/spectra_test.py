@@ -77,7 +77,7 @@ def Test3 ():
     spectra.RunCalculation()
     
     # Display the Plot in a Tab
-    spectra.PlotSpectra(spectra.IRSpectra, "Aspirin", showPlot=False)
+    Spectra.PlotSpectra(spectra.IRSpectra, "Aspirin", showPlot=False)
 
 #
 # Test 1 : Load Molecule and Use Molecule as Input
