@@ -17,6 +17,7 @@ class OrcaOutput:
         self.dipole = self.read_dipole()
         self.absolutedipole = self.read_absolute_dipole()
         self.energy = self.finalenergy()
+        self.solvation_energy = self.get_solvation_energy()
         # Extract the name of the file without the path and extension
         self.name = re.search(r"[^\\]+$", self.file_path).group()[:-4]
         self.frequencies = self.get_vibrational_frequencies() if self.calc_type() == "FREQ" else None
@@ -164,6 +165,12 @@ class OrcaOutput:
     def relative_polarity(self):
         """Placeholder for a function to calculate relative polarity."""
         return
+    
+    def get_solvation_energy(self) -> float:
+        """Extracts solvation energy (Gsolv)"""
+        for line in self.lines():
+            if line.split()[2] == "Gsolv":
+                return float(line.split()[3])
 
     def save_to_txt(self, output_path: str):
         """Writes all the extracted information to a text file in a human-readable format."""
