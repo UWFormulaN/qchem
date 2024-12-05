@@ -13,9 +13,6 @@ class BaseCalculation(ABC):
     calculationName: str
     """Name of the Calculation. Saves the Input and Output File as the Name"""
 
-    cores : int
-    """Number of Cores to use for the Calculation"""
-    
     orcaCachePath: str
     """The Path to the Orca Cache on the Local Device"""
 
@@ -25,7 +22,13 @@ class BaseCalculation(ABC):
     STDOut: bool
     """Boolean Flag Determining if Standard Output Messages will be displayed"""
     
-    def __init__ (self, name: str, index: int = 1, stdout : bool = True):
+    isLocal: bool
+    """Boolean Flag determining if the Calculation should be run locally or inside a Container"""
+    
+    cores : int
+    """Number of Cores to use for the Calculation"""
+    
+    def __init__ (self, name: str, index: int = 1, cores: int = 1, isLocal: bool = False, stdout : bool = True):
         
         # Value Type Checking
         if (not isinstance(name, (str)) or name == ""):
@@ -34,8 +37,16 @@ class BaseCalculation(ABC):
         if (not isinstance(index, (int))):
             raise ValueError("Index must be an integer")
         
+        if (not isinstance(cores, (int))):
+            raise ValueError("Cores must be an integer")
+        
+        if (not isinstance(isLocal, (bool))):
+            raise ValueError("IsLocal must be a boolean")
+        
         if (not isinstance(stdout, (bool))):
             raise ValueError("STDOut must be a boolean")
+        
+        
         
         #if (not isinstance(inputFile, (OrcaInputFile))):
         #    raise ValueError("Input File must be a OrcaInputFile")
@@ -43,7 +54,9 @@ class BaseCalculation(ABC):
         # Set Values
         self.calculationName = name
         self.index = index
+        self.cores = cores
         self.STDOut = stdout
+        self.isLocal = isLocal
         
         #self.inputFile = inputFile
         
@@ -59,12 +72,10 @@ class BaseCalculation(ABC):
         #else:
         #    self.cores = 1
     
-    
-    
     @abstractmethod
     def RunCalculation(self):
         """Runs the Orca Calculation"""
-        return
+        pass
     
     def CreateDirectories (self):
         """Creates the necessary Cache Folders to store the Calculation"""

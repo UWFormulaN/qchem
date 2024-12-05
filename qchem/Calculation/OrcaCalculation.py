@@ -2,10 +2,10 @@ import os
 import subprocess
 import time
 from .OrcaInputFile import OrcaInputFile
-from .BaseCalculation import BaseCalculation
+from .BaseOrcaCalculation import BaseOrcaCalculation
 from ..Molecule import Molecule #from qchem.Molecule import Molecule
 
-class OrcaCalculation(BaseCalculation):
+class OrcaCalculation(BaseOrcaCalculation):
     """Class capable of running an Orca Calculation"""
 
     #Cores : int
@@ -38,32 +38,32 @@ class OrcaCalculation(BaseCalculation):
     #STDOut: bool
     #"""Boolean Flag Determining if Standard Output Messages will be displayed"""
 
-    inputFilePath: str
-    """The Path to the Input File on the Device"""
+    #inputFilePath: str
+    #"""The Path to the Input File on the Device"""
 
-    outputFilePath: str
-    """The Path to the Output File on the Device"""
+    #outputFilePath: str
+    #"""The Path to the Output File on the Device"""
 
-    isLocal: bool
-    """Boolean Flag determining if the Calculation should be run locally or inside a Container"""
+    #isLocal: bool
+    #"""Boolean Flag determining if the Calculation should be run locally or inside a Container"""
     
     inputFile: OrcaInputFile
     """The Input File for the Calculation that will be run"""
     
-    molecule: Molecule | str
-    """The Molecule to be Optimized"""
+    #molecule: Molecule | str
+    #"""The Molecule to be Optimized"""
 
     def __init__ (self, name: str, inputFile: OrcaInputFile, index: int = 1, isLocal: bool = False, stdout : bool = True):
         
         # Make a Super Call (Use the Base Class Init for some Boilerplate Setup)
-        super().__init__(name, index, stdout)
+        super().__init__(name, index, isLocal, stdout)
         
         # Value Type Checking
         if (not isinstance(inputFile, (OrcaInputFile))):
             raise ValueError("Input File must be a OrcaInputFile")
         
-        if (not isinstance(isLocal, (bool))):
-            raise ValueError("IsLocal must be a boolean")
+        #if (not isinstance(isLocal, (bool))):
+        #    raise ValueError("IsLocal must be a boolean")
         
         #if (not isinstance(name, (str)) or name == ""):
         #    raise ValueError("Name of the Calculation must be specified ")
@@ -79,7 +79,9 @@ class OrcaCalculation(BaseCalculation):
         
         # Set Values
         self.inputFile = inputFile
-        self.isLocal = isLocal
+        
+        
+        #self.isLocal = isLocal
         
         #self.calculationName = name
         #self.index = index
@@ -89,8 +91,8 @@ class OrcaCalculation(BaseCalculation):
         # Generate Cache Paths
         #orcaCache = "OrcaCache"
         #self.orcaCachePath =  os.path.join(os.getcwd(), orcaCache, self.calculationName)  #f'{os.getcwd()}\\{orcaCache}\\{self.CalculationName}'
-        self.outputFilePath = os.path.join(self.orcaCachePath, self.GetOutputFileName())  #f'{self.OrcaCachePath}\\{self.GetOutputFileName()}'
-        self.inputFilePath = os.path.join(self.orcaCachePath, self.GetInputFileName()) #f'{self.OrcaCachePath}\\{self.GetInputFileName()}'
+        #self.outputFilePath = os.path.join(self.orcaCachePath, self.GetOutputFileName())  #f'{self.OrcaCachePath}\\{self.GetOutputFileName()}'
+        #self.inputFilePath = os.path.join(self.orcaCachePath, self.GetInputFileName()) #f'{self.OrcaCachePath}\\{self.GetInputFileName()}'
         
         # Determine how many cores are used by the calculation
         if ("cores" in self.inputFile.variables):
@@ -172,18 +174,18 @@ class OrcaCalculation(BaseCalculation):
     #    if not os.path.exists(self.orcaCachePath):
     #        os.makedirs(self.orcaCachePath)
 
-    def GetInputFileName (self):
-        """Returns the Input File Name with it's extension"""
-        return f"{self.calculationName}.inp"
-
-    def GetOutputFileName (self):
-        """Returns the Output File Name with it's extension"""
-        return f"{self.calculationName}.out"
-    
-    def GetOutput (self) -> str:
-        # Open the Output File and Grab the Content
-        with open(self.outputFilePath, 'r') as file:
-            self.CalculationOutput = file.read()
+    #def GetInputFileName (self):
+    #    """Returns the Input File Name with it's extension"""
+    #    return f"{self.calculationName}.inp"
+#
+    #def GetOutputFileName (self):
+    #    """Returns the Output File Name with it's extension"""
+    #    return f"{self.calculationName}.out"
+    #
+    #def GetOutput (self) -> str:
+    #    # Open the Output File and Grab the Content
+    #    with open(self.outputFilePath, 'r') as file:
+    #        self.CalculationOutput = file.read()
     
     
     #def ClockTime(self, seconds):
@@ -201,10 +203,16 @@ class OrcaCalculation(BaseCalculation):
     #    
     #    return ", ".join(parts) if parts else "0 seconds"
 
-    def IsFileReference(self):
-        """Determines if the Molecule is stored as a File Reference, or is a direct Molecule Object"""
-        if isinstance(self.molecule, (str)):
-            return True
-        else:
-            return False
-
+    #def IsFileReference(self):
+    #    """Determines if the Molecule is stored as a File Reference, or is a direct Molecule Object"""
+    #    if isinstance(self.molecule, (str)):
+    #        return True
+    #    else:
+    #        return False
+    #    
+    #def SetDefaultName (self, tag: str):
+    #    if (isinstance(self.molecule, (Molecule))):
+    #            self.name = self.molecule.Name
+    #    else:
+    #        print(f"No Name Provided for the Molecule, using Default Name: {tag}Molecule")
+    #        self.name = f"{tag}Molecule"
