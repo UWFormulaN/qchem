@@ -5,6 +5,7 @@ from .OrcaInputFile import OrcaInputFile
 from .BaseOrcaCalculation import BaseOrcaCalculation
 from ..Molecule import Molecule #from qchem.Molecule import Molecule
 
+
 class OrcaCalculation(BaseOrcaCalculation):
     """Class capable of running an Orca Calculation"""
 

@@ -34,6 +34,8 @@ def Test1 ():
     
     # Run the Frequency Calculation
     frequency.RunCalculation()
+    
+    print(frequency.IRFrequencies)
 
 #
 # Test 2 : Use File Reference as Input for Molecular Geometry

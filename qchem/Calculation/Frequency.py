@@ -6,6 +6,7 @@ from qchem.Calculation.OrcaInputFile import OrcaInputFile
 from qchem.Calculation.OrcaCalculation import OrcaCalculation
 from qchem.Data.Enums import OrcaInputTemplate
 from .BaseOrcaCalculation import BaseOrcaCalculation
+from .OrcaCalcs import RunOrcaCalculation
 
 class Frequency(BaseOrcaCalculation):
     
@@ -47,7 +48,7 @@ class Frequency(BaseOrcaCalculation):
     IRFrequencies : pd.DataFrame
     """IR Frequencies of the Molecule"""
     
-    def __init__(self, molecule: str | Molecule, basisSet: str, functional: str, index: int = 1, cores:int = 1, isLocal:bool = False, name:str = ""):
+    def __init__(self, molecule: str | Molecule, basisSet: str, functional: str, index: int = 1, cores:int = 1, isLocal:bool = False, name:str = "FREQMolecule"):
         
         # Make a Super Call (Use the Base Class Init for some Boilerplate Setup)
         super().__init__(name, molecule, index, cores, isLocal, True)
@@ -120,13 +121,17 @@ class Frequency(BaseOrcaCalculation):
                                       xyz = self.molecule.XYZBody())
         
         # Create the Calculation Object
-        calculation = OrcaCalculation(self.name, inputFile, isLocal=self.isLocal, stdout=False)
+        #calculation = OrcaCalculation(self.name, inputFile, isLocal=self.isLocal, stdout=False)
         
         # Add a Print Statement to say we are running
         print(f"Running Frequency Analysis on {self.name}...")
         
+        # Run the Orca Calculation
+        calculation = RunOrcaCalculation(self.name, inputFile, self.isLocal, self.index)
+        
+        
         # Run the Calculation
-        calculation.RunCalculation()
+        #calculation.RunCalculation()
         
         # Get the Calculation Time
         self.calculationTime = time.time() - startTime
