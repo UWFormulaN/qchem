@@ -100,6 +100,11 @@ class OrcaCalculation(BaseOrcaCalculation):
         else:
             self.cores = 1
 
+    
+
+
+
+
     def RunCalculation(self):
         """Runs a Orca Calculation in a Docker Container"""
 
