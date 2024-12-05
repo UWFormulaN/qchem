@@ -1,29 +1,25 @@
 [tool.poetry]
 name = "qchem"
-version = "0.1.0"
-description = "This is a project used for quantum chemistry simulations"
-authors = ["Matthew Athanasopoulos <matthew.athanasopoulos@gmail.com>"]
-license = "MIT"
+version = "0.5"
+description = "QChem is a project used for Quantum Chemistry Simulations and Data Anaylsis/Visualization, developed by the Formula Nano student design team at the University of Waterloo."
+authors = ["Ryan Miller", "Alex Dufresne-Nappert", "Cameron Chin", "Matthew Athanasopoulos"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "^3.11.6"
-pennylane = "^0.34.0"
+python = ">=3.11,<3.13"
 pandas = "^2.2.0"
 matplotlib = "^3.8.2"
 chemview = "^0.6"
-pyarrow = "^15.0.0"
-pyscf = "^2.5.0"
-qiskit-nature = "^0.7.1"
 seaborn = "^0.13.2"
-python-dotenv = "^1.0.1"
-qiskit-algorithms = "^0.3.0"
-scipy = "^1.13.0"
+numpy = "^1.0.0"
+pymatgen = "^2024.11.13"
+
 
 [tool.poetry.group.dev.dependencies]
-jupyterlab = "^4.1.1"
+jupyterlab = "^4.3.2"
 pytest = "^8.0.0"
 black = "^24.1.1"
+flake8 = "^7.1.1"
 
 [build-system]
 requires = ["poetry-core"]
