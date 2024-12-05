@@ -154,8 +154,8 @@ class GeoOpt(BaseOrcaCalculation):
             else:
                 # Check if the Molecule is Fully Optimized
                 if (self.IsOptimized(outputFile.vibrational_frequencies["frequency"])):
-                    calcTime = time.time() - startTime
-                    print(f"Molecule {self.name} is Optimized! ({self.ClockTime(calcTime)})")
+                    self.calculationTime = time.time() - startTime
+                    print(f"Molecule {self.name} is Optimized! ({self.ClockTime(self.calculationTime)})")
                     isOptimized = True
                     self.calculation = calculation
                     self.optimizedMoleculePath = os.path.join(calculation.orcaCachePath,calculation.name + ".xyz")
