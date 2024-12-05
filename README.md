@@ -10,6 +10,6 @@ Work on seperate branches for changes and submit PR's to main; squash commits wh
 
 ## How to use poetry:
 To start, you will need to have poetry installed. DO NOT do this through pip, it needs to be installed into it's own virtual environment. 
-On Windows (Powershell), the recommended command is `(Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py -`. On Linux, macOS and Windows (WSL), the recommended command is `curl -sSL https://install.python-poetry.org | python3 -`. See more at https://python-poetry.org/docs/#installing-with-the-official-installer.
+On Windows (Powershell), the recommended command is `(Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py -`. On Linux, macOS and Windows (WSL), the recommended command is `curl -sSL https://install.python-poetry.org | python3 -`. See more at https://python-poetry.org/docs/#installing-with-the-official-installer. If you already have it installed, you can uninstall/reinstall it to be safe, or just try your luck that it was installed correctly originally. 
 
-When entering the project, run `poetry shell` to enter a virtual environment. This environment is built with dependencies from the lock file, which ensures consistency across users. 
+When entering the project, run `poetry shell` to enter a virtual environment, then run `poetry install`. This environment is built with dependencies from the lock file, which ensures consistency across users.
