@@ -19,22 +19,26 @@ class BaseOrcaCalculation(BaseCalculation):
     
     def __init__ (self, name: str, molecule: str | Molecule, index: int = 1, cores: int = 1, isLocal: bool = False, stdout : bool = True):
         
-        self.SetName(name)
+       
         
-        name = self.name
-        
-        # Make a Super Call (Use the Base Class Init for some Boilerplate Setup)
-        super().__init__(name, index, cores, isLocal, stdout)
-        
-        # Check if Values are empty or of Wrong Type
+         # Check if Values are empty or of Wrong Type
         if (not (molecule and isinstance(molecule, (str, Molecule)))):
             raise ValueError("Molecule is not defined! Provide a Path to the XYZ file or a Molecule Object")
+        
+        # Set the Values
+        self.molecule = molecule
+        
+        self.SetName(name)
+        
+        # Make a Super Call (Use the Base Class Init for some Boilerplate Setup)
+        super().__init__(self.name, index, cores, isLocal, stdout)
+        
+       
     
         #if (not isinstance(cores, (int))):
         #    raise ValueError("Cores must be an integer")
     
-        # Set the Values
-        self.molecule = molecule
+        
         
         # Convert to Functions?
         self.outputFilePath = os.path.join(self.orcaCachePath, self.GetOutputFileName())  #f'{self.OrcaCachePath}\\{self.GetOutputFileName()}'
