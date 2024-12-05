@@ -56,7 +56,7 @@ class OrcaCalculation(BaseCalculation):
     def __init__ (self, name: str, inputFile: OrcaInputFile, index: int = 1, isLocal: bool = False, stdout : bool = True):
         
         # Make a Super Call (Use the Base Class Init for some Boilerplate Setup)
-        super.__init__(name, index, isLocal, stdout)
+        super().__init__(name, index, isLocal, stdout)
         
         # Value Type Checking
         if (not isinstance(inputFile, (OrcaInputFile))):
