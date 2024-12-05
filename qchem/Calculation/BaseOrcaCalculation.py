@@ -19,7 +19,8 @@ class BaseOrcaCalculation(BaseCalculation):
     
     def __init__ (self, name: str, molecule: str | Molecule, index: int = 1, cores: int = 1, isLocal: bool = False, stdout : bool = True):
         
-       
+        # Make a Super Call (Use the Base Class Init for some Boilerplate Setup)
+        super().__init__(name, index, cores, isLocal, stdout)
         
          # Check if Values are empty or of Wrong Type
         if (not (molecule and isinstance(molecule, (str, Molecule)))):
@@ -28,18 +29,15 @@ class BaseOrcaCalculation(BaseCalculation):
         # Set the Values
         self.molecule = molecule
         
-        self.SetName(name)
+        # Set Name to the Name of the Molecule
+        if (isinstance(molecule, Molecule)):
+            self.name = molecule.Name
         
-        # Make a Super Call (Use the Base Class Init for some Boilerplate Setup)
-        super().__init__(self.name, index, cores, isLocal, stdout)
+        #self.SetName(name)
         
-       
-    
         #if (not isinstance(cores, (int))):
         #    raise ValueError("Cores must be an integer")
     
-        
-        
         # Convert to Functions?
         self.outputFilePath = os.path.join(self.orcaCachePath, self.GetOutputFileName())  #f'{self.OrcaCachePath}\\{self.GetOutputFileName()}'
         self.inputFilePath = os.path.join(self.orcaCachePath, self.GetInputFileName()) #f'{self.OrcaCachePath}\\{self.GetInputFileName()}'
@@ -59,24 +57,24 @@ class BaseOrcaCalculation(BaseCalculation):
         
     def GetInputFileName (self):
         """Returns the Input File Name with it's extension"""
-        return f"{self.calculationName}.inp"
+        return f"{self.name}.inp"
 
     def GetOutputFileName (self):
         """Returns the Output File Name with it's extension"""
-        return f"{self.calculationName}.out"
+        return f"{self.name}.out"
     
     def GetOutput (self) -> str:
         # Open the Output File and Grab the Content
         with open(self.outputFilePath, 'r') as file:
             self.CalculationOutput = file.read()
         
-    def SetName(self, name:str):
-        if (name == ""):
-            if (isinstance(self.molecule, (Molecule))):
-                self.name = self.molecule.Name
-            else:
-                print(f"No Name Provided for the Molecule, using Default Name: {self.calculationType}Molecule")
-                self.name = f"{self.calculationType}Molecule"
-        else:
-            self.name = name
+    #def SetName(self, name:str):
+    #    if (name == ""):
+    #        if (isinstance(self.molecule, (Molecule))):
+    #            self.name = self.molecule.Name
+    #        else:
+    #            print(f"No Name Provided for the Molecule, using Default Name: {self.calculationType}Molecule")
+    #            self.name = f"{self.calculationType}Molecule"
+    #    else:
+    #        self.name = name
     

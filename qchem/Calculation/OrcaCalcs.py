@@ -15,10 +15,7 @@ class OrcaCalcResult:
         self.orcaCachePath = cachePath
         self.outputFilePath = os.path.join(self.orcaCachePath, GetOutputFileName(name))
 
-
-
-
-def RunOrcaCalculation(name, inputFile: OrcaInputFile, isLocal, index):
+def RunOrcaCalculation(name, inputFile: OrcaInputFile, index: int = 1, isLocal: bool = False, STDOut: bool = True):
     """Runs a Orca Calculation in a Docker Container"""
 
     orcaCache = "OrcaCache"
@@ -37,8 +34,8 @@ def RunOrcaCalculation(name, inputFile: OrcaInputFile, isLocal, index):
     # Get the Start Time of the Calculation
     startTimer = time.time()
     
-    #if self.STDOut:
-    print(f"Running Calulation : {GetInputFileName(name)}")
+    if STDOut:
+        print(f"Running Calulation : {GetInputFileName(name)}")
 
     # Run the Calculation Locally or through a Docker Container
     if (isLocal):
@@ -54,8 +51,8 @@ def RunOrcaCalculation(name, inputFile: OrcaInputFile, isLocal, index):
         print(f"WARNING Errors Maybe Occured : \n\n{result.stderr}")
     
     # If Standard Output Allowed post the Completion Message
-    #if self.STDOut:
-    print(f"Calculation Complete ({ClockTime(calculationTime)}) : {GetInputFileName(name)}") 
+    if STDOut:
+        print(f"Calculation Complete ({ClockTime(calculationTime)}) : {GetInputFileName(name)}") 
     
     return OrcaCalcResult(name, orcaCachePath)
 

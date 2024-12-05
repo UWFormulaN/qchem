@@ -6,11 +6,13 @@ from qchem.Parser import OrcaOutput
 from qchem.Calculation.OrcaInputFile import OrcaInputFile
 from qchem.Calculation.OrcaCalculation import OrcaCalculation
 from qchem.Data.Enums import OrcaInputTemplate, OrcaCalculationType
+from .BaseOrcaCalculation import BaseOrcaCalculation
+from .OrcaCalcs import RunOrcaCalculation
 
-class GeoOpt:
+class GeoOpt(BaseOrcaCalculation):
     
-    molecule: Molecule | str
-    """The Molecule to be Optimized"""
+    #molecule: Molecule | str
+    #"""The Molecule to be Optimized"""
     
     optMolecule: Molecule
     """The Final Optimized Molecule"""
@@ -21,8 +23,8 @@ class GeoOpt:
     functional: str
     """The Density Functional to be used for the Optimization"""
     
-    optimizationTime : float
-    """Time Elapsed for the Optimization to Complete"""
+    #optimizationTime : float
+    #"""Time Elapsed for the Optimization to Complete"""
     
     optimizedMoleculePath: str
     """Path to the Optimized Molecule File"""
@@ -30,20 +32,23 @@ class GeoOpt:
     calculation: OrcaCalculation
     """Reference to the Last Orca Calculation Object for the GeoOpt"""
     
-    cores: int
-    """The Number of Cores the Geometry Optimization will Utilize"""
+    #cores: int
+    #"""The Number of Cores the Geometry Optimization will Utilize"""
     
-    isLocal : bool
-    """Boolean Flag to determine if the Optimization is Local or not (Local = Runs on Device, Non-Local = Runs in Docker Container)"""
+    #isLocal : bool
+    #"""Boolean Flag to determine if the Optimization is Local or not (Local = Runs on Device, Non-Local = Runs in Docker Container)"""
     
-    name: str
-    """Name of the Molecule being GeoOptimized"""
+    #name: str
+    #"""Name of the Molecule being GeoOptimized"""
     
-    def __init__(self, molecule: str | Molecule, basisSet: str, functional: str, cores:int = 1, isLocal:bool = False, name:str = ""):
+    def __init__(self, molecule: str | Molecule, basisSet: str, functional: str, index: int = 1,  cores:int = 1, isLocal:bool = False, name:str = "OPTMolecule"):
+        
+        # Make a Super Call (Use the Base Class Init for some Boilerplate Setup)
+        super().__init__(name, molecule, index, cores, isLocal, True)
         
         # Check if Values are empty or of Wrong Type
-        if (not (molecule and isinstance(molecule, (str, Molecule)))):
-            raise ValueError("Molecule is not defined! Provide a Path to the XYZ file or a Molecule Object")
+        #if (not (molecule and isinstance(molecule, (str, Molecule)))):
+        #    raise ValueError("Molecule is not defined! Provide a Path to the XYZ file or a Molecule Object")
         
         if (not (basisSet and isinstance(basisSet, (str)))):
             raise ValueError("BasisSet is not defined! Provide the Name of the Basis Set as a String")
@@ -51,38 +56,38 @@ class GeoOpt:
         if (not functional and isinstance(functional, (str))):
             raise ValueError("Functional is not defined! Provide the Name of the Functional as a String")
             
-        if (not isinstance(cores, (int))):
-            raise ValueError("Cores is not an Integer! Provide an Integer Value")
-            
-        if (not isinstance(isLocal, (bool))):
-            raise ValueError("IsLocal is not a Boolean! Provide a Boolean Value")
-        
-        if (not isinstance(name, (str))):
-            raise ValueError("Name is not a String! Provide a String Value")
+        #if (not isinstance(cores, (int))):
+        #    raise ValueError("Cores is not an Integer! Provide an Integer Value")
+        #    
+        #if (not isinstance(isLocal, (bool))):
+        #    raise ValueError("IsLocal is not a Boolean! Provide a Boolean Value")
+        #
+        #if (not isinstance(name, (str))):
+        #    raise ValueError("Name is not a String! Provide a String Value")
         
         # Set the Name of the Molecule
-        if (name == ""):
-            if (isinstance(molecule, (Molecule))):
-                self.name = molecule.Name
-            else:
-                print("No Name Provided for the Molecule, using Default Name: GeoOptMolecule")
-                self.name = "GeoOptMolecule"
-        else:
-            self.name = name
+        #if (name == ""):
+        #    if (isinstance(molecule, (Molecule))):
+        #        self.name = molecule.Name
+        #    else:
+        #        print("No Name Provided for the Molecule, using Default Name: GeoOptMolecule")
+        #        self.name = "GeoOptMolecule"
+        #else:
+        #    self.name = name
             
         # Set the Values
-        self.molecule = molecule
+        #self.molecule = molecule
         self.basisSet = basisSet
         self.functional = functional
-        self.cores = cores
-        self.isLocal = isLocal
+        #self.cores = cores
+        #self.isLocal = isLocal
         
-    def IsFileReference(self):
-        """Determines if the Molecule is stored as a File Reference, or is a direct Molecule Object"""
-        if (isinstance(self.molecule, (str))):
-            return True
-        else:
-            return False
+    #def IsFileReference(self):
+    #    """Determines if the Molecule is stored as a File Reference, or is a direct Molecule Object"""
+    #    if (isinstance(self.molecule, (str))):
+    #        return True
+    #    else:
+    #        return False
         
     def RunCalculation (self):
         """Runs through a Geometry Optimization on the Molecule and repeats until properly converged"""
@@ -119,7 +124,7 @@ class GeoOpt:
                                     xyz=xyzMol)
         
         # Create the Calculation Object
-        calculation = OrcaCalculation(self.name, inputFile, isLocal=self.isLocal, stdout=False)    
+        #calculation = OrcaCalculation(self.name, inputFile, isLocal=self.isLocal, stdout=False)    
         
         # Start the Optimization Loop
         while (not isOptimized):
@@ -129,11 +134,15 @@ class GeoOpt:
             # Generate Print Statement for User on the Optimization Attempt
             print(f"Running Optimization Attempt {optIndex} on {self.name}...")
             
+            calcName = self.name if (optIndex == 1) else self.name + f"_{optIndex}"
+            
+            calculation = RunOrcaCalculation(calcName, inputFile, isLocal=self.isLocal, STDOut=False)
+            
             # Rune the Calculation
-            calculation.RunCalculation()
+            #calculation.RunCalculation()
             
             # Get the Output File
-            outputFile = OrcaOutput(calculation.OutputFilePath)
+            outputFile = OrcaOutput(calculation.outputFilePath)
             
             # Check if Frequencies are Empty and cannot be found
             if outputFile.vibrational_frequencies is None or (isinstance(outputFile.vibrational_frequencies, pd.DataFrame) and outputFile.vibrational_frequencies.empty):
@@ -149,7 +158,7 @@ class GeoOpt:
                     print(f"Molecule {self.name} is Optimized! ({self.ClockTime(calcTime)})")
                     isOptimized = True
                     self.calculation = calculation
-                    self.optimizedMoleculePath = os.path.join(calculation.OrcaCachePath,calculation.CalculationName + ".xyz")
+                    self.optimizedMoleculePath = os.path.join(calculation.orcaCachePath,calculation.name + ".xyz")
                     self.optMolecule = Molecule(self.name, self.optimizedMoleculePath)
                     break
                 
@@ -157,7 +166,7 @@ class GeoOpt:
             print(f"Finished Optimization Attempt {optIndex} on {self.name} ({self.ClockTime(calcTime)})")
             
             # Update the Molecule and Optimization Template for the Next Iteration
-            self.optimizedMoleculePath = os.path.join(calculation.OrcaCachePath,calculation.CalculationName + ".xyz")
+            self.optimizedMoleculePath = os.path.join(calculation.orcaCachePath, calculation.name + ".xyz")
             OPTtemplate = OrcaInputTemplate.BASICXYZPARALLEL
             xyzMol = Molecule(self.name, self.optimizedMoleculePath).XYZBody()
             optIndex += 1
@@ -171,7 +180,7 @@ class GeoOpt:
                                     xyz=xyzMol)
             
             # Create the Calculation Object
-            calculation = OrcaCalculation(self.name + f"_{optIndex}", inputFile, isLocal=self.isLocal, stdout=False)
+            #calculation = OrcaCalculation(self.name + f"_{optIndex}", inputFile, isLocal=self.isLocal, stdout=False)
             
     def IsOptimized(self, frequencies):
         """Determines if the Molecule is Optimized to the Valid Minimum"""
@@ -181,22 +190,22 @@ class GeoOpt:
         
         return True
     
-    def ClockTime(self, seconds):
-        """Converts Seconds to a Human Readable Time String"""
-        # Convert Seconds to Hours, Minutes, and Seconds
-        hours = seconds // 3600
-        minutes = (seconds % 3600) // 60
-        remainingSeconds = seconds % 60
-        
-        # Generate the Time String
-        parts = []
-        if hours > 0:
-            parts.append(f"{int(hours)} hour{'s' if hours > 1 else ''}")
-        if minutes > 0:
-            parts.append(f"{int(minutes)} minute{'s' if minutes > 1 else ''}")
-        if remainingSeconds > 0:
-            parts.append(f"{int(remainingSeconds)} second{'s' if remainingSeconds > 1 else ''}")
-        
-        # Return the Time String
-        return ", ".join(parts) if parts else "0 seconds"
+    #def ClockTime(self, seconds):
+    #    """Converts Seconds to a Human Readable Time String"""
+    #    # Convert Seconds to Hours, Minutes, and Seconds
+    #    hours = seconds // 3600
+    #    minutes = (seconds % 3600) // 60
+    #    remainingSeconds = seconds % 60
+    #    
+    #    # Generate the Time String
+    #    parts = []
+    #    if hours > 0:
+    #        parts.append(f"{int(hours)} hour{'s' if hours > 1 else ''}")
+    #    if minutes > 0:
+    #        parts.append(f"{int(minutes)} minute{'s' if minutes > 1 else ''}")
+    #    if remainingSeconds > 0:
+    #        parts.append(f"{int(remainingSeconds)} second{'s' if remainingSeconds > 1 else ''}")
+    #    
+    #    # Return the Time String
+    #    return ", ".join(parts) if parts else "0 seconds"
         

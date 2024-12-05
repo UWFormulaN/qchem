@@ -52,7 +52,7 @@ class BaseCalculation(ABC):
         #    raise ValueError("Input File must be a OrcaInputFile")
         
         # Set Values
-        self.calculationName = name
+        self.name = name
         self.index = index
         self.cores = cores
         self.STDOut = stdout
@@ -62,7 +62,7 @@ class BaseCalculation(ABC):
         
         # Generate Cache Paths
         orcaCache = "OrcaCache" #Change this to QChemCache?
-        self.orcaCachePath =  os.path.join(os.getcwd(), orcaCache, self.calculationName)  #f'{os.getcwd()}\\{orcaCache}\\{self.CalculationName}'
+        self.orcaCachePath =  os.path.join(os.getcwd(), orcaCache, self.name)  #f'{os.getcwd()}\\{orcaCache}\\{self.CalculationName}'
         #self.outputFilePath = os.path.join(self.orcaCachePath, self.GetOutputFileName())  #f'{self.OrcaCachePath}\\{self.GetOutputFileName()}'
         #self.inputFilePath = os.path.join(self.orcaCachePath, self.GetInputFileName()) #f'{self.OrcaCachePath}\\{self.GetInputFileName()}'
         
