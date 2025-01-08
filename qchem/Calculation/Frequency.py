@@ -1,12 +1,11 @@
 import time
-from typing import Any
 import pandas as pd
 from qchem.Molecule import Molecule
 from qchem.Parser import OrcaOutput
-from qchem.Calculation.OrcaInputFile import OrcaInputFile
 from qchem.Data.Enums import OrcaCalculationType, OrcaInputTemplate
 from .BaseOrcaCalculation import BaseOrcaCalculation
 from .OrcaCalcs import RunOrcaCalculation
+
 
 class Frequency(BaseOrcaCalculation):
 
@@ -20,7 +19,7 @@ class Frequency(BaseOrcaCalculation):
 
     IRFrequencies: pd.DataFrame
     """IR Frequencies of the Molecule"""
-    
+
     def __init__(
         self,
         molecule: str | Molecule,
@@ -30,46 +29,26 @@ class Frequency(BaseOrcaCalculation):
         isLocal: bool = False,
         name: str = "FREQMolecule",
         stdout: bool = True,
-        **variables
+        **variables,
     ):
         # Make a Super Call (Use the Base Class Init for some Boilerplate Setup)
         super().__init__(name, molecule, template, index, cores, isLocal, stdout, **variables)
 
         # Check if the Calculation has a Basis Set and a Functional Defined (Specific to Certain Calculations)
         self.BasisSetFunctionalCompliant()
-        
+
     def RunCalculation(self):
-        """Runs through the GOAT Calculation"""
+        f"""Runs through the FREQ Calculation"""
 
         # Start the Clock
         startTime = time.time()
-        
-        # Check if we are using a File reference, create the appropriate Input File associated with it
-        #if self.IsFileReference():
-        #    inputFile = OrcaInputFile(
-        #        OrcaInputTemplate.BASIC,
-        #        calculation=self.calculationType,
-        #        #basis=self.basisSet,
-        #        #functional=self.functional,
-        #        xyzfile=self.molecule,
-        #        self.idk
-        #    )
-        #else:
-        #    inputFile = OrcaInputFile(
-        #        OrcaInputTemplate.BASICXYZ,
-        #        calculation=self.calculationType,
-        #        #basis=self.basisSet,
-        #        #functional=self.functional,
-        #        xyz=self.molecule.XYZBody(),
-        #        variables = self.idk
-        #    )
 
         # Add a Print Statement to say we are running
-        print(f"Running Frequency Analysis on {self.name}...")
+        print(f"Running FREQ on {self.name}...")
 
         # Run the Orca Calculation
         calculation = RunOrcaCalculation(
-            self.name, self.inputFile, self.index, self.isLocal, self.STDOut
+            self.name, self.inputFile, self.index, self.isLocal, STDOut=False
         )
 
         # Get the Calculation Time
@@ -89,6 +68,4 @@ class Frequency(BaseOrcaCalculation):
         self.IRFrequencies = outputFile.get_ir_frequencies()
 
         # Display a Print Statement for the Frequency Completion
-        print(
-            f"Finished {self.calculationType} on {self.name}! ({self.ClockTime(self.calculationTime)})"
-        )
+        print(f"Finished FREQ on {self.name}! ({self.ClockTime(self.calculationTime)})")

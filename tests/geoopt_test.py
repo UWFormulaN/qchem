@@ -28,7 +28,7 @@ def Test1 ():
     mol = Molecule("PropaneGEOOPT", os.path.join("tests", "test_files", "propane.xyz"))
 
     # Create a GeoOpt Object
-    geoOpt = GeoOpt(mol, OrcaBasisSet.DEF2_SVP.value, OrcaDensityFunctional.B3LYP.value, Cores, isLocal=LocalTest)
+    geoOpt = GeoOpt(mol, basis=OrcaBasisSet.DEF2_SVP.value, functional=OrcaDensityFunctional.B3LYP.value, cores=Cores, isLocal=LocalTest)
 
     # Run the Optimization
     geoOpt.RunCalculation()
@@ -46,7 +46,7 @@ def Test2 ():
     shutil.copy(os.path.join("tests", "test_files", "propane.xyz"), os.path.join("OrcaCache", "Propane_GEOOPT_Ref", "propane.xyz"))
     
     # Create a GeoOpt Object
-    geoOpt = GeoOpt("propane.xyz", OrcaBasisSet.DEF2_SVP.value, OrcaDensityFunctional.B3LYP.value, Cores, name="Propane_GEOOPT_Ref", isLocal=LocalTest)
+    geoOpt = GeoOpt("propane.xyz", basis=OrcaBasisSet.DEF2_SVP.value, functional=OrcaDensityFunctional.B3LYP.value, cores=Cores, name="Propane_GEOOPT_Ref", isLocal=LocalTest)
 
     # Run the Optimization
     geoOpt.RunCalculation()
@@ -59,7 +59,7 @@ def Test3 ():
     mol = Molecule("CaffeineGEOOPT", os.path.join("tests", "test_files", "caffeine.xyz"))
 
     # Create a GeoOpt Object
-    geoOpt = GeoOpt(mol, OrcaBasisSet.MINI.value, OrcaDensityFunctional.B3LYP.value, Cores, isLocal=LocalTest)
+    geoOpt = GeoOpt(mol, basis=OrcaBasisSet.MINI.value, functional=OrcaDensityFunctional.B3LYP.value, cores=Cores, isLocal=LocalTest)
 
     # Run the Optimization
     geoOpt.RunCalculation()

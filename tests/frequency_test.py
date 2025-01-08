@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__))))
 # SETTINGS : Modify these as needed for Testing
 #
 LocalTest = False # I Suggest using False here as XTB may be required and that is for sure installed on Docker Container
-Cores = 8
+Cores = 1
 
 #
 # Test 1 : Load Molecule and Use Molecule as Input
@@ -32,32 +32,29 @@ def Test1 ():
     # Define the Frequency Object
     frequency = Frequency(mol, cores=Cores, isLocal=LocalTest, basis=OrcaBasisSet.DEF2_SVP.value, functional=OrcaDensityFunctional.B3LYP.value)
     
-    #frequency = Frequency(mol, 1, Cores, LocalTest, mol.Name, basis=OrcaBasisSet.DEF2_SVP.value, functional=OrcaDensityFunctional.B3LYP.value)
-    
     # Run the Frequency Calculation
     frequency.RunCalculation()
 
 #
 # Test 2 : Use File Reference as Input for Molecular Geometry
 #
-
-#def Test2 ():
-#    # Create the Orca Cache Directory
-#    if os.path.exists(os.path.join("OrcaCache", "Propane_FREQ_Ref")):
-#        shutil.rmtree(os.path.join("OrcaCache", "Propane_FREQ_Ref"))
-#    os.mkdir(os.path.join("OrcaCache", "Propane_FREQ_Ref"))
-#    
-#    # Copy the Proper XYZ File to be used
-#    shutil.copy(os.path.join("tests", "test_files", "propane.xyz"), os.path.join("OrcaCache", "Propane_FREQ_Ref", "propane.xyz"))
-#    
-#    # Define the Frequency Object
-#    frequency = Frequency("propane.xyz", OrcaBasisSet.DEF2_SVP.value, OrcaDensityFunctional.B3LYP.value, Cores, LocalTest, name="Propane_FREQ_Ref")
-#    
-#    # Run the Frequency Calculation
-#    frequency.RunCalculation()
+def Test2 ():
+    # Create the Orca Cache Directory
+    if os.path.exists(os.path.join("OrcaCache", "Propane_FREQ_Ref")):
+        shutil.rmtree(os.path.join("OrcaCache", "Propane_FREQ_Ref"))
+    os.mkdir(os.path.join("OrcaCache", "Propane_FREQ_Ref"))
+    
+    # Copy the Proper XYZ File to be used
+    shutil.copy(os.path.join("tests", "test_files", "propane.xyz"), os.path.join("OrcaCache", "Propane_FREQ_Ref", "propane.xyz"))
+    
+    # Define the Frequency Object
+    frequency = Frequency("propane.xyz", cores=Cores, isLocal=LocalTest, basis=OrcaBasisSet.DEF2_SVP.value, functional=OrcaDensityFunctional.B3LYP.value, name="Propane_FREQ_Ref")
+    
+    # Run the Frequency Calculation
+    frequency.RunCalculation()
     
 #
 # Running Tests
 #
 Test1()
-#Test2()
+Test2()

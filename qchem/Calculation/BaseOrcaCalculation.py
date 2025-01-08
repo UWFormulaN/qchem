@@ -98,13 +98,20 @@ class BaseOrcaCalculation(ABC):
         if (self.IsFileReference()):
             self.variables["xyzfile"] = self.molecule
             if (self.template == ""):
-                self.template = OrcaInputTemplate.BASIC
+                if (self.cores == 1):
+                    self.template = OrcaInputTemplate.BASIC
+                else:
+                    self.template = OrcaInputTemplate.BASICPARALLEL
         else:
             self.variables["xyz"] = self.molecule.XYZBody()
             if (self.template == ""):
-                self.template = OrcaInputTemplate.BASICXYZ
+                if (self.cores == 1):
+                    self.template = OrcaInputTemplate.BASICXYZ
+                else:
+                    self.template = OrcaInputTemplate.BASICXYZPARALLEL
                 
         self.variables["calculation"] = self.calculationType
+        self.variables["cores"] = self.cores
             
         # Generate Cache Paths
         orcaCache = "OrcaCache" #Change this to QChemCache?
