@@ -3,35 +3,37 @@ import os
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from qchem.Data.Enums import OrcaInputTemplate
 from qchem.Molecule import Molecule
 from qchem.Calculation.GeoOpt import GeoOpt
 from qchem.Calculation.GOAT import GOAT
 from qchem.Calculation.Frequency import Frequency
+from qchem.Calculation.BaseOrcaCalculation import BaseOrcaCalculation
 
-class Spectra:
+class Spectra(BaseOrcaCalculation):
 
-    molecule: Molecule | str
+    #molecule: Molecule | str
     """The Molecule to be Optimized"""
 
-    cores: int
+    #cores: int
     """The Number of Cores the Geometry Optimization will Utilize"""
 
-    isLocal: bool
+    #isLocal: bool
     """Boolean Flag to determine if the Optimization is Local or not (Local = Runs on Device, Non-Local = Runs in Docker Container)"""
 
-    name: str
+    #name: str
     """Name of the Molecule being GeoOptimized"""
 
-    calculationTime: float
+    #calculationTime: float
     """Time Elapsed for the GOAT Optimization to Complete"""
 
-    orcaCachePath: str
+    #orcaCachePath: str
     """The Path to the Orca Cache folder for the Calculation"""
 
-    outputFilePath: str
+    #outputFilePath: str
     """The Path to the Output File"""
 
-    basisSet: str
+    #basisSet: str
     """The Basis Set to be used for the Optimization"""
 
     IRSpectra: pd.DataFrame
@@ -40,62 +42,19 @@ class Spectra:
     def __init__(
         self,
         molecule: str | Molecule,
-        basisSet: str,
-        functional: str,
+        template: str | OrcaInputTemplate = "",
+        index: int = 1,
         cores: int = 1,
         isLocal: bool = False,
-        name: str = "",
+        name: str = "FREQMolecule",
+        stdout: bool = True,
+        **variables
     ):
-        # Check if Values are empty or of Wrong Type
-        if not (molecule and isinstance(molecule, (str, Molecule))):
-            raise ValueError(
-                "Molecule is not defined! Provide a Path to the XYZ file or a Molecule Object"
-            )
+        # Make a Super Call (Use the Base Class Init for some Boilerplate Setup)
+        super().__init__(name, molecule, template, index, cores, isLocal, stdout, **variables)
 
-        if not (basisSet and isinstance(basisSet, (str))):
-            raise ValueError(
-                "BasisSet is not defined! Provide the Name of the Basis Set as a String"
-            )
-
-        if not functional and isinstance(functional, (str)):
-            raise ValueError(
-                "Functional is not defined! Provide the Name of the Functional as a String"
-            )
-
-        if not isinstance(cores, (int)):
-            raise ValueError("Cores is not an Integer! Provide an Integer Value")
-
-        if not isinstance(isLocal, (bool)):
-            raise ValueError("IsLocal is not a Boolean! Provide a Boolean Value")
-
-        if not isinstance(name, (str)):
-            raise ValueError("Name is not a String! Provide a String Value")
-
-        # Set the Name of the Molecule
-        if name == "":
-            if isinstance(molecule, (Molecule)):
-                self.name = molecule.Name
-            else:
-                print(
-                    "No Name Provided for the Molecule, using Default Name: GOATMolecule"
-                )
-                self.name = "GOATMolecule"
-        else:
-            self.name = name
-
-        # Set the Values
-        self.molecule = molecule
-        self.basisSet = basisSet
-        self.functional = functional
-        self.cores = cores
-        self.isLocal = isLocal
-
-    def IsFileReference(self):
-        """Determines if the Molecule is stored as a File Reference, or is a direct Molecule Object"""
-        if isinstance(self.molecule, (str)):
-            return True
-        else:
-            return False
+        # Check if the Calculation has a Basis Set and a Functional Defined (Specific to Certain Calculations)
+        self.BasisSetFunctionalCompliant()
 
     def RunCalculation(self):
         """Runs through all Calculations required to produce a Spectra Graph"""
@@ -104,42 +63,44 @@ class Spectra:
         startTime = time.time()
 
         # Create a Cache Folder Path
-        orcaCache = "OrcaCache"
-        orcaCachePath = os.path.join(os.getcwd(), orcaCache, self.name)
+        #orcaCache = "OrcaCache"
+        #orcaCachePath = os.path.join(os.getcwd(), orcaCache, self.name)
         
         # Make Cache Folder if it doesn't Exist
-        if not os.path.exists(orcaCachePath):
-            os.makedirs(orcaCachePath)
+        if not os.path.exists(self.orcaCachePath):
+            os.makedirs(self.orcaCachePath)
 
         print("\nRunning GeoOpt\n")
 
         # Create a Geo Opt Calculation Object
-        geoOptCalc = GeoOpt(
-            self.molecule,
-            self.basisSet,
-            self.functional,
-            self.cores,
-            self.isLocal,
-            f"{self.name}_GEOOPT",
-        )
+        geoOptCalc = GeoOpt(self.molecule, True, self.template, self.index, self.cores, self.isLocal, f"{self.name}_GEOOPT", False, **self.variables)
+    
+        #geoOptCalc = GeoOpt(
+        #    self.molecule,
+        #    self.basisSet,
+        #    self.functional,
+        #    self.cores,
+        #    self.isLocal,
+        #    f"{self.name}_GEOOPT",
+        #)
 
         # Run the GeoOptimization on the Molecule
         geoOptCalc.RunCalculation()
 
         print("\nFinished GeoOpt\n")
-
         print("\nRunning GOAT\n")
 
         # Create GOAT Calculation Object
-        goatCalc = GOAT(
-            geoOptCalc.optMolecule, self.cores, self.isLocal, f"{self.name}_GOAT"
-        )
+        goatCalc = GOAT(geoOptCalc.optMolecule, self.template, self.index, self.cores, self.isLocal, f"{self.name}_GOAT", False, **self.variables)
+        
+        #goatCalc = GOAT(
+        #    geoOptCalc.optMolecule, self.cores, self.isLocal, f"{self.name}_GOAT"
+        #)
 
         # Run the GOAT Calculation
         goatCalc.RunCalculation()
 
         print("\nFinished GOAT\n")
-
         print("\nRunning Frequency Analysis\n")
 
         # Get the Number of Conformers Created
@@ -158,21 +119,23 @@ class Spectra:
 
         # Save the Contributions to Excel File
         IRContribution.to_csv(
-            os.path.join(orcaCachePath, f"{self.name}_Contributions.csv"), index=False
+            os.path.join(self.orcaCachePath, f"{self.name}_Contributions.csv"), index=False
         )
 
         # Loop through all the Conformers and Run a Frequency Calculation
         for i in range(conformersNum):
 
             # Create the Frequency Calculation
-            freqCalc = Frequency(
-                goatCalc.conformers[i],
-                self.basisSet,
-                self.functional,
-                self.cores,
-                self.isLocal,
-                f"{self.name}_FREQ_{i}",
-            )
+            freqCalc = Frequency(goatCalc.conformers[i], self.template, self.index, self.cores, self.isLocal, f"{self.name}_FREQ_{i}", False, **self.variables)
+            
+            #freqCalc = Frequency(
+            #    goatCalc.conformers[i],
+            #    self.basisSet,
+            #    self.functional,
+            #    self.cores,
+            #    self.isLocal,
+            #    f"{self.name}_FREQ_{i}",
+            #)
 
             # Run the Frequency Calculation
             freqCalc.RunCalculation()
@@ -187,7 +150,7 @@ class Spectra:
 
             # Save Individual Spectra
             FreqSpectra.to_csv(
-                os.path.join(orcaCachePath, f"{self.name}_IRIntensity_{i}.csv"),
+                os.path.join(self.orcaCachePath, f"{self.name}_IRIntensity_{i}.csv"),
                 index=False,
             )
 
@@ -200,7 +163,6 @@ class Spectra:
             self.IRSpectra = pd.concat([self.IRSpectra, FreqSpectra], ignore_index=True)
 
         print("\nFinished Frequency Analysis\n")
-
         print("\nMaking Final Touches\n")
 
         # Group Common Wavenumbers and Sum their Values
@@ -211,7 +173,7 @@ class Spectra:
 
         # Save Full Spectra
         self.IRSpectra.to_csv(
-            os.path.join(orcaCachePath, f"{self.name}_Spectra.csv"), index=False
+            os.path.join(self.orcaCachePath, f"{self.name}_Spectra.csv"), index=False
         )
 
         # Get Total Time for Spectra
@@ -323,27 +285,3 @@ class Spectra:
         
         if showPlot:
             plt.show()
-
-    def ClockTime(self, seconds):
-        """Converts Seconds to a Human Readable Time String"""
-        # Convert Seconds to Hours, Minutes, and Seconds
-        days = seconds // 86400
-        hours = (seconds % 86400) // 3600
-        minutes = (seconds % 3600) // 60
-        remainingSeconds = seconds % 60
-
-        # Generate the Time String
-        parts = []
-        if days > 0:
-            parts.append(f"{int(hours)} day{'s' if days > 1 else ''}")
-        if hours > 0:
-            parts.append(f"{int(hours)} hour{'s' if hours > 1 else ''}")
-        if minutes > 0:
-            parts.append(f"{int(minutes)} minute{'s' if minutes > 1 else ''}")
-        if remainingSeconds > 0:
-            parts.append(
-                f"{int(remainingSeconds)} second{'s' if remainingSeconds > 1 else ''}"
-            )
-
-        # Return the Time String
-        return ", ".join(parts) if parts else "0 seconds"

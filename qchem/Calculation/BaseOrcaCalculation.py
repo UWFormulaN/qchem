@@ -1,7 +1,6 @@
 import os
 from typing import Any
 from qchem.Data.Enums import OrcaInputTemplate
-from .BaseCalculation import BaseCalculation
 from .OrcaInputFile import OrcaInputFile
 from ..Molecule import Molecule
 from abc import ABC, abstractmethod
@@ -51,9 +50,6 @@ class BaseOrcaCalculation(ABC):
     """Number of Cores to use for the Calculation"""
     
     def __init__ (self, name: str, molecule: str | Molecule, template: str | OrcaInputTemplate, index: int, cores: int, isLocal: bool, stdout : bool, **variables):
-        
-        # Make a Super Call (Use the Base Class Init for some Boilerplate Setup)
-        #super().__init__(name, index, cores, isLocal, stdout)
         
          # Value Type Checking
         if (not (self.calculationType and isinstance(self.calculationType, (str)))):

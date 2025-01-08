@@ -36,7 +36,7 @@ class GeoOpt(BaseOrcaCalculation):
         index: int = 1,
         cores: int = 1,
         isLocal: bool = False,
-        name: str = "FREQMolecule",
+        name: str = "GEOOPTMolecule",
         stdout: bool = True,
         **variables
     ):
@@ -52,7 +52,7 @@ class GeoOpt(BaseOrcaCalculation):
     def RunCalculation(self):
         """Runs through a Geometry Optimization on the Molecule and repeats until properly converged"""
         # Start the Timer, Set the Optimization Index, and Initialize the Optimization Flag
-        startTime = time.time()
+        #startTime = time.time()
         
         # Single Optimization
         if self.fullOptimization:
