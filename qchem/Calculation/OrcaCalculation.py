@@ -1,6 +1,7 @@
 import os
 import subprocess
 import time
+from typing import Any
 from .OrcaInputFile import OrcaInputFile
 from .BaseOrcaCalculation import BaseOrcaCalculation
 from ..Molecule import Molecule #from qchem.Molecule import Molecule
@@ -53,8 +54,8 @@ class OrcaCalculation(BaseOrcaCalculation):
     
     #molecule: Molecule | str
     #"""The Molecule to be Optimized"""
-
-    def __init__ (self, name: str, inputFile: OrcaInputFile, index: int = 1, isLocal: bool = False, stdout : bool = True):
+    
+    def __init__ (self, name: str, inputFile: OrcaInputFile, index: int = 1, isLocal: bool = False, stdout : bool = True, **variables):
         
         # Make a Super Call (Use the Base Class Init for some Boilerplate Setup)
         super().__init__(name, index, isLocal, stdout)
@@ -81,7 +82,6 @@ class OrcaCalculation(BaseOrcaCalculation):
         # Set Values
         self.inputFile = inputFile
         
-        
         #self.isLocal = isLocal
         
         #self.calculationName = name
@@ -100,11 +100,6 @@ class OrcaCalculation(BaseOrcaCalculation):
             self.cores = self.inputFile.variables["cores"]
         else:
             self.cores = 1
-
-    
-
-
-
 
     def RunCalculation(self):
         """Runs a Orca Calculation in a Docker Container"""

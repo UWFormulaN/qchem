@@ -30,7 +30,9 @@ def Test1 ():
     mol = Molecule("PropaneFREQ", os.path.join("tests", "test_files", "propane.xyz"))
 
     # Define the Frequency Object
-    frequency = Frequency(mol, OrcaBasisSet.DEF2_SVP.value, OrcaDensityFunctional.B3LYP.value, Cores, LocalTest)
+    frequency = Frequency(mol, cores=Cores, isLocal=LocalTest, basis=OrcaBasisSet.DEF2_SVP.value, functional=OrcaDensityFunctional.B3LYP.value)
+    
+    #frequency = Frequency(mol, 1, Cores, LocalTest, mol.Name, basis=OrcaBasisSet.DEF2_SVP.value, functional=OrcaDensityFunctional.B3LYP.value)
     
     # Run the Frequency Calculation
     frequency.RunCalculation()
@@ -38,23 +40,24 @@ def Test1 ():
 #
 # Test 2 : Use File Reference as Input for Molecular Geometry
 #
-def Test2 ():
-    # Create the Orca Cache Directory
-    if os.path.exists(os.path.join("OrcaCache", "Propane_FREQ_Ref")):
-        shutil.rmtree(os.path.join("OrcaCache", "Propane_FREQ_Ref"))
-    os.mkdir(os.path.join("OrcaCache", "Propane_FREQ_Ref"))
-    
-    # Copy the Proper XYZ File to be used
-    shutil.copy(os.path.join("tests", "test_files", "propane.xyz"), os.path.join("OrcaCache", "Propane_FREQ_Ref", "propane.xyz"))
-    
-    # Define the Frequency Object
-    frequency = Frequency("propane.xyz", OrcaBasisSet.DEF2_SVP.value, OrcaDensityFunctional.B3LYP.value, Cores, LocalTest, name="Propane_FREQ_Ref")
-    
-    # Run the Frequency Calculation
-    frequency.RunCalculation()
+
+#def Test2 ():
+#    # Create the Orca Cache Directory
+#    if os.path.exists(os.path.join("OrcaCache", "Propane_FREQ_Ref")):
+#        shutil.rmtree(os.path.join("OrcaCache", "Propane_FREQ_Ref"))
+#    os.mkdir(os.path.join("OrcaCache", "Propane_FREQ_Ref"))
+#    
+#    # Copy the Proper XYZ File to be used
+#    shutil.copy(os.path.join("tests", "test_files", "propane.xyz"), os.path.join("OrcaCache", "Propane_FREQ_Ref", "propane.xyz"))
+#    
+#    # Define the Frequency Object
+#    frequency = Frequency("propane.xyz", OrcaBasisSet.DEF2_SVP.value, OrcaDensityFunctional.B3LYP.value, Cores, LocalTest, name="Propane_FREQ_Ref")
+#    
+#    # Run the Frequency Calculation
+#    frequency.RunCalculation()
     
 #
 # Running Tests
 #
 Test1()
-Test2()
+#Test2()

@@ -6,11 +6,11 @@ from qchem.Parser import OrcaOutput
 from qchem.Calculation.OrcaInputFile import OrcaInputFile
 from qchem.Calculation.OrcaCalculation import OrcaCalculation
 from qchem.Data.Enums import OrcaInputTemplate
+from qchem.Calculation.BaseOrcaCalculation import BaseOrcaCalculation
 
-class GOAT:
+class GOAT(BaseOrcaCalculation):
     
     # Most of this is Boilerplate, Should make a Abstract class to inherit this boilerplate logic
-    
     molecule: Molecule | str
     """The Molecule to be Optimized"""
     
@@ -38,28 +38,27 @@ class GOAT:
     conformerContribution : list[float] # Switch to DataFrame?
     """A List of the Contributions each Conformer provides to the Ensemble"""
     
-    def __init__(self, molecule: str | Molecule, cores:int = 1, isLocal:bool = False, name:str = ""):
+    def __init__(self, molecule: str | Molecule, index: int = 1, cores:int = 1, isLocal:bool = False, name:str = "GOATMolecule"):
+        
+        # Make a Super Call (Use the Base Class Init for some Boilerplate Setup)
+        super().__init__(name, molecule, index, cores, isLocal, True)
         
         # Check if Values are empty or of Wrong Type
-        if (not (molecule and isinstance(molecule, (str, Molecule)))):
-            raise ValueError("Molecule is not defined! Provide a Path to the XYZ file or a Molecule Object")
-        
-        if (not isinstance(cores, (int))):
-            raise ValueError("Cores is not an Integer! Provide an Integer Value")
-            
-        if (not isinstance(isLocal, (bool))):
-            raise ValueError("IsLocal is not a Boolean! Provide a Boolean Value")
-        
-        if (not isinstance(name, (str))):
-            raise ValueError("Name is not a String! Provide a String Value")
+        #if (not (molecule and isinstance(molecule, (str, Molecule)))):
+        #    raise ValueError("Molecule is not defined! Provide a Path to the XYZ file or a Molecule Object")
+        #
+        #if (not isinstance(cores, (int))):
+        #    raise ValueError("Cores is not an Integer! Provide an Integer Value")
+        #    
+        #if (not isinstance(isLocal, (bool))):
+        #    raise ValueError("IsLocal is not a Boolean! Provide a Boolean Value")
+        #
+        #if (not isinstance(name, (str))):
+        #    raise ValueError("Name is not a String! Provide a String Value")
         
         # Set the Name of the Molecule
-        if (name == ""):
-            if (isinstance(molecule, (Molecule))):
-                self.name = molecule.Name
-            else:
-                print("No Name Provided for the Molecule, using Default Name: GOATMolecule")
-                self.name = "GOATMolecule"
+        if isinstance(molecule, Molecule) and name == self.defaultName:
+            self.name = molecule.Name
         else:
             self.name = name
         
@@ -162,21 +161,21 @@ class GOAT:
             # Add to the Conformer List
             self.conformers.append(molecule)
             
-    def ClockTime(self, seconds):
-        """Converts Seconds to a Human Readable Time String"""
-        # Convert Seconds to Hours, Minutes, and Seconds
-        hours = seconds // 3600
-        minutes = (seconds % 3600) // 60
-        remainingSeconds = seconds % 60
-        
-        # Generate the Time String
-        parts = []
-        if hours > 0:
-            parts.append(f"{int(hours)} hour{'s' if hours > 1 else ''}")
-        if minutes > 0:
-            parts.append(f"{int(minutes)} minute{'s' if minutes > 1 else ''}")
-        if remainingSeconds > 0:
-            parts.append(f"{int(remainingSeconds)} second{'s' if remainingSeconds > 1 else ''}")
-        
-        # Return the Time String
-        return ", ".join(parts) if parts else "0 seconds"
+    #def ClockTime(self, seconds):
+    #    """Converts Seconds to a Human Readable Time String"""
+    #    # Convert Seconds to Hours, Minutes, and Seconds
+    #    hours = seconds // 3600
+    #    minutes = (seconds % 3600) // 60
+    #    remainingSeconds = seconds % 60
+    #    
+    #    # Generate the Time String
+    #    parts = []
+    #    if hours > 0:
+    #        parts.append(f"{int(hours)} hour{'s' if hours > 1 else ''}")
+    #    if minutes > 0:
+    #        parts.append(f"{int(minutes)} minute{'s' if minutes > 1 else ''}")
+    #    if remainingSeconds > 0:
+    #        parts.append(f"{int(remainingSeconds)} second{'s' if remainingSeconds > 1 else ''}")
+    #    
+    #    # Return the Time String
+    #    return ", ".join(parts) if parts else "0 seconds"

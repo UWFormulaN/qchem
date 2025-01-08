@@ -1,8 +1,5 @@
 import os
-import subprocess
-import time
 from abc import ABC, abstractmethod
-from .OrcaInputFile import OrcaInputFile
 
 class BaseCalculation(ABC):
     """Abstract Class to be Inherited to define a new Orca Calculation class"""
@@ -45,8 +42,6 @@ class BaseCalculation(ABC):
         
         if (not isinstance(stdout, (bool))):
             raise ValueError("STDOut must be a boolean")
-        
-        
         
         #if (not isinstance(inputFile, (OrcaInputFile))):
         #    raise ValueError("Input File must be a OrcaInputFile")
