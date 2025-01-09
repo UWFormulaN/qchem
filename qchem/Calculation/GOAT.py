@@ -6,6 +6,7 @@ from qchem.Parser import OrcaOutput
 from qchem.Calculation.OrcaCalculation import OrcaCalculation
 from qchem.Data.Enums import OrcaInputTemplate
 from qchem.Calculation.BaseOrcaCalculation import BaseOrcaCalculation
+from .OrcaCalcs import RunOrcaCalculation
 
 class GOAT(BaseOrcaCalculation):
 
@@ -53,6 +54,8 @@ class GOAT(BaseOrcaCalculation):
         stdout: bool = True,
         **variables
     ):
+        variables["basis"] = ""
+        variables["functional"] = ""
 
         # Make a Super Call (Use the Base Class Init for some Boilerplate Setup)
         super().__init__(name, molecule, template, index, cores, isLocal, stdout, **variables)
@@ -88,16 +91,18 @@ class GOAT(BaseOrcaCalculation):
         #        xyz=self.molecule.XYZBody(),
         #    )
 
-        # Create the Calculation Object
-        calculation = OrcaCalculation(
-            self.name, self.inputFile, isLocal=self.isLocal, stdout=False
-        )
-
         # Add a Print Statement to say we are running
         print(f"Running GOAT (Global Optimizer Algorithm) on {self.name}...")
 
+        # Create the Calculation Object
+        calculation = RunOrcaCalculation(self.name, self.inputFile, self.index, self.isLocal, STDOut=False)
+        
+        #calculation = OrcaCalculation(
+        #    self.name, self.inputFile, self.index, isLocal=self.isLocal, stdout=False, **self.variables
+        #)
+
         # Run the Calculation
-        calculation.RunCalculation()
+        #calculation.RunCalculation()
 
         # Get the Calculation Time
         self.calculationTime = time.time() - startTime
@@ -122,7 +127,7 @@ class GOAT(BaseOrcaCalculation):
         """Extracts all the Conformer Molecules"""
         # Get the Number of Atoms we should Expect
         if self.IsFileReference():
-            atomNum = XYZFile(self.molecule).AtomCount
+            atomNum = XYZFile(os.path.join(self.orcaCachePath, self.molecule)).AtomCount
         else:
             atomNum = self.molecule.AtomCount
 

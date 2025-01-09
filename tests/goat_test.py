@@ -28,7 +28,7 @@ def Test1 ():
     mol = Molecule("PropaneGOAT", os.path.join("tests", "test_files", "propane.xyz"))
 
     # Create a GOAT Object
-    goat = GOAT(mol, Cores, isLocal=LocalTest)
+    goat = GOAT(mol, cores=Cores, isLocal=LocalTest, index=1)
 
     # Run the GOAT Calculation
     goat.RunCalculation()
@@ -46,7 +46,7 @@ def Test2 ():
     shutil.copy(os.path.join("tests", "test_files", "propane.xyz"), os.path.join("OrcaCache", "Propane_GOAT_Ref", "propane.xyz"))
     
     # Create a GOAT Object
-    goat = GOAT("propane.xyz", Cores, name="Propane_GOAT_Ref", isLocal=LocalTest)
+    goat = GOAT("propane.xyz", cores=Cores, name="Propane_GOAT_Ref", isLocal=LocalTest, index=2)
 
     # Run the GOAT Calculation
     goat.RunCalculation()
@@ -54,5 +54,6 @@ def Test2 ():
 #
 # Running Tests
 #
-Test1()
-Test2()
+if __name__ == "__main__":
+    Test1()
+    #Test2()

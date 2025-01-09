@@ -20,9 +20,6 @@ def RunOrcaCalculation(name, inputFile: OrcaInputFile, index: int = 1, isLocal: 
 
     orcaCache = "OrcaCache"
     orcaCachePath =  os.path.join(os.getcwd(), orcaCache, name)
-    
-    #inputFileName = name + ".inp"
-    #outputFileName = name + ".out"
 
     # Make Cache Folder if it doesn't Exist
     if not os.path.exists(orcaCachePath):

@@ -99,7 +99,8 @@ def Test4 ():
 #
 # Running Tests
 #
-Test1()
-Test2()
-Test3()
-Test4()
+if __name__ == "__main__":
+    Test1()
+    Test2()
+    Test3()
+    Test4()
