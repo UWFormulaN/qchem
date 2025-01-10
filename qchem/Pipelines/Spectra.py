@@ -12,30 +12,8 @@ from qchem.Calculation.BaseOrcaCalculation import BaseOrcaCalculation
 
 class Spectra(BaseOrcaCalculation):
 
-    #molecule: Molecule | str
-    """The Molecule to be Optimized"""
-
-    #cores: int
-    """The Number of Cores the Geometry Optimization will Utilize"""
-
-    #isLocal: bool
-    """Boolean Flag to determine if the Optimization is Local or not (Local = Runs on Device, Non-Local = Runs in Docker Container)"""
-
-    #name: str
-    """Name of the Molecule being GeoOptimized"""
-
-    #calculationTime: float
-    """Time Elapsed for the GOAT Optimization to Complete"""
-
-    #orcaCachePath: str
-    """The Path to the Orca Cache folder for the Calculation"""
-
-    #outputFilePath: str
-    """The Path to the Output File"""
-
-    #basisSet: str
-    """The Basis Set to be used for the Optimization"""
-
+    calculationType: str = "Spectra"
+    
     IRSpectra: pd.DataFrame
     """The Resulting IR Spectra plotted"""
 
@@ -55,6 +33,9 @@ class Spectra(BaseOrcaCalculation):
 
         # Check if the Calculation has a Basis Set and a Functional Defined (Specific to Certain Calculations)
         self.BasisSetFunctionalCompliant()
+    
+        # Delete Cores from Variables cause it causes Issues        
+        self.variables.pop("cores")
 
     def RunCalculation(self):
         """Runs through all Calculations required to produce a Spectra Graph"""
@@ -62,46 +43,29 @@ class Spectra(BaseOrcaCalculation):
         # Start the Timer
         startTime = time.time()
 
-        # Create a Cache Folder Path
-        #orcaCache = "OrcaCache"
-        #orcaCachePath = os.path.join(os.getcwd(), orcaCache, self.name)
-        
         # Make Cache Folder if it doesn't Exist
         if not os.path.exists(self.orcaCachePath):
             os.makedirs(self.orcaCachePath)
 
-        print("\nRunning GeoOpt\n")
+        print("\nRunning GeoOpt!\n")
 
         # Create a Geo Opt Calculation Object
         geoOptCalc = GeoOpt(self.molecule, True, self.template, self.index, self.cores, self.isLocal, f"{self.name}_GEOOPT", False, **self.variables)
     
-        #geoOptCalc = GeoOpt(
-        #    self.molecule,
-        #    self.basisSet,
-        #    self.functional,
-        #    self.cores,
-        #    self.isLocal,
-        #    f"{self.name}_GEOOPT",
-        #)
-
         # Run the GeoOptimization on the Molecule
         geoOptCalc.RunCalculation()
 
-        print("\nFinished GeoOpt\n")
-        print("\nRunning GOAT\n")
+        print("\nFinished GeoOpt!\n")
+        print("\nRunning GOAT!\n")
 
         # Create GOAT Calculation Object
         goatCalc = GOAT(geoOptCalc.optMolecule, self.template, self.index, self.cores, self.isLocal, f"{self.name}_GOAT", False, **self.variables)
         
-        #goatCalc = GOAT(
-        #    geoOptCalc.optMolecule, self.cores, self.isLocal, f"{self.name}_GOAT"
-        #)
-
         # Run the GOAT Calculation
         goatCalc.RunCalculation()
 
-        print("\nFinished GOAT\n")
-        print("\nRunning Frequency Analysis\n")
+        print("\nFinished GOAT!\n")
+        print("\nRunning Frequency Analysis!\n")
 
         # Get the Number of Conformers Created
         conformersNum = len(goatCalc.conformers)
@@ -128,15 +92,6 @@ class Spectra(BaseOrcaCalculation):
             # Create the Frequency Calculation
             freqCalc = Frequency(goatCalc.conformers[i], self.template, self.index, self.cores, self.isLocal, f"{self.name}_FREQ_{i}", False, **self.variables)
             
-            #freqCalc = Frequency(
-            #    goatCalc.conformers[i],
-            #    self.basisSet,
-            #    self.functional,
-            #    self.cores,
-            #    self.isLocal,
-            #    f"{self.name}_FREQ_{i}",
-            #)
-
             # Run the Frequency Calculation
             freqCalc.RunCalculation()
 
@@ -162,7 +117,7 @@ class Spectra(BaseOrcaCalculation):
             # This Method Works, no need for a Dictionary and all that
             self.IRSpectra = pd.concat([self.IRSpectra, FreqSpectra], ignore_index=True)
 
-        print("\nFinished Frequency Analysis\n")
+        print("\nFinished Frequency Analysis!\n")
         print("\nMaking Final Touches\n")
 
         # Group Common Wavenumbers and Sum their Values
@@ -179,7 +134,7 @@ class Spectra(BaseOrcaCalculation):
         # Get Total Time for Spectra
         calcTime = time.time() - startTime
 
-        print(f"\nFinished Making {self.name} Spectra ({self.ClockTime(calcTime)})\n")
+        print(f"\nFinished Making {self.name} Spectra! ({self.ClockTime(calcTime)})\n")
 
     @staticmethod
     def GaussianBlur(data, sigma):

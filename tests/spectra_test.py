@@ -32,7 +32,7 @@ def Test1 ():
     mol = Molecule("Ethane", os.path.join("tests", "test_files", "ethane.xyz"))
     
     # Create a Spectra Object
-    spectra = Spectra(mol, OrcaBasisSet.DEF2_SVP.value, OrcaDensityFunctional.B3LYP.value, Cores, LocalTest)
+    spectra = Spectra(mol, cores=Cores, isLocal=LocalTest, index=1, basis=OrcaBasisSet.DEF2_SVP.value, functional=OrcaDensityFunctional.B3LYP.value)
     
     # Run the Spectra Calculation
     spectra.RunCalculation()
@@ -53,7 +53,7 @@ def Test2 ():
     shutil.copy(os.path.join("tests", "test_files", "propane.xyz"), os.path.join("OrcaCache", "Propane_Spectra_Ref_GEOOPT", "propane.xyz"))
     
      # Create a Spectra Object
-    spectra = Spectra("propane.xyz", OrcaBasisSet.DEF2_SVP.value, OrcaDensityFunctional.B3LYP.value, Cores, LocalTest, name="Propane_Spectra_Ref")
+    spectra = Spectra("propane.xyz", cores=Cores, isLocal=LocalTest, name="Propane_Spectra_Ref", index=2, basis=OrcaBasisSet.DEF2_SVP.value, functional=OrcaDensityFunctional.B3LYP.value)
     
     # Run the Spectra Calculation
     spectra.RunCalculation()
@@ -71,7 +71,7 @@ def Test3 ():
     mol = Molecule("Aspirin", os.path.join("tests", "test_files", "aspirin_raw.xyz"))
     
     # Create a Spectra Object
-    spectra = Spectra(mol, OrcaBasisSet.DEF2_SVP.value, OrcaDensityFunctional.B3LYP.value, Cores, LocalTest)
+    spectra = Spectra(mol, cores=Cores, isLocal=LocalTest, index=3, basis=OrcaBasisSet.DEF2_SVP.value, functional=OrcaDensityFunctional.B3LYP.value)
     
     # Run the Spectra Calculation
     spectra.RunCalculation()
@@ -88,7 +88,7 @@ def Test4 ():
     mol = Molecule("Dypyrro", os.path.join("tests", "test_files", "dypyrroMethane.xyz"))
     
     # Create a Spectra Object
-    spectra = Spectra(mol, OrcaBasisSet.DEF2_SVP.value, OrcaDensityFunctional.B3LYP.value, Cores, LocalTest)
+    spectra = Spectra(mol, cores=Cores, isLocal=LocalTest, index=4, basis=OrcaBasisSet.DEF2_SVP.value, functional=OrcaDensityFunctional.B3LYP.value)
     
     # Run the Spectra Calculation
     spectra.RunCalculation()

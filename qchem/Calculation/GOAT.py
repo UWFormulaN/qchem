@@ -3,7 +3,6 @@ import os
 from qchem.Molecule import Molecule
 from qchem.XYZFile import XYZFile
 from qchem.Parser import OrcaOutput
-from qchem.Calculation.OrcaCalculation import OrcaCalculation
 from qchem.Data.Enums import OrcaInputTemplate
 from qchem.Calculation.BaseOrcaCalculation import BaseOrcaCalculation
 from .OrcaCalcs import RunOrcaCalculation
@@ -14,28 +13,6 @@ class GOAT(BaseOrcaCalculation):
     # Need to be Set
     #
     calculationType: str = "GOAT XTB"
-
-    # Most of this is Boilerplate, Should make a Abstract class to inherit this boilerplate logic
-    #molecule: Molecule | str
-    """The Molecule to be Optimized"""
-
-    #cores: int
-    """The Number of Cores the Geometry Optimization will Utilize"""
-
-    #isLocal: bool
-    """Boolean Flag to determine if the Optimization is Local or not (Local = Runs on Device, Non-Local = Runs in Docker Container)"""
-
-    #name: str
-    """Name of the Molecule being GeoOptimized"""
-
-    #calculationTime: float
-    """Time Elapsed for the GOAT Optimization to Complete"""
-
-    #orcaCachePath: str
-    """The Path to the Orca Cache folder for the Calculation"""
-
-    #outputFilePath: str
-    """The Path to the Output File"""
 
     conformers: list[Molecule]
     """List of Conformer Molecules Calculated from GOAT"""
@@ -54,6 +31,7 @@ class GOAT(BaseOrcaCalculation):
         stdout: bool = True,
         **variables
     ):
+        # Set Basis and Functional to Empty
         variables["basis"] = ""
         variables["functional"] = ""
 
@@ -66,44 +44,15 @@ class GOAT(BaseOrcaCalculation):
     def RunCalculation(self):
         """Runs through the GOAT Calculation"""
 
-        # GOATTemplate: OrcaInputTemplate | str
-        #calculationType = f"GOAT XTB PAL{self.cores}"
-
         # Start the Clock
         startTime = time.time()
 
-        # Check if we are using a File reference, create the appropriate Input File associated with it
-        #if self.IsFileReference():
-        #    inputFile = OrcaInputFile(
-        #        OrcaInputTemplate.BASIC,
-        #        calculation=calculationType,
-        #        basis="",
-        #        functional="",
-        #        xyzfile=self.molecule,
-        #    )
-#
-        #else:
-        #    inputFile = OrcaInputFile(
-        #        OrcaInputTemplate.BASICXYZ,
-        #        calculation=calculationType,
-        #        basis="",
-        #        functional="",
-        #        xyz=self.molecule.XYZBody(),
-        #    )
-
         # Add a Print Statement to say we are running
-        print(f"Running GOAT (Global Optimizer Algorithm) on {self.name}...")
+        print(f"Running GOAT on {self.name}...")
 
         # Create the Calculation Object
         calculation = RunOrcaCalculation(self.name, self.inputFile, self.index, self.isLocal, STDOut=False)
         
-        #calculation = OrcaCalculation(
-        #    self.name, self.inputFile, self.index, isLocal=self.isLocal, stdout=False, **self.variables
-        #)
-
-        # Run the Calculation
-        #calculation.RunCalculation()
-
         # Get the Calculation Time
         self.calculationTime = time.time() - startTime
 

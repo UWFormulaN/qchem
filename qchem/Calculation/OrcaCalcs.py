@@ -2,7 +2,6 @@ import os
 import subprocess
 import time
 from .OrcaInputFile import OrcaInputFile
-from types import SimpleNamespace
 
 class OrcaCalcResult:
     
@@ -15,11 +14,11 @@ class OrcaCalcResult:
         self.orcaCachePath = cachePath
         self.outputFilePath = os.path.join(self.orcaCachePath, GetOutputFileName(name))
 
-def RunOrcaCalculation(name, inputFile: OrcaInputFile, index: int = 1, isLocal: bool = False, STDOut: bool = True):
+def RunOrcaCalculation(name, inputFile: OrcaInputFile, index: int = 1, isLocal: bool = False, STDOut: bool = True, cachePath: str = os.path.join(os.getcwd(), "OrcaCache")):
     """Runs a Orca Calculation in a Docker Container"""
 
-    orcaCache = "OrcaCache"
-    orcaCachePath =  os.path.join(os.getcwd(), orcaCache, name)
+    # The Cache Path for Storage
+    orcaCachePath =  os.path.join(cachePath, name)
 
     # Make Cache Folder if it doesn't Exist
     if not os.path.exists(orcaCachePath):
