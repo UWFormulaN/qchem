@@ -6,7 +6,8 @@ from qchem.Parser import OrcaOutput
 from qchem.Calculation.OrcaInputFile import OrcaInputFile
 from qchem.Data.Enums import OrcaInputTemplate, OrcaCalculationType
 from .BaseOrcaCalculation import BaseOrcaCalculation
-from qchem.Calculation.OrcaCalculation import RunOrcaCalculation
+from qchem.Calculation.OrcaCalculation import RunOrcaCalculation, OrcaCalcResult
+
 
 class GeoOpt(BaseOrcaCalculation):
 
@@ -26,7 +27,7 @@ class GeoOpt(BaseOrcaCalculation):
     optimizedMoleculePath: str
     """Path to the Optimized Molecule File"""
 
-    calculation: OrcaCalculation
+    calculation: OrcaCalcResult
     """Reference to the Last Orca Calculation Object for the GeoOpt"""
 
     def __init__(
@@ -69,7 +70,9 @@ class GeoOpt(BaseOrcaCalculation):
         startTime = time.time()
 
         # Run the Calculation
-        calculation = RunOrcaCalculation(self.name, self.inputFile, isLocal=self.isLocal, STDOut=False)
+        calculation = RunOrcaCalculation(
+            self.name, self.inputFile, isLocal=self.isLocal, STDOut=False
+        )
 
         # Get the Output File
         outputFile = OrcaOutput(calculation.outputFilePath)
@@ -84,9 +87,13 @@ class GeoOpt(BaseOrcaCalculation):
             # Check if the Molecule is Fully Optimized
             if self.IsOptimized(outputFile.vibrational_frequencies["frequency"]):
                 self.calculationTime = time.time() - startTime
-                print(f"Molecule {self.name} is Optimized! ({self.ClockTime(self.calculationTime)})")
+                print(
+                    f"Molecule {self.name} is Optimized! ({self.ClockTime(self.calculationTime)})"
+                )
                 self.calculation = calculation
-                self.optimizedMoleculePath = os.path.join(calculation.orcaCachePath, calculation.name + ".xyz")
+                self.optimizedMoleculePath = os.path.join(
+                    calculation.orcaCachePath, calculation.name + ".xyz"
+                )
                 self.optMolecule = Molecule(self.name, self.optimizedMoleculePath)
             else:
                 print(f"Molecule {self.name} is not Optimized!")
