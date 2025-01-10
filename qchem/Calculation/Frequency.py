@@ -4,7 +4,7 @@ from qchem.Molecule import Molecule
 from qchem.Parser import OrcaOutput
 from qchem.Data.Enums import OrcaCalculationType, OrcaInputTemplate
 from .BaseOrcaCalculation import BaseOrcaCalculation
-from .OrcaCalcs import RunOrcaCalculation
+from qchem.Calculation.OrcaCalculation import RunOrcaCalculation
 
 
 class Frequency(BaseOrcaCalculation):

@@ -4,10 +4,9 @@ import pandas as pd
 from qchem.Molecule import Molecule
 from qchem.Parser import OrcaOutput
 from qchem.Calculation.OrcaInputFile import OrcaInputFile
-from qchem.Calculation.OrcaCalculation import OrcaCalculation
 from qchem.Data.Enums import OrcaInputTemplate, OrcaCalculationType
 from .BaseOrcaCalculation import BaseOrcaCalculation
-from .OrcaCalcs import RunOrcaCalculation
+from qchem.Calculation.OrcaCalculation import RunOrcaCalculation
 
 class GeoOpt(BaseOrcaCalculation):
 

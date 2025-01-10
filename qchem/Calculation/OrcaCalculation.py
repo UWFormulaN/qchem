@@ -1,219 +1,118 @@
 import os
 import subprocess
 import time
-from typing import Any
 from .OrcaInputFile import OrcaInputFile
-from .BaseOrcaCalculation import BaseOrcaCalculation
-from ..Molecule import Molecule #from qchem.Molecule import Molecule
 
-
-class OrcaCalculation(BaseOrcaCalculation):
-    """Class capable of running an Orca Calculation"""
-
-    #Cores : int
-    #"""Number of Cores to use for the Calculation"""
-#
-    #CalculationName: str
-    #"""Name of the Calculation. Saves the Input and Output File as the Name"""
-#
-    #OutputFilePath: str
-    #"""The Path to the Output File on the Device"""
-#
-    #InputFilePath: str
-    #"""The Path to the Input File on the Device"""
-    #
-    #OrcaCachePath: str
-    #"""The Path to the Orca Cache on the Local Device"""
-#
-    #InputFile: OrcaInputFile
-    #"""The Input File for the Calculation that will be run"""
-#
-    #Index: int
-    #"""Container Index so that they can be run in parallel"""
-    #
-    #IsLocal: bool
-    #"""Boolean Flag determining if the Calculation should be run locally or inside a Container"""
-    #
-    #CalculationTime: float
-    #"""The Time it took to run the Calculation (In Seconds)"""
-    #
-    #STDOut: bool
-    #"""Boolean Flag Determining if Standard Output Messages will be displayed"""
-
-    #inputFilePath: str
-    #"""The Path to the Input File on the Device"""
-
-    #outputFilePath: str
-    #"""The Path to the Output File on the Device"""
-
-    #isLocal: bool
-    #"""Boolean Flag determining if the Calculation should be run locally or inside a Container"""
+class OrcaCalcResult:
     
-    inputFile: OrcaInputFile
-    """The Input File for the Calculation that will be run"""
+    name: str
     
-    #molecule: Molecule | str
-    #"""The Molecule to be Optimized"""
+    orcaCachePath: str
     
-    def __init__ (self, name: str, inputFile: OrcaInputFile, index: int = 1, isLocal: bool = False, stdout : bool = True, **variables):
-        
-        # Make a Super Call (Use the Base Class Init for some Boilerplate Setup)
-        super().__init__(name, index, isLocal, stdout)
-        
-        # Value Type Checking
-        if (not isinstance(inputFile, (OrcaInputFile))):
-            raise ValueError("Input File must be a OrcaInputFile")
-        
-        #if (not isinstance(isLocal, (bool))):
-        #    raise ValueError("IsLocal must be a boolean")
-        
-        #if (not isinstance(name, (str)) or name == ""):
-        #    raise ValueError("Name of the Calculation must be specified ")
-        #
-        #if (not isinstance(index, (int))):
-        #    raise ValueError("Index must be an integer")
-        #
-        #if (not isinstance(isLocal, (bool))):
-        #    raise ValueError("IsLocal must be a boolean")
-        #
-        #if (not isinstance(stdout, (bool))):
-        #    raise ValueError("STDOut must be a boolean")
-        
-        # Set Values
-        self.inputFile = inputFile
-        
-        #self.isLocal = isLocal
-        
-        #self.calculationName = name
-        #self.index = index
-        #self.isLocal = isLocal
-        #self.STDOut = stdout
-        
-        # Generate Cache Paths
-        #orcaCache = "OrcaCache"
-        #self.orcaCachePath =  os.path.join(os.getcwd(), orcaCache, self.calculationName)  #f'{os.getcwd()}\\{orcaCache}\\{self.CalculationName}'
-        #self.outputFilePath = os.path.join(self.orcaCachePath, self.GetOutputFileName())  #f'{self.OrcaCachePath}\\{self.GetOutputFileName()}'
-        #self.inputFilePath = os.path.join(self.orcaCachePath, self.GetInputFileName()) #f'{self.OrcaCachePath}\\{self.GetInputFileName()}'
-        
-        # Determine how many cores are used by the calculation
-        if ("cores" in self.inputFile.variables):
-            self.cores = self.inputFile.variables["cores"]
-        else:
-            self.cores = 1
+    def __init__ (self, name, cachePath):
+        self.name = name
+        self.orcaCachePath = cachePath
+        self.outputFilePath = os.path.join(self.orcaCachePath, GetOutputFileName(name))
 
-    def RunCalculation(self):
-        """Runs a Orca Calculation in a Docker Container"""
+def RunOrcaCalculation(name, inputFile: OrcaInputFile, index: int = 1, isLocal: bool = False, STDOut: bool = True, cachePath: str = os.path.join(os.getcwd(), "OrcaCache")):
+    """Runs a Orca Calculation in a Docker Container"""
 
-        # Create the Directories to Store Calculation info
-        self.CreateDirectories()
+    # The Cache Path for Storage
+    orcaCachePath =  os.path.join(cachePath, name)
 
-        # Save the Input File to the folder
-        self.inputFile.SaveInputFile(os.path.join(self.orcaCachePath, self.calculationName) + ".inp")
+    # Make Cache Folder if it doesn't Exist
+    if not os.path.exists(orcaCachePath):
+        os.makedirs(orcaCachePath)
 
-        # Get the Start Time of the Calculation
-        startTimer = time.time()
-        
-        if self.STDOut:
-            print(f"Running Calulation : {self.GetInputFileName()}")
+    # Save the Input File to the folder
+    inputFile.SaveInputFile(os.path.join(orcaCachePath, GetInputFileName(name)))
 
-        # Run the Calculation Locally or through a Docker Container
-        if (self.isLocal):
-            result = self.RunLocally(self.orcaCachePath)
-        else:
-            result = self.RunDockerContainer(self.orcaCachePath)
-        
-        # Get the Total Calculation time
-        self.calculationTime = time.time() - startTimer
-        
-        # Post a message that an Error may have Occured
-        if (result.stderr.__len__() > 0):
-            print(f"WARNING Errors Maybe Occured : \n\n{result.stderr}")
-        
-        # If Standard Output Allowed post the Completion Message
-        if self.STDOut:
-            print(f"Calculation Complete ({self.ClockTime(self.calculationTime)}) : {self.GetInputFileName()}")  
-
-    def RunLocally (self, cachePath: str):
-        # Create the Command String
-        command = ""
-        
-        # Windows OS
-        if os.name == 'nt':
-            orcaPath = subprocess.run("where orca", shell=True, text=True, capture_output=True).stdout.strip(" \n\"").removesuffix(".exe")
-            command = f"cd /d {cachePath} && \"{orcaPath}\" \"{self.GetInputFileName()}\" > \"{self.GetOutputFileName()}\""
-        else:
-            # Unix based OS (Linux, Mac)
-            command = f"cd \"{cachePath}\" && /Orca/orca {self.GetInputFileName()} > {self.GetOutputFileName()}"
-        
-        # Run the Orca Calculation locally
-        return subprocess.run(command, shell=True, text=True, capture_output=True)
-            
-    def RunDockerContainer (self, cachePath):
-        # Create the Command String
-        command = f'docker run --name qchemorca{self.index} -v "{cachePath}":/home/orca mrdnalex/orca sh -c "cd /home/orca && /Orca/orca {self.GetInputFileName()} > {self.GetOutputFileName()}"'
-
-        # Kill and Remove qchemorca container if it doesn't exist yet
-        subprocess.run(f"docker kill qchemorca{self.index}" , shell=True, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
-        subprocess.run(f"docker rm qchemorca{self.index}" , shell=True, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
-        
-        # Run the Calculation in a Container and wait
-        result = subprocess.run(command, shell=True, text=True, capture_output=True)
-        
-        # Kill and Remove the Container
-        subprocess.run(f"docker kill qchemorca{self.index}" , shell=True, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
-        subprocess.run(f"docker rm qchemorca{self.index}" , shell=True, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
-        
-        return result
-
-    #def CreateDirectories (self):
-    #    """Creates the necessary Cache Folders to store the Calculation"""
-    #    # Make Cache Folder if it doesn't Exist
-    #    if not os.path.exists(self.orcaCachePath):
-    #        os.makedirs(self.orcaCachePath)
-#
-    #    # Make a folder for the Specific Calculation
-    #    if not os.path.exists(self.orcaCachePath):
-    #        os.makedirs(self.orcaCachePath)
-
-    #def GetInputFileName (self):
-    #    """Returns the Input File Name with it's extension"""
-    #    return f"{self.calculationName}.inp"
-#
-    #def GetOutputFileName (self):
-    #    """Returns the Output File Name with it's extension"""
-    #    return f"{self.calculationName}.out"
-    #
-    #def GetOutput (self) -> str:
-    #    # Open the Output File and Grab the Content
-    #    with open(self.outputFilePath, 'r') as file:
-    #        self.CalculationOutput = file.read()
+    # Get the Start Time of the Calculation
+    startTimer = time.time()
     
-    
-    #def ClockTime(self, seconds):
-    #    hours = seconds // 3600
-    #    minutes = (seconds % 3600) // 60
-    #    remaining_seconds = seconds % 60
-    #    
-    #    parts = []
-    #    if hours > 0:
-    #        parts.append(f"{int(hours)} hour{'s' if hours > 1 else ''}")
-    #    if minutes > 0:
-    #        parts.append(f"{int(minutes)} minute{'s' if minutes > 1 else ''}")
-    #    if remaining_seconds > 0:
-    #        parts.append(f"{int(remaining_seconds)} second{'s' if remaining_seconds > 1 else ''}")
-    #    
-    #    return ", ".join(parts) if parts else "0 seconds"
+    if STDOut:
+        print(f"Running Calulation : {GetInputFileName(name)}")
 
-    #def IsFileReference(self):
-    #    """Determines if the Molecule is stored as a File Reference, or is a direct Molecule Object"""
-    #    if isinstance(self.molecule, (str)):
-    #        return True
-    #    else:
-    #        return False
-    #    
-    #def SetDefaultName (self, tag: str):
-    #    if (isinstance(self.molecule, (Molecule))):
-    #            self.name = self.molecule.Name
-    #    else:
-    #        print(f"No Name Provided for the Molecule, using Default Name: {tag}Molecule")
-    #        self.name = f"{tag}Molecule"
+    # Run the Calculation Locally or through a Docker Container
+    if (isLocal):
+        result = RunLocally(orcaCachePath, name)
+    else:
+        result = RunDockerContainer(orcaCachePath, name, index)
+    
+    # Get the Total Calculation time
+    calculationTime = time.time() - startTimer
+    
+    # Post a message that an Error may have Occured
+    if (result.stderr.__len__() > 0):
+        print(f"WARNING Errors Maybe Occured : \n\n{result.stderr}")
+    
+    # If Standard Output Allowed post the Completion Message
+    if STDOut:
+        print(f"Calculation Complete ({ClockTime(calculationTime)}) : {GetInputFileName(name)}") 
+    
+    return OrcaCalcResult(name, orcaCachePath)
+
+def RunLocally (cachePath: str, name: str):
+    
+    # Create the Command String
+    command = ""
+    
+    # Windows OS
+    if os.name == 'nt':
+        orcaPath = subprocess.run("where orca", shell=True, text=True, capture_output=True).stdout.strip(" \n\"").removesuffix(".exe")
+        command = f"cd /d {cachePath} && \"{orcaPath}\" \"{GetInputFileName(name)}\" > \"{GetOutputFileName(name)}\""
+    else:
+        # Unix based OS (Linux, Mac)
+        command = f"cd \"{cachePath}\" && /Orca/orca {self.GetInputFileName()} > {self.GetOutputFileName()}"
+    
+    # Run the Orca Calculation locally
+    return subprocess.run(command, shell=True, text=True, capture_output=True)
+        
+def RunDockerContainer ( cachePath, name, index):
+    # Create the Command String
+    command = f'docker run --name qchemorca{index} -v "{cachePath}":/home/orca mrdnalex/orca sh -c "cd /home/orca && /Orca/orca {GetInputFileName(name)} > {GetOutputFileName(name)}"'
+
+    # Kill and Remove qchemorca container if it doesn't exist yet
+    subprocess.run(f"docker kill qchemorca{index}" , shell=True, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+    subprocess.run(f"docker rm qchemorca{index}" , shell=True, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+    
+    # Run the Calculation in a Container and wait
+    result = subprocess.run(command, shell=True, text=True, capture_output=True)
+    
+    # Kill and Remove the Container
+    subprocess.run(f"docker kill qchemorca{index}" , shell=True, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+    subprocess.run(f"docker rm qchemorca{index}" , shell=True, stderr=subprocess.DEVNULL, stdout=subprocess.DEVNULL)
+    
+    return result
+
+def ClockTime(seconds):
+        """Converts Seconds to a Human Readable Time String"""
+        # Convert Seconds to Hours, Minutes, and Seconds
+        days = seconds // 86400
+        hours = (seconds % 86400) // 3600
+        minutes = (seconds % 3600) // 60
+        remainingSeconds = seconds % 60
+
+        # Generate the Time String
+        parts = []
+        if days > 0:
+            parts.append(f"{int(hours)} day{'s' if days > 1 else ''}")
+        if hours > 0:
+            parts.append(f"{int(hours)} hour{'s' if hours > 1 else ''}")
+        if minutes > 0:
+            parts.append(f"{int(minutes)} minute{'s' if minutes > 1 else ''}")
+        if remainingSeconds > 0:
+            parts.append(
+                f"{int(remainingSeconds)} second{'s' if remainingSeconds > 1 else ''}"
+            )
+
+        # Return the Time String
+        return ", ".join(parts) if parts else "0 seconds"
+    
+def GetInputFileName (name):
+    """Returns the Input File Name with it's extension"""
+    return f"{name}.inp"
+
+def GetOutputFileName (name):
+    """Returns the Output File Name with it's extension"""
+    return f"{name}.out"

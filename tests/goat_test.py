@@ -7,7 +7,6 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 # Importing the required modules
 from qchem.Molecule import Molecule
 from qchem.Calculation.GOAT import GOAT
-from qchem.Parser import OrcaOutput
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__))))
 
 #

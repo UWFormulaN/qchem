@@ -5,7 +5,7 @@ from qchem.XYZFile import XYZFile
 from qchem.Parser import OrcaOutput
 from qchem.Data.Enums import OrcaInputTemplate
 from qchem.Calculation.BaseOrcaCalculation import BaseOrcaCalculation
-from .OrcaCalcs import RunOrcaCalculation
+from qchem.Calculation.OrcaCalculation import RunOrcaCalculation
 
 class GOAT(BaseOrcaCalculation):
 
