@@ -27,7 +27,7 @@ class GOAT(BaseOrcaCalculation):
         index: int = 1,
         cores: int = 1,
         isLocal: bool = False,
-        name: str = "GOATMolecule",
+        name: str = "Molecule",
         stdout: bool = True,
         **variables
     ):

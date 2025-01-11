@@ -49,7 +49,8 @@ class BaseOrcaCalculation(ABC):
     cores : int
     """Number of Cores to use for the Calculation"""
     
-    defaultName : str
+    defaultName: str = "Molecule"
+    """Default Name Used to Name a Calculation if not specified. self.name will have the Calculation Type added before 'Molecule' seperated by '_'"""
     
     def __init__ (self, name: str, molecule: str | Molecule, template: str | OrcaInputTemplate, index: int, cores: int, isLocal: bool, stdout : bool, **variables):
         
@@ -88,11 +89,12 @@ class BaseOrcaCalculation(ABC):
         self.STDOut = stdout
         self.variables = variables
         
-        self.defaultName = (self.calculationType + " Molecule").replace(" ", "_")
-        
         # Set Name to the Name of the Molecule
-        if (isinstance(molecule, Molecule) and self.name != self.defaultName): # and not ("Molecule" in self.name)
-            self.name = molecule.Name
+        if (self.name == self.defaultName):
+            if (isinstance(molecule, Molecule)):
+                self.name = molecule.Name
+            else:
+                self.name = (self.calculationType + " Molecule").replace(" ", "_")
         
         # Set Appropriate XYZ Format and Default Templates
         if (self.IsFileReference()):

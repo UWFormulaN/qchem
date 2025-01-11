@@ -24,7 +24,7 @@ class Spectra(BaseOrcaCalculation):
         index: int = 1,
         cores: int = 1,
         isLocal: bool = False,
-        name: str = "FREQMolecule",
+        name: str = "Molecule",
         stdout: bool = True,
         **variables
     ):

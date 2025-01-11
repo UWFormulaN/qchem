@@ -49,6 +49,13 @@ class Molecule:
             XYZ : str | XYZFile
         """
         from qchem.XYZFile import XYZFile # <-- To Avoid Circular Imports
+        
+        if (not isinstance(name, (str))):
+            raise ValueError("Name must be a String")
+        
+        if (name == ""):
+            raise ValueError("Name cannot be Empty")
+        
         self.Name = name
         
         if (isinstance(XYZ, (str))):
