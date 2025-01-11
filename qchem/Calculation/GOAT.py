@@ -7,6 +7,7 @@ from qchem.Data.Enums import OrcaInputTemplate
 from qchem.Calculation.OrcaCalculation import RunOrcaCalculation
 from qchem.Calculation.BaseOrcaCalculation import BaseOrcaCalculation
 
+
 class GOAT(BaseOrcaCalculation):
 
     #
@@ -29,14 +30,16 @@ class GOAT(BaseOrcaCalculation):
         isLocal: bool = False,
         name: str = "Molecule",
         stdout: bool = True,
-        **variables
+        **variables,
     ):
         # Set Basis and Functional to Empty
         variables["basis"] = ""
         variables["functional"] = ""
 
         # Make a Super Call (Use the Base Class Init for some Boilerplate Setup)
-        super().__init__(name, molecule, template, index, cores, isLocal, stdout, **variables)
+        super().__init__(
+            name, molecule, template, index, cores, isLocal, stdout, **variables
+        )
 
         # Set the Values
         self.conformers = []
@@ -51,8 +54,10 @@ class GOAT(BaseOrcaCalculation):
         print(f"Running GOAT on {self.name}...")
 
         # Create the Calculation Object
-        calculation = RunOrcaCalculation(self.name, self.inputFile, self.index, self.isLocal, STDOut=False)
-        
+        calculation = RunOrcaCalculation(
+            self.name, self.inputFile, self.index, self.isLocal, STDOut=False
+        )
+
         # Get the Calculation Time
         self.calculationTime = time.time() - startTime
 
@@ -68,9 +73,7 @@ class GOAT(BaseOrcaCalculation):
         self.conformerContribution = conformerOutput[conformerOutput.columns[3]].values
 
         # Display a Print Statement for the GOAT Completion
-        print(
-            f"Finished GOAT on {self.name}! ({self.ClockTime(self.calculationTime)})"
-        )
+        print(f"Finished GOAT on {self.name}! ({self.ClockTime(self.calculationTime)})")
 
     def ExtractConformers(self):
         """Extracts all the Conformer Molecules"""

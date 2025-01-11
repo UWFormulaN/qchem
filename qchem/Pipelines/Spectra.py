@@ -10,10 +10,11 @@ from qchem.Data.Enums import OrcaInputTemplate
 from qchem.Calculation.Frequency import Frequency
 from qchem.Calculation.BaseOrcaCalculation import BaseOrcaCalculation
 
+
 class Spectra(BaseOrcaCalculation):
 
     calculationType: str = "Spectra"
-    
+
     IRSpectra: pd.DataFrame
     """The Resulting IR Spectra plotted"""
 
@@ -26,15 +27,17 @@ class Spectra(BaseOrcaCalculation):
         isLocal: bool = False,
         name: str = "Molecule",
         stdout: bool = True,
-        **variables
+        **variables,
     ):
         # Make a Super Call (Use the Base Class Init for some Boilerplate Setup)
-        super().__init__(name, molecule, template, index, cores, isLocal, stdout, **variables)
+        super().__init__(
+            name, molecule, template, index, cores, isLocal, stdout, **variables
+        )
 
         # Check if the Calculation has a Basis Set and a Functional Defined (Specific to Certain Calculations)
         self.BasisSetFunctionalCompliant()
-    
-        # Delete Cores from Variables cause it causes Issues        
+
+        # Delete Cores from Variables cause it causes Issues
         self.variables.pop("cores")
 
     def RunCalculation(self):
@@ -50,8 +53,18 @@ class Spectra(BaseOrcaCalculation):
         print("\nRunning GeoOpt!\n")
 
         # Create a Geo Opt Calculation Object
-        geoOptCalc = GeoOpt(self.molecule, True, self.template, self.index, self.cores, self.isLocal, f"{self.name}_GEOOPT", False, **self.variables)
-    
+        geoOptCalc = GeoOpt(
+            self.molecule,
+            True,
+            self.template,
+            self.index,
+            self.cores,
+            self.isLocal,
+            f"{self.name}_GEOOPT",
+            False,
+            **self.variables,
+        )
+
         # Run the GeoOptimization on the Molecule
         geoOptCalc.RunCalculation()
 
@@ -59,8 +72,17 @@ class Spectra(BaseOrcaCalculation):
         print("\nRunning GOAT!\n")
 
         # Create GOAT Calculation Object
-        goatCalc = GOAT(geoOptCalc.optMolecule, self.template, self.index, self.cores, self.isLocal, f"{self.name}_GOAT", False, **self.variables)
-        
+        goatCalc = GOAT(
+            geoOptCalc.optMolecule,
+            self.template,
+            self.index,
+            self.cores,
+            self.isLocal,
+            f"{self.name}_GOAT",
+            False,
+            **self.variables,
+        )
+
         # Run the GOAT Calculation
         goatCalc.RunCalculation()
 
@@ -83,15 +105,25 @@ class Spectra(BaseOrcaCalculation):
 
         # Save the Contributions to Excel File
         IRContribution.to_csv(
-            os.path.join(self.orcaCachePath, f"{self.name}_Contributions.csv"), index=False
+            os.path.join(self.orcaCachePath, f"{self.name}_Contributions.csv"),
+            index=False,
         )
 
         # Loop through all the Conformers and Run a Frequency Calculation
         for i in range(conformersNum):
 
             # Create the Frequency Calculation
-            freqCalc = Frequency(goatCalc.conformers[i], self.template, self.index, self.cores, self.isLocal, f"{self.name}_FREQ_{i}", False, **self.variables)
-            
+            freqCalc = Frequency(
+                goatCalc.conformers[i],
+                self.template,
+                self.index,
+                self.cores,
+                self.isLocal,
+                f"{self.name}_FREQ_{i}",
+                False,
+                **self.variables,
+            )
+
             # Run the Frequency Calculation
             freqCalc.RunCalculation()
 
@@ -177,7 +209,7 @@ class Spectra(BaseOrcaCalculation):
 
             # Make Bool Array
             isHeader = [isinstance(i, str) for i in firstRow]
-            
+
             # Determine if the First Row is a Header or Not
             if all(isHeader):  # First Line is the Header, we can Load it
                 return pd.read_csv(spectra)
@@ -185,7 +217,7 @@ class Spectra(BaseOrcaCalculation):
                 return pd.read_csv(spectra, names=["Wavenumber", "IRIntensity"])
 
         elif isinstance(spectra, pd.DataFrame):
-            
+
             # Determine the Columns to check for
             columns = ["Wavenumber", "IRIntensity"]
 
@@ -205,7 +237,7 @@ class Spectra(BaseOrcaCalculation):
         sigma: int = 5,
         maxWaveNum=4000,
         spacing=10,
-        showPlot = True
+        showPlot=True,
     ):
         """Create and Plots an IR Spectra, takes a path to a CSV or Pandas Dataframe with the Calculated"""
 
@@ -237,6 +269,6 @@ class Spectra(BaseOrcaCalculation):
         plt.ylabel("IR Intensity")
         plt.gca().invert_xaxis()
         plt.savefig(f"{plotName}.png")
-        
+
         if showPlot:
             plt.show()

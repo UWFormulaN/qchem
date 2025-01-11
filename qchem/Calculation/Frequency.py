@@ -32,7 +32,9 @@ class Frequency(BaseOrcaCalculation):
         **variables,
     ):
         # Make a Super Call (Use the Base Class Init for some Boilerplate Setup)
-        super().__init__(name, molecule, template, index, cores, isLocal, stdout, **variables)
+        super().__init__(
+            name, molecule, template, index, cores, isLocal, stdout, **variables
+        )
 
         # Check if the Calculation has a Basis Set and a Functional Defined (Specific to Certain Calculations)
         self.BasisSetFunctionalCompliant()
