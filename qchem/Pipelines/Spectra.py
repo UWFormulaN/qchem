@@ -1,12 +1,12 @@
-import time
 import os
+import time
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-from qchem.Data.Enums import OrcaInputTemplate
 from qchem.Molecule import Molecule
-from qchem.Calculation.GeoOpt import GeoOpt
 from qchem.Calculation.GOAT import GOAT
+from qchem.Calculation.GeoOpt import GeoOpt
+from qchem.Data.Enums import OrcaInputTemplate
 from qchem.Calculation.Frequency import Frequency
 from qchem.Calculation.BaseOrcaCalculation import BaseOrcaCalculation
 

@@ -1,11 +1,11 @@
-import time
 import os
+import time
 import pandas as pd
 from qchem.Molecule import Molecule
 from qchem.Parser import OrcaOutput
+from .BaseOrcaCalculation import BaseOrcaCalculation
 from qchem.Calculation.OrcaInputFile import OrcaInputFile
 from qchem.Data.Enums import OrcaInputTemplate, OrcaCalculationType
-from .BaseOrcaCalculation import BaseOrcaCalculation
 from qchem.Calculation.OrcaCalculation import RunOrcaCalculation, OrcaCalcResult
 
 

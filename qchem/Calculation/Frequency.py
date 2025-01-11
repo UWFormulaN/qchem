@@ -2,9 +2,9 @@ import time
 import pandas as pd
 from qchem.Molecule import Molecule
 from qchem.Parser import OrcaOutput
-from qchem.Data.Enums import OrcaCalculationType, OrcaInputTemplate
 from .BaseOrcaCalculation import BaseOrcaCalculation
 from qchem.Calculation.OrcaCalculation import RunOrcaCalculation
+from qchem.Data.Enums import OrcaCalculationType, OrcaInputTemplate
 
 
 class Frequency(BaseOrcaCalculation):

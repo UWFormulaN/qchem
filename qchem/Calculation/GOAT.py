@@ -1,11 +1,11 @@
-import time
 import os
-from qchem.Molecule import Molecule
+import time
 from qchem.XYZFile import XYZFile
+from qchem.Molecule import Molecule
 from qchem.Parser import OrcaOutput
 from qchem.Data.Enums import OrcaInputTemplate
-from qchem.Calculation.BaseOrcaCalculation import BaseOrcaCalculation
 from qchem.Calculation.OrcaCalculation import RunOrcaCalculation
+from qchem.Calculation.BaseOrcaCalculation import BaseOrcaCalculation
 
 class GOAT(BaseOrcaCalculation):
 
