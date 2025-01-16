@@ -96,7 +96,7 @@ class BaseOrcaCalculation(ABC):
             else:
                 self.name = (self.calculationType + " Molecule").replace(" ", "_")
         
-        # Set Appropriate XYZ Format and Default Templates
+        # Set Appropriate XYZ Format and Default Templates (Only if unspecified)
         if (self.IsFileReference()):
             self.variables["xyzfile"] = self.molecule
             if (self.template == ""):
@@ -111,17 +111,18 @@ class BaseOrcaCalculation(ABC):
                     self.template = OrcaInputTemplate.BASICXYZ
                 else:
                     self.template = OrcaInputTemplate.BASICXYZPARALLEL
-                
+        
+        # Define the Calculation Type and the Number of Cores to Use
         self.variables["calculation"] = self.calculationType
         self.variables["cores"] = self.cores
             
         # Generate Cache Paths
         orcaCache = "OrcaCache" #Change this to QChemCache?
-        self.orcaCachePath =  os.path.join(os.getcwd(), orcaCache, self.name)  #f'{os.getcwd()}\\{orcaCache}\\{self.CalculationName}'
+        self.orcaCachePath =  os.path.join(os.getcwd(), orcaCache, self.name)
         
         # Convert to Functions?
-        self.outputFilePath = os.path.join(self.orcaCachePath, self.GetOutputFileName())  #f'{self.OrcaCachePath}\\{self.GetOutputFileName()}'
-        self.inputFilePath = os.path.join(self.orcaCachePath, self.GetInputFileName()) #f'{self.OrcaCachePath}\\{self.GetInputFileName()}'
+        self.outputFilePath = os.path.join(self.orcaCachePath, self.GetOutputFileName())
+        self.inputFilePath = os.path.join(self.orcaCachePath, self.GetInputFileName())
 
         # Create the Input File
         self.inputFile = OrcaInputFile(self.template, **self.variables)
@@ -147,6 +148,7 @@ class BaseOrcaCalculation(ABC):
         return f"{self.name}.out"
     
     def GetOutput (self) -> str:
+        """Returns the Entire Content of the Output File as a Single String"""
         # Open the Output File and Grab the Content
         with open(self.outputFilePath, 'r') as file:
             self.CalculationOutput = file.read()
@@ -186,6 +188,7 @@ class BaseOrcaCalculation(ABC):
         return ", ".join(parts) if parts else "0 seconds"
     
     def BasisSetFunctionalCompliant (self):
+        """Checks if the Basis Set and Functional Values have been defined. Used to simply call and confirm in Calculation Classes that require a Basis Set and Functional to be defined"""
         if (not ("basis" in self.variables)):
             raise ValueError("BasisSet not defined! Provide Basis Set Name as a String")
         

@@ -76,7 +76,7 @@ class GOAT(BaseOrcaCalculation):
         print(f"Finished GOAT on {self.name}! ({self.ClockTime(self.calculationTime)})")
 
     def ExtractConformers(self):
-        """Extracts all the Conformer Molecules"""
+        """Extracts all the Conformer Molecules from the .finalensemble.xyz File"""
         # Get the Number of Atoms we should Expect
         if self.IsFileReference():
             atomNum = XYZFile(os.path.join(self.orcaCachePath, self.molecule)).AtomCount

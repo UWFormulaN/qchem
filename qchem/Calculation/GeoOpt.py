@@ -63,6 +63,7 @@ class GeoOpt(BaseOrcaCalculation):
             self.FullOptimization()
 
     def SingleOptimization(self):
+        """Runs a Single Optimization Attempt on the Molecule (Will Output a message if the Molecule is not fully optimized)"""
 
         print(f"Running OPT on {self.name}...")
 
@@ -77,6 +78,7 @@ class GeoOpt(BaseOrcaCalculation):
         # Get the Output File
         outputFile = OrcaOutput(calculation.outputFilePath)
 
+        # Check if the Vibrational Frequencies Exist and/or is not empty
         if outputFile.vibrational_frequencies is None or (
             isinstance(outputFile.vibrational_frequencies, pd.DataFrame)
             and outputFile.vibrational_frequencies.empty
@@ -98,10 +100,14 @@ class GeoOpt(BaseOrcaCalculation):
             else:
                 print(f"Molecule {self.name} is not Optimized!")
 
+        # Stop Timer and Get Total time in Seconds
         calcTime = time.time() - startTime
+        
+        # Print a Finishing Statement with the Time
         print(f"Finished OPT on {self.name} ({self.ClockTime(calcTime)})")
 
     def FullOptimization(self):
+        """Runs a Full Geo Optimization on the Molecule. Will repeat the Optimization loop until the Molecule has fully converged."""
         # Start the Timer
         startTime = time.time()
 
@@ -113,6 +119,7 @@ class GeoOpt(BaseOrcaCalculation):
         # Full Optimization Loop
         while not isOptimized:
 
+            # Start the Individual Iteration Timer
             iterStartTime = time.time()
 
             # Generate Print Statement for User on the Optimization Attempt
@@ -129,7 +136,7 @@ class GeoOpt(BaseOrcaCalculation):
             # Get the Output File
             outputFile = OrcaOutput(calculation.outputFilePath)
 
-            # Check if Frequencies are Empty and cannot be found
+            # Check if the Vibrational Frequencies Exist and/or is not empty
             if outputFile.vibrational_frequencies is None or (
                 isinstance(outputFile.vibrational_frequencies, pd.DataFrame)
                 and outputFile.vibrational_frequencies.empty
@@ -177,7 +184,7 @@ class GeoOpt(BaseOrcaCalculation):
             self.inputFile = OrcaInputFile(self.template, **self.variables)
 
     def IsOptimized(self, frequencies):
-        """Determines if the Molecule is Optimized to the Valid Minimum"""
+        """Returns a Boolean Flag as to if the Molecule is fully Optimized (Fully Optimized = All Frequencies > 0)"""
         for freq in frequencies:
             if freq < 0:
                 return False
