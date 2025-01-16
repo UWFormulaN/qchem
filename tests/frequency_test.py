@@ -20,7 +20,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__))))
 # SETTINGS : Modify these as needed for Testing
 #
 LocalTest = False # I Suggest using False here as XTB may be required and that is for sure installed on Docker Container
-Cores = 8
+Cores = 1
 
 #
 # Test 1 : Load Molecule and Use Molecule as Input
@@ -30,7 +30,7 @@ def Test1 ():
     mol = Molecule("PropaneFREQ", os.path.join("tests", "test_files", "propane.xyz"))
 
     # Define the Frequency Object
-    frequency = Frequency(mol, OrcaBasisSet.DEF2_SVP.value, OrcaDensityFunctional.B3LYP.value, Cores, LocalTest)
+    frequency = Frequency(mol, cores=Cores, isLocal=LocalTest, basis=OrcaBasisSet.DEF2_SVP.value, functional=OrcaDensityFunctional.B3LYP.value)
     
     # Run the Frequency Calculation
     frequency.RunCalculation()
@@ -48,7 +48,7 @@ def Test2 ():
     shutil.copy(os.path.join("tests", "test_files", "propane.xyz"), os.path.join("OrcaCache", "Propane_FREQ_Ref", "propane.xyz"))
     
     # Define the Frequency Object
-    frequency = Frequency("propane.xyz", OrcaBasisSet.DEF2_SVP.value, OrcaDensityFunctional.B3LYP.value, Cores, LocalTest, name="Propane_FREQ_Ref")
+    frequency = Frequency("propane.xyz", cores=Cores, isLocal=LocalTest, basis=OrcaBasisSet.DEF2_SVP.value, functional=OrcaDensityFunctional.B3LYP.value, name="Propane_FREQ_Ref")
     
     # Run the Frequency Calculation
     frequency.RunCalculation()
@@ -56,5 +56,6 @@ def Test2 ():
 #
 # Running Tests
 #
-Test1()
-Test2()
+if __name__ == "__main__":
+    Test1()
+    Test2()

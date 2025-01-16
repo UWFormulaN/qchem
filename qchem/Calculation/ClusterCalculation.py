@@ -1,4 +1,4 @@
-from qchem.Calculation.OrcaCalculation import OrcaCalculation
+from qchem.Calculation.OrcaCalculation import OrcaCalcResult
 import multiprocessing
 import time
 
@@ -11,10 +11,10 @@ class ClusterCalculation:
     UsedCores: int
     """The Current number of Cores being used"""
 
-    Calculations: list[OrcaCalculation]
+    Calculations: list[OrcaCalcResult]
     """List of Calculations that are to be Started"""
 
-    CompletedCalculations : list[OrcaCalculation]
+    CompletedCalculations : list[OrcaCalcResult]
     """List of Calculations that have been Completed"""
 
     Index: int
@@ -22,7 +22,7 @@ class ClusterCalculation:
 
     def __init__(
         self,
-        calculations: list[OrcaCalculation],
+        calculations: list[OrcaCalcResult],
         maxCores: int = 1,
     ):
         self.Calculations = calculations
@@ -70,7 +70,7 @@ class ClusterCalculation:
             # Wait Half a Second before Checking Again
             time.sleep(0.5)
                 
-    def RunIndividualCalculation(self, calculation: OrcaCalculation, message_queue: multiprocessing.Queue):
+    def RunIndividualCalculation(self, calculation: OrcaCalcResult, message_queue: multiprocessing.Queue):
         """Runs an Individual Calculation and Provides Messages Saying it's Started and Finished"""
         message_queue.put(f"Starting Calculation {calculation.GetInputFileName()}")
         calculation.RunCalculation()
