@@ -31,7 +31,7 @@ def Test1 ():
     geoOpt = GeoOpt(mol, basis=OrcaBasisSet.DEF2_SVP.value, functional=OrcaDensityFunctional.B3LYP.value, cores=Cores, isLocal=LocalTest, index=1)
 
     # Run the Optimization
-    geoOpt.RunCalculation()
+    geoOpt.runCalculation()
 
 #
 # Test 2 : Use File Reference as Input for Molecular Geometry
@@ -49,7 +49,7 @@ def Test2 ():
     geoOpt = GeoOpt("propane.xyz", basis=OrcaBasisSet.DEF2_SVP.value, functional=OrcaDensityFunctional.B3LYP.value, cores=Cores, name="Propane_GEOOPT_Ref", isLocal=LocalTest, index=2)
 
     # Run the Optimization
-    geoOpt.RunCalculation()
+    geoOpt.runCalculation()
 
 #
 # Test 3 : Use a Molecule That doesn't Converge on the and only run one Optimization Iteration
@@ -62,7 +62,7 @@ def Test3 ():
     geoOpt = GeoOpt(mol, fullOptimization=False, basis=OrcaBasisSet.MINI.value, functional=OrcaDensityFunctional.B3LYP.value, cores=Cores, isLocal=LocalTest, index=3)
 
     # Run the Optimization
-    geoOpt.RunCalculation()
+    geoOpt.runCalculation()
     
 #
 # Test 4 : Use a Molecule That doesn't Converge on the first Attempt
@@ -75,7 +75,7 @@ def Test4 ():
     geoOpt = GeoOpt(mol, fullOptimization=True, basis=OrcaBasisSet.MINI.value, functional=OrcaDensityFunctional.B3LYP.value, cores=Cores, isLocal=LocalTest, index=4)
 
     # Run the Optimization
-    geoOpt.RunCalculation()
+    geoOpt.runCalculation()
 
 #
 # Running Tests

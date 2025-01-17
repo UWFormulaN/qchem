@@ -84,7 +84,7 @@ ATOM      NA   ZA      QA     VA    BVA   FA
 
 Loewdin Charges:
 Step 1:
- atom_num atom    charge
+ atomNum atom    charge
         0    C -0.103861
         1    C -0.171414
         2    H  0.122997
@@ -110,7 +110,7 @@ Step 1:
        22    N  0.051146
 
 Step 2:
- atom_num atom    charge
+ atomNum atom    charge
         0    C -0.095892
         1    C -0.166954
         2    H  0.123209

@@ -35,10 +35,10 @@ def Test1 ():
     spectra = Spectra(mol, cores=Cores, isLocal=LocalTest, index=1, basis=OrcaBasisSet.DEF2_SVP.value, functional=OrcaDensityFunctional.B3LYP.value)
     
     # Run the Spectra Calculation
-    spectra.RunCalculation()
+    spectra.runCalculation()
     
     # Display the Plot in a Tab
-    Spectra.PlotSpectra(spectra.IRSpectra, "Ethane Test", showPlot=False)
+    Spectra.plotSpectra(spectra.IRSpectra, "Ethane Test", showPlot=False)
 
 #
 # Test 2 : Use File Reference as Input for Molecular Geometry
@@ -56,10 +56,10 @@ def Test2 ():
     spectra = Spectra("propane.xyz", cores=Cores, isLocal=LocalTest, name="Propane_Spectra_Ref", index=2, basis=OrcaBasisSet.DEF2_SVP.value, functional=OrcaDensityFunctional.B3LYP.value)
     
     # Run the Spectra Calculation
-    spectra.RunCalculation()
+    spectra.runCalculation()
     
     # Display the Plot in a Tab
-    Spectra.PlotSpectra(spectra.IRSpectra, "Propane", showPlot=False)
+    Spectra.plotSpectra(spectra.IRSpectra, "Propane", showPlot=False)
     
     
 #
@@ -74,10 +74,10 @@ def Test3 ():
     spectra = Spectra(mol, cores=Cores, isLocal=LocalTest, index=3, basis=OrcaBasisSet.DEF2_SVP.value, functional=OrcaDensityFunctional.B3LYP.value)
     
     # Run the Spectra Calculation
-    spectra.RunCalculation()
+    spectra.runCalculation()
     
     # Display the Plot in a Tab
-    Spectra.PlotSpectra(spectra.IRSpectra, "Aspirin", showPlot=False)
+    Spectra.plotSpectra(spectra.IRSpectra, "Aspirin", showPlot=False)
 
 #
 # Test 1 : Load Molecule and Use Molecule as Input
@@ -91,10 +91,10 @@ def Test4 ():
     spectra = Spectra(mol, cores=Cores, isLocal=LocalTest, index=4, basis=OrcaBasisSet.DEF2_SVP.value, functional=OrcaDensityFunctional.B3LYP.value)
     
     # Run the Spectra Calculation
-    spectra.RunCalculation()
+    spectra.runCalculation()
     
     # Display the Plot in a Tab
-    spectra.PlotSpectra(spectra.IRSpectra, "Dypyrro", showPlot=False)
+    spectra.plotSpectra(spectra.IRSpectra, "Dypyrro", showPlot=False)
 
 #
 # Running Tests

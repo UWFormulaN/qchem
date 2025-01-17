@@ -15,4 +15,4 @@ import pytest
     ],
 )
 def LoadTest (file):
-    assert(not Spectra.LoadSpectra(os.path.join("test_files", "Spectra", file)) == None)
+    assert(not Spectra.loadSpectra(os.path.join("test_files", "Spectra", file)) == None)

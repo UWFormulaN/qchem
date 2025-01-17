@@ -97,7 +97,7 @@ class BaseOrcaCalculation(ABC):
                 self.name = (self.calculationType + " Molecule").replace(" ", "_")
         
         # Set Appropriate XYZ Format and Default Templates (Only if unspecified)
-        if (self.IsFileReference()):
+        if (self.isFileReference()):
             self.variables["xyzfile"] = self.molecule
             if (self.template == ""):
                 if (self.cores == 1):
@@ -121,39 +121,39 @@ class BaseOrcaCalculation(ABC):
         self.orcaCachePath =  os.path.join(os.getcwd(), orcaCache, self.name)
         
         # Convert to Functions?
-        self.outputFilePath = os.path.join(self.orcaCachePath, self.GetOutputFileName())
-        self.inputFilePath = os.path.join(self.orcaCachePath, self.GetInputFileName())
+        self.outputFilePath = os.path.join(self.orcaCachePath, self.getOutputFileName())
+        self.inputFilePath = os.path.join(self.orcaCachePath, self.getInputFileName())
 
         # Create the Input File
         self.inputFile = OrcaInputFile(self.template, **self.variables)
     
     @abstractmethod
-    def RunCalculation(self):
+    def runCalculation(self):
         """Runs the Orca Calculation"""
         pass
     
-    def IsFileReference(self):
+    def isFileReference(self):
         """Determines if the Molecule is stored as a File Reference, or is a direct Molecule Object"""
         if (isinstance(self.molecule, (str))):
             return True
         else:
             return False
         
-    def GetInputFileName (self):
+    def getInputFileName (self):
         """Returns the Input File Name with it's extension"""
         return f"{self.name}.inp"
 
-    def GetOutputFileName (self):
+    def getOutputFileName (self):
         """Returns the Output File Name with it's extension"""
         return f"{self.name}.out"
     
-    def GetOutput (self) -> str:
+    def getOutput (self) -> str:
         """Returns the Entire Content of the Output File as a Single String"""
         # Open the Output File and Grab the Content
         with open(self.outputFilePath, 'r') as file:
             self.CalculationOutput = file.read()
             
-    def CreateDirectories (self):
+    def createDirectories (self):
         """Creates the necessary Cache Folders to store the Calculation"""
         # Make Cache Folder if it doesn't Exist
         if not os.path.exists(self.orcaCachePath):
@@ -163,7 +163,7 @@ class BaseOrcaCalculation(ABC):
         if not os.path.exists(self.orcaCachePath):
             os.makedirs(self.orcaCachePath)
     
-    def ClockTime(self, seconds):
+    def clockTime(self, seconds):
         """Converts Seconds to a Human Readable Time String"""
         # Convert Seconds to Hours, Minutes, and Seconds
         days = seconds // 86400
@@ -187,7 +187,7 @@ class BaseOrcaCalculation(ABC):
         # Return the Time String
         return ", ".join(parts) if parts else "0 seconds"
     
-    def BasisSetFunctionalCompliant (self):
+    def basisSetFunctionalCompliant (self):
         """Checks if the Basis Set and Functional Values have been defined. Used to simply call and confirm in Calculation Classes that require a Basis Set and Functional to be defined"""
         if (not ("basis" in self.variables)):
             raise ValueError("BasisSet not defined! Provide Basis Set Name as a String")
@@ -195,6 +195,6 @@ class BaseOrcaCalculation(ABC):
         if (not ("functional" in self.variables)):
             raise ValueError("Functional not defined! Provide Functional Name as a String")
         
-    def SetCalculationType (self, calculationType):
+    def setCalculationType (self, calculationType):
         """Sets the Calculation Type in the Variables Dictionary"""
         self.variables["calculation"] = calculationType
