@@ -35,12 +35,12 @@ class Spectra(BaseOrcaCalculation):
         )
 
         # Check if the Calculation has a Basis Set and a Functional Defined (Specific to Certain Calculations)
-        self.BasisSetFunctionalCompliant()
+        self.basisSetFunctionalCompliant()
 
         # Delete Cores from Variables cause it causes Issues
         self.variables.pop("cores")
 
-    def RunCalculation(self):
+    def runCalculation(self):
         """Runs through all Calculations required to produce a Spectra Graph"""
 
         # Start the Timer
@@ -66,7 +66,7 @@ class Spectra(BaseOrcaCalculation):
         )
 
         # Run the GeoOptimization on the Molecule
-        geoOptCalc.RunCalculation()
+        geoOptCalc.runCalculation()
 
         print("\nFinished GeoOpt!\n")
         print("\nRunning GOAT!\n")
@@ -84,7 +84,7 @@ class Spectra(BaseOrcaCalculation):
         )
 
         # Run the GOAT Calculation
-        goatCalc.RunCalculation()
+        goatCalc.runCalculation()
 
         print("\nFinished GOAT!\n")
         print("\nRunning Frequency Analysis!\n")
@@ -125,13 +125,13 @@ class Spectra(BaseOrcaCalculation):
             )
 
             # Run the Frequency Calculation
-            freqCalc.RunCalculation()
+            freqCalc.runCalculation()
 
             # Load Individual Spectra Results
             FreqSpectra = pd.DataFrame(
                 {
                     "Wavenumber": freqCalc.IRFrequencies["frequency"].values,
-                    "IRIntensity": freqCalc.IRFrequencies["IR_intensity"].values,
+                    "IRIntensity": freqCalc.IRFrequencies["IRIntensity"].values,
                 }
             )
 
@@ -166,10 +166,10 @@ class Spectra(BaseOrcaCalculation):
         # Get Total Time for Spectra
         calcTime = time.time() - startTime
 
-        print(f"\nFinished Making {self.name} Spectra! ({self.ClockTime(calcTime)})\n")
+        print(f"\nFinished Making {self.name} Spectra! ({self.clockTime(calcTime)})\n")
 
     @staticmethod
-    def GaussianBlur(data, sigma):
+    def gaussianBlur(data, sigma):
 
         # Get Size
         size = int(len(data))
@@ -191,7 +191,7 @@ class Spectra(BaseOrcaCalculation):
         return blurred_data
 
     @staticmethod
-    def LoadSpectra(spectra: str | pd.DataFrame):
+    def loadSpectra(spectra: str | pd.DataFrame):
 
         # Check if the file is a DataFrame or Path
         if not isinstance(spectra, (str, pd.DataFrame)):
@@ -231,7 +231,7 @@ class Spectra(BaseOrcaCalculation):
             return spectra.copy()
 
     @staticmethod
-    def PlotSpectra(
+    def plotSpectra(
         spectra: str | pd.DataFrame,
         plotName: str = "Spectra",
         sigma: int = 5,
@@ -242,7 +242,7 @@ class Spectra(BaseOrcaCalculation):
         """Create and Plots an IR Spectra, takes a path to a CSV or Pandas Dataframe with the Calculated"""
 
         # Load the Spectra
-        IRSpectra = Spectra.LoadSpectra(spectra)
+        IRSpectra = Spectra.loadSpectra(spectra)
 
         # Add a bunch of Dummy Data
         for i in range(0, maxWaveNum, spacing):
@@ -255,7 +255,7 @@ class Spectra(BaseOrcaCalculation):
         IRSpectra = IRSpectra.sort_values(by="Wavenumber", ascending=False)
 
         # Apply a Gaussian Blurring to the Intensities
-        IRSpectra["IRIntensity"] = Spectra.GaussianBlur(IRSpectra["IRIntensity"], sigma)
+        IRSpectra["IRIntensity"] = Spectra.gaussianBlur(IRSpectra["IRIntensity"], sigma)
 
         # Normalize and Inverse Intensity
         IRSpectra["IRIntensity"] = 1 - (

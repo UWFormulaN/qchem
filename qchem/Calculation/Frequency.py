@@ -3,7 +3,7 @@ import pandas as pd
 from qchem.Molecule import Molecule
 from qchem.Parser import OrcaOutput
 from .BaseOrcaCalculation import BaseOrcaCalculation
-from qchem.Calculation.OrcaCalculation import RunOrcaCalculation
+from qchem.Calculation.OrcaCalculation import runOrcaCalculation
 from qchem.Data.Enums import OrcaCalculationType, OrcaInputTemplate
 
 
@@ -37,9 +37,9 @@ class Frequency(BaseOrcaCalculation):
         )
 
         # Check if the Calculation has a Basis Set and a Functional Defined (Specific to Certain Calculations)
-        self.BasisSetFunctionalCompliant()
+        self.basisSetFunctionalCompliant()
 
-    def RunCalculation(self):
+    def runCalculation(self):
         f"""Runs through the FREQ Calculation"""
 
         # Start the Clock
@@ -49,7 +49,7 @@ class Frequency(BaseOrcaCalculation):
         print(f"Running FREQ on {self.name}...")
 
         # Run the Orca Calculation
-        calculation = RunOrcaCalculation(
+        calculation = runOrcaCalculation(
             self.name, self.inputFile, self.index, self.isLocal, STDOut=False
         )
 
@@ -64,10 +64,10 @@ class Frequency(BaseOrcaCalculation):
         outputFile = OrcaOutput(calculation.outputFilePath)
 
         # Extract the Vibrational Frequency from the Output File
-        self.vibrationalFrequencies = outputFile.get_vibrational_frequencies()
+        self.vibrationalFrequencies = outputFile.getVibrationalFrequencies()
 
         # Load the IR Frequency from the
-        self.IRFrequencies = outputFile.get_ir_frequencies()
+        self.IRFrequencies = outputFile.getIRFrequencies()
 
         # Display a Print Statement for the Frequency Completion
-        print(f"Finished FREQ on {self.name}! ({self.ClockTime(self.calculationTime)})")
+        print(f"Finished FREQ on {self.name}! ({self.clockTime(self.calculationTime)})")

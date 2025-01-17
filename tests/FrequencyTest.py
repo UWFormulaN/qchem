@@ -33,7 +33,7 @@ def Test1 ():
     frequency = Frequency(mol, cores=Cores, isLocal=LocalTest, basis=OrcaBasisSet.DEF2_SVP.value, functional=OrcaDensityFunctional.B3LYP.value)
     
     # Run the Frequency Calculation
-    frequency.RunCalculation()
+    frequency.runCalculation()
 
 #
 # Test 2 : Use File Reference as Input for Molecular Geometry
@@ -51,7 +51,7 @@ def Test2 ():
     frequency = Frequency("propane.xyz", cores=Cores, isLocal=LocalTest, basis=OrcaBasisSet.DEF2_SVP.value, functional=OrcaDensityFunctional.B3LYP.value, name="Propane_FREQ_Ref")
     
     # Run the Frequency Calculation
-    frequency.RunCalculation()
+    frequency.runCalculation()
     
 #
 # Running Tests

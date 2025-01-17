@@ -17,7 +17,7 @@ Gibbs Free Energy:
 GOAT Calculation Results:
 
 Conformer Analysis:
- conformer  energy  degeneracy  total_percent  cumulative_percent
+ conformer  energy  degeneracy  totalPercent  cumulativePercent
          0   0.000           1          18.19               18.19
          1   0.167           1          13.73               31.92
          2   0.188           1          13.24               45.16

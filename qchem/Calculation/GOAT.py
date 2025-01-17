@@ -4,7 +4,7 @@ from qchem.XYZFile import XYZFile
 from qchem.Molecule import Molecule
 from qchem.Parser import OrcaOutput
 from qchem.Data.Enums import OrcaInputTemplate
-from qchem.Calculation.OrcaCalculation import RunOrcaCalculation
+from qchem.Calculation.OrcaCalculation import runOrcaCalculation
 from qchem.Calculation.BaseOrcaCalculation import BaseOrcaCalculation
 
 
@@ -44,7 +44,7 @@ class GOAT(BaseOrcaCalculation):
         # Set the Values
         self.conformers = []
 
-    def RunCalculation(self):
+    def runCalculation(self):
         """Runs through the GOAT Calculation"""
 
         # Start the Clock
@@ -54,7 +54,7 @@ class GOAT(BaseOrcaCalculation):
         print(f"Running GOAT on {self.name}...")
 
         # Create the Calculation Object
-        calculation = RunOrcaCalculation(
+        calculation = runOrcaCalculation(
             self.name, self.inputFile, self.index, self.isLocal, STDOut=False
         )
 
@@ -66,22 +66,22 @@ class GOAT(BaseOrcaCalculation):
         self.orcaCachePath = calculation.orcaCachePath
 
         # Extract the Conformer Molecules from the Resulting XYZ File
-        self.ExtractConformers()
+        self.extractConformers()
 
         # Extract the Contributions
         conformerOutput = OrcaOutput(calculation.outputFilePath).conformers
         self.conformerContribution = conformerOutput[conformerOutput.columns[3]].values
 
         # Display a Print Statement for the GOAT Completion
-        print(f"Finished GOAT on {self.name}! ({self.ClockTime(self.calculationTime)})")
+        print(f"Finished GOAT on {self.name}! ({self.clockTime(self.calculationTime)})")
 
-    def ExtractConformers(self):
-        """Extracts all the Conformer Molecules"""
+    def extractConformers(self):
+        """Extracts all the Conformer Molecules from the .finalensemble.xyz File"""
         # Get the Number of Atoms we should Expect
-        if self.IsFileReference():
-            atomNum = XYZFile(os.path.join(self.orcaCachePath, self.molecule)).AtomCount
+        if self.isFileReference():
+            atomNum = XYZFile(os.path.join(self.orcaCachePath, self.molecule)).atomCount
         else:
-            atomNum = self.molecule.AtomCount
+            atomNum = self.molecule.atomCount
 
         # Open the File
         ensembleXYZFile = open(
