@@ -8,19 +8,19 @@ from abc import ABC, abstractmethod
 class BaseOrcaCalculation(ABC):
     
     molecule: Molecule | str
-    """The Molecule Used for Calculation"""
+    """String Path to the XYZ file or Molecule Object of the Molecule to run a Calculation on"""
     
     template: str | OrcaInputTemplate
-    """Input File Tenmplate for the Calculation"""
+    """Template for the Input File that gets filled out to run the Calculation"""
     
     calculationType: str = ""
-    """The Orca Calculation Type and Keyword"""
+    """The Keyword for the Calculation to run on the Molecule (For Pipelines replace with name)"""
     
     inputFile: OrcaInputFile
-    """Input File Object"""
+    """The auto generated Input File that is used for the Calculation"""
     
     inputFilePath: str
-    """The Path to the Input File on the Device"""
+    """The path the Input File will be saved to, often orcaCachePath + inputFileName.inp"""
 
     outputFilePath: str
     """The Path to the Output File on the Device"""
