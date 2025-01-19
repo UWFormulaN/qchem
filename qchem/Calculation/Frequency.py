@@ -8,17 +8,19 @@ from qchem.Data.Enums import OrcaCalculationType, OrcaInputTemplate
 
 
 class Frequency(BaseOrcaCalculation):
+    """Performs a Frequency Calculation on a Molecule. Will Expose IR and Vibrational Frequencies"""
 
     #
     # Need to be Set
     #
     calculationType: str = OrcaCalculationType.FREQUENCY.value
+    """The Keyword for the Calculation to run on the Molecule (For Pipelines replace with name)"""
 
     vibrationalFrequencies: pd.DataFrame
-    """Vibrational Frequencies of the Molecule"""
+    """The resulting Vibrational Frequencies of the Molecule"""
 
     IRFrequencies: pd.DataFrame
-    """IR Frequencies of the Molecule"""
+    """The resulting Infra Red Frequencies of the Molecule"""
 
     def __init__(
         self,
@@ -40,7 +42,14 @@ class Frequency(BaseOrcaCalculation):
         self.basisSetFunctionalCompliant()
 
     def runCalculation(self):
-        f"""Runs through the FREQ Calculation"""
+        """Runs the Frequency Calculation and Saves the Vibrational Frequencies and Infra Red Frequencies
+        
+        Parameters: \n
+            self - Default Parameter for the Class Instance
+            
+        Returns: \n
+            None - No Return Value
+        """
 
         # Start the Clock
         startTime = time.time()

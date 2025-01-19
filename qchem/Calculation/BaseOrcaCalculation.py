@@ -136,7 +136,7 @@ class BaseOrcaCalculation(ABC):
         self.inputFilePath = os.path.join(self.orcaCachePath, self.getInputFileName())
 
         # Create the Input File
-        self.inputFile = OrcaInputFile(self.template, **self.variables)
+        self.createInputFile()
 
     @abstractmethod
     def runCalculation(self):
@@ -145,7 +145,8 @@ class BaseOrcaCalculation(ABC):
         Parameters:\n
             self - Default Parameter for the Class Instance
 
-        Returns: None - No Return Value
+        Returns: \n
+            None - No Return Value
         """
         pass
 
@@ -155,7 +156,8 @@ class BaseOrcaCalculation(ABC):
         Parameters : \n
             self - Default Parameter for the Class Instance
 
-        Returns : bool - True if the Molecule is a File Reference, False if it is a Molecule Object
+        Returns : \n
+            bool - True if the Molecule is a File Reference, False if it is a Molecule Object
         """
         if isinstance(self.molecule, (str)):
             return True
@@ -168,7 +170,8 @@ class BaseOrcaCalculation(ABC):
         Parameters : \n
             self - Default Parameter for the Class Instance
 
-        Returns : str - Name of the file with the file extension"""
+        Returns : \n
+            str - Name of the file with the file extension"""
         return f"{self.name}.inp"
 
     def getOutputFileName(self):
@@ -177,7 +180,8 @@ class BaseOrcaCalculation(ABC):
         Parameters : \n
             self - Default Parameter for the Class Instance
 
-        Returns : str - Name of the file with the file extension"""
+        Returns : \n
+            str - Name of the file with the file extension"""
         return f"{self.name}.out"
 
     def getOutput(self) -> str:
@@ -186,7 +190,8 @@ class BaseOrcaCalculation(ABC):
         Parameters : \n
             self - Default Parameter for the Class Instance
 
-        Returns : str - The entire content of the Output File as a String
+        Returns : \n
+            str - The entire content of the Output File as a String
         """
         # Open the Output File and Grab the Content
         with open(self.outputFilePath, "r") as file:
@@ -198,7 +203,8 @@ class BaseOrcaCalculation(ABC):
         Parameters : \n
             self - Default Parameter for the Class Instance
 
-        Returns : None - No Return Value
+        Returns : \n
+            None - No Return Value
         """
         # Make Cache Folder if it doesn't Exist
         if not os.path.exists(self.orcaCachePath):
@@ -212,10 +218,11 @@ class BaseOrcaCalculation(ABC):
         """Converts Calculation Time Seconds to Human Readable Clock Format
 
         Parameters : \n
-            self - Default Parameter for the Class Instance
+            self - Default Parameter for the Class Instance \n
             seconds : int - Number of Seconds to Convert to Clock Format
 
-        Returns : str - The time in a clock format (x days : y hours : z mins : a sec)
+        Returns : \n
+            str - The time in a clock format (x days : y hours : z mins : a sec)
         """
         # Convert Seconds to Hours, Minutes, and Seconds
         days = seconds // 86400
@@ -245,7 +252,8 @@ class BaseOrcaCalculation(ABC):
         Parameters : \n
             self - Default Parameter for the Class Instance
 
-        Returns : None - No Return Value
+        Returns : \n
+            None - No Return Value
         """
         if not ("basis" in self.variables):
             raise ValueError("BasisSet not defined! Provide Basis Set Name as a String")
@@ -254,3 +262,15 @@ class BaseOrcaCalculation(ABC):
             raise ValueError(
                 "Functional not defined! Provide Functional Name as a String"
             )
+            
+    def createInputFile (self):
+        """Creates the Input File for the Calculation, used to update if Values are changed
+
+        Parameters : \n
+            self - Default Parameter for the Class Instance
+
+        Returns : \n
+            None - No Return Value
+        """
+        # Create the Input File
+        self.inputFile = OrcaInputFile(self.template, **self.variables)
