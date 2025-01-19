@@ -5,6 +5,7 @@ from .OrcaInputFile import OrcaInputFile
 from ..Molecule import Molecule
 from abc import ABC, abstractmethod
 
+
 class BaseOrcaCalculation(ABC):
 
     molecule: Molecule | str
@@ -162,21 +163,43 @@ class BaseOrcaCalculation(ABC):
             return False
 
     def getInputFileName(self):
-        """Returns the Input File Name with it's extension"""
+        """Gives the Name of the Input File
+
+        Parameters : \n
+            self - Default Parameter for the Class Instance
+
+        Returns : str - Name of the file with the file extension"""
         return f"{self.name}.inp"
 
     def getOutputFileName(self):
-        """Returns the Output File Name with it's extension"""
+        """Gives the Name of the Output File
+
+        Parameters : \n
+            self - Default Parameter for the Class Instance
+
+        Returns : str - Name of the file with the file extension"""
         return f"{self.name}.out"
 
     def getOutput(self) -> str:
-        """Returns the Entire Content of the Output File as a Single String"""
+        """Opens the Output File and returns the entire Output File as a single String
+
+        Parameters : \n
+            self - Default Parameter for the Class Instance
+
+        Returns : str - The entire content of the Output File as a String
+        """
         # Open the Output File and Grab the Content
         with open(self.outputFilePath, "r") as file:
             self.CalculationOutput = file.read()
 
     def createDirectories(self):
-        """Creates the necessary Cache Folders to store the Calculation"""
+        """Creates the Folder to Store Temporary and Resulting Calculation Files
+
+        Parameters : \n
+            self - Default Parameter for the Class Instance
+
+        Returns : None - No Return Value
+        """
         # Make Cache Folder if it doesn't Exist
         if not os.path.exists(self.orcaCachePath):
             os.makedirs(self.orcaCachePath)
@@ -185,8 +208,15 @@ class BaseOrcaCalculation(ABC):
         if not os.path.exists(self.orcaCachePath):
             os.makedirs(self.orcaCachePath)
 
-    def clockTime(self, seconds):
-        """Converts Seconds to a Human Readable Time String"""
+    def clockTime(self, seconds: int):
+        """Converts Calculation Time Seconds to Human Readable Clock Format
+
+        Parameters : \n
+            self - Default Parameter for the Class Instance
+            seconds : int - Number of Seconds to Convert to Clock Format
+
+        Returns : str - The time in a clock format (x days : y hours : z mins : a sec)
+        """
         # Convert Seconds to Hours, Minutes, and Seconds
         days = seconds // 86400
         hours = (seconds % 86400) // 3600
@@ -210,7 +240,13 @@ class BaseOrcaCalculation(ABC):
         return ", ".join(parts) if parts else "0 seconds"
 
     def basisSetFunctionalCompliant(self):
-        """Checks if the Basis Set and Functional Values have been defined. Used to simply call and confirm in Calculation Classes that require a Basis Set and Functional to be defined"""
+        """Check if the Calculation has the Basis Set and Functional defined. Throws Errors if not set
+
+        Parameters : \n
+            self - Default Parameter for the Class Instance
+
+        Returns : None - No Return Value
+        """
         if not ("basis" in self.variables):
             raise ValueError("BasisSet not defined! Provide Basis Set Name as a String")
 
@@ -218,7 +254,3 @@ class BaseOrcaCalculation(ABC):
             raise ValueError(
                 "Functional not defined! Provide Functional Name as a String"
             )
-
-    def setCalculationType(self, calculationType):
-        """Sets the Calculation Type in the Variables Dictionary"""
-        self.variables["calculation"] = calculationType

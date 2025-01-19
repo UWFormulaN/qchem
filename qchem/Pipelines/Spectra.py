@@ -47,8 +47,7 @@ class Spectra(BaseOrcaCalculation):
         startTime = time.time()
 
         # Make Cache Folder if it doesn't Exist
-        if not os.path.exists(self.orcaCachePath):
-            os.makedirs(self.orcaCachePath)
+        self.createDirectories()
 
         print("\nRunning GeoOpt!\n")
 
