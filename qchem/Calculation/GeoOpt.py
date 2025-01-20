@@ -58,10 +58,10 @@ class GeoOpt(BaseOrcaCalculation):
     def runCalculation(self):
         """Runs the GeoOpt Calculation and Saves the Optimized Molecule and it's Path
         
-        Parameters: \n
+        ## Parameters: \n
             self - Default Parameter for the Class Instance
             
-        Returns : \n
+        ## Returns : \n
             None - No Return Value
         """
 
@@ -74,10 +74,10 @@ class GeoOpt(BaseOrcaCalculation):
     def singleOptimization(self):
         """Runs a Single Optimization Attempt on the Molecule. If the Molecule has not Converged a warning will be sent to the Terminal
         
-        Parameters : \n
+        ## Parameters : \n
             self - Default Parameter for the Class Instance
             
-        Returns : \n
+        ## Returns : \n
             None - No Return Value
         """
 
@@ -125,10 +125,10 @@ class GeoOpt(BaseOrcaCalculation):
     def completeOptimization(self):
         """Runs an Algorithm that will continuously run Geometry Optimizations until the Molecule has been completely Optimized and Converged
         
-        Parameters : \n
+        ## Parameters : \n
             self - Default Parameter for the Class Instance
             
-        Returns : \n
+        ## Returns : \n
             None - No Return Value"""
         # Start the Timer
         startTime = time.time()
@@ -208,11 +208,11 @@ class GeoOpt(BaseOrcaCalculation):
     def isOptimized(self, frequencies: list[float]):
         """Checks if the Molecule has been Optimized using the Vibrational Frequencies. Returns a boolean indicating if Optimized (Fully Optimized = All Frequencies > 0)
         
-        Parameters : \n
+        ## Parameters : \n
             self - Default Parameter for the Class Instance \n
             frequencies - A list of Vibrational Frequencies
         
-        Returns : \n
+        ## Returns : \n
             bool - True if Molecule is Optimized, False if not Optimized
         """
         for freq in frequencies:

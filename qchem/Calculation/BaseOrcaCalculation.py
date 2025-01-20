@@ -7,6 +7,7 @@ from abc import ABC, abstractmethod
 
 
 class BaseOrcaCalculation(ABC):
+    """BaseOrcaCalculation is an Abstract class that is meant to be inherited by other Calculation classes. It provides the bare structure and information a Calculation will need to properly create, manage and run a Calculation to Orca."""
 
     molecule: Molecule | str
     """String Path to the XYZ file or Molecule Object of the Molecule to run a Calculation on"""
@@ -42,10 +43,10 @@ class BaseOrcaCalculation(ABC):
     """The resulting total time for the calculation in seconds."""
 
     STDOut: bool
-    """A Boolean flag to indicate if Standard Output logs should be printed"""
+    """Boolean flag to indicate if Standard Output logs should be printed"""
 
     isLocal: bool
-    """A Boolean flag to indicate if the calculation runs locally or in Docker (True = Local, False = Docker)"""
+    """Boolean flag to indicate if the calculation runs locally or in Docker (True = Local, False = Docker)"""
 
     cores: int
     """Number of CPU Cores allocated to the calculation"""
@@ -142,10 +143,10 @@ class BaseOrcaCalculation(ABC):
     def runCalculation(self):
         """Runs the Calculation Algorithm, is an Abstract Method/Function that needs to be overridden.
 
-        Parameters:\n
+        ## Parameters:\n
             self - Default Parameter for the Class Instance
 
-        Returns: \n
+        ## Returns: \n
             None - No Return Value
         """
         pass
@@ -153,10 +154,10 @@ class BaseOrcaCalculation(ABC):
     def isFileReference(self):
         """Checks if the Molecule is defined as a File Reference as a str or a Molecule Object
 
-        Parameters : \n
+        ## Parameters : \n
             self - Default Parameter for the Class Instance
 
-        Returns : \n
+        ## Returns : \n
             bool - True if the Molecule is a File Reference, False if it is a Molecule Object
         """
         if isinstance(self.molecule, (str)):
@@ -167,30 +168,31 @@ class BaseOrcaCalculation(ABC):
     def getInputFileName(self):
         """Gives the Name of the Input File
 
-        Parameters : \n
+        ## Parameters : \n
             self - Default Parameter for the Class Instance
 
-        Returns : \n
-            str - Name of the file with the file extension"""
+        ## Returns : \n
+            str - Name of the file with the file extension
+        """
         return f"{self.name}.inp"
 
     def getOutputFileName(self):
         """Gives the Name of the Output File
 
-        Parameters : \n
+        ## Parameters : \n
             self - Default Parameter for the Class Instance
 
-        Returns : \n
+        ## Returns : \n
             str - Name of the file with the file extension"""
         return f"{self.name}.out"
 
     def getOutput(self) -> str:
         """Opens the Output File and returns the entire Output File as a single String
 
-        Parameters : \n
+        ## Parameters : \n
             self - Default Parameter for the Class Instance
 
-        Returns : \n
+        ## Returns : \n
             str - The entire content of the Output File as a String
         """
         # Open the Output File and Grab the Content
@@ -200,10 +202,10 @@ class BaseOrcaCalculation(ABC):
     def createDirectories(self):
         """Creates the Folder to Store Temporary and Resulting Calculation Files
 
-        Parameters : \n
+        ## Parameters : \n
             self - Default Parameter for the Class Instance
 
-        Returns : \n
+        ## Returns : \n
             None - No Return Value
         """
         # Make Cache Folder if it doesn't Exist
@@ -217,11 +219,11 @@ class BaseOrcaCalculation(ABC):
     def clockTime(self, seconds: int):
         """Converts Calculation Time Seconds to Human Readable Clock Format
 
-        Parameters : \n
+        ## Parameters : \n
             self - Default Parameter for the Class Instance \n
             seconds : int - Number of Seconds to Convert to Clock Format
 
-        Returns : \n
+        ## Returns : \n
             str - The time in a clock format (x days : y hours : z mins : a sec)
         """
         # Convert Seconds to Hours, Minutes, and Seconds
@@ -249,10 +251,10 @@ class BaseOrcaCalculation(ABC):
     def basisSetFunctionalCompliant(self):
         """Check if the Calculation has the Basis Set and Functional defined. Throws Errors if not set
 
-        Parameters : \n
+        ## Parameters : \n
             self - Default Parameter for the Class Instance
 
-        Returns : \n
+        ## Returns : \n
             None - No Return Value
         """
         if not ("basis" in self.variables):
@@ -266,10 +268,10 @@ class BaseOrcaCalculation(ABC):
     def createInputFile (self):
         """Creates the Input File for the Calculation, used to update if Values are changed
 
-        Parameters : \n
+        ## Parameters : \n
             self - Default Parameter for the Class Instance
 
-        Returns : \n
+        ## Returns : \n
             None - No Return Value
         """
         # Create the Input File

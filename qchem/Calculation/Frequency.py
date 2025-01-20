@@ -44,13 +44,12 @@ class Frequency(BaseOrcaCalculation):
     def runCalculation(self):
         """Runs the Frequency Calculation and Saves the Vibrational Frequencies and Infra Red Frequencies
         
-        Parameters: \n
+        ## Parameters: \n
             self - Default Parameter for the Class Instance
             
-        Returns: \n
+        ## Returns: \n
             None - No Return Value
         """
-
         # Start the Clock
         startTime = time.time()
 
