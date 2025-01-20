@@ -477,8 +477,18 @@ class Molecule:
             chi = chi + 360.0
         return chi
 
-    def getAngleBetweenAtoms(self, atomIndex1, atomIndex2, atomIndex3):
-        """Returns the Angle between Atoms in Degrees"""
+    def getAngleBetweenAtoms(self, atomIndex1: int, atomIndex2: int, atomIndex3: int):
+        """Determines the Angle in Degrees between 2 atoms bonded with a common middle atom
+
+        ## Parameters : \n
+            self : Molecule - Default Parameter for the Class Instance \n
+            atomIndex1 : int - Index of the First Atom \n
+            atomIndex2 : int - Index of the Second Atom, is the commonly shared Atom \n
+            atomIndex3 : int - Index of the Third Atom \n
+
+        ## Returns : \n
+            float - Angle between the bonded atoms in Degrees
+        """
         # Get Atom Positions
         atom1Pos = self.getAtomPosition(atomIndex1)
         atom2Pos = self.getAtomPosition(atomIndex2)
@@ -494,7 +504,14 @@ class Molecule:
         return (180 / pi) * math.acos(np.dot(v1, v2))
 
     def displayBondGraph(self):
-        """Displays the Bond Graph in Terminal"""
+        """Prints the Bond graph to the Terminal. Displays the index of atoms that are bonded to the displayed index
+
+        ## Parameters : \n
+            self : Molecule - Default Parameter for the Class Instance \n
+
+        ## Returns : \n
+            None - No Return Value
+        """
         # Display Title Header
         print("   %s\n" % (self.Name), end="")
 
@@ -528,8 +545,17 @@ class Molecule:
                 % (index + 1, atom, bonds, bondDist, rotatable)
             )
 
-    def getDihedralAtomChain(self, atomChain: list[int], depth=0):
-        """Recursively Searches for a Viable Atom Chain of length 4"""
+    def getDihedralAtomChain(self, atomChain: list[int], depth: int = 0):
+        """Recursively searches for a atom chain of length 4 to calculate the Dihedral angle
+
+        ## Parameters : \n
+            self : Molecule - Default Parameter for the Class Instance \n
+            atomChain : list[int] - List of Atoms indices that are in the Chain \n
+            depth : int - The Depth of the Recursive Search
+
+        ## Returns : \n
+            list[int] - The Dihedral Atom chain list. Is of length 4
+        """
         # Grab Bonds and Sort by incrementing index
         bonds: list[int] = self.bonds["Bonds"][atomChain[depth]]
         bonds.sort()
@@ -561,15 +587,29 @@ class Molecule:
         return atomChain
 
     def displayZMatrix(self):
-        """Displays the Z Matrix in the Terminal"""
+        """Displays the Molecules Atoms info in Z Matrix Format
+
+        ## Parameters : \n
+            self : Molecule - Default Parameter for the Class Instance
+
+        ## Returns : \n
+            None - No Return Value
+        """
         zMatrix = self.createZMatrixFile()
         for i in zMatrix:
             print(i)
 
     def createZMatrixFile(self):
-        """Creates an Array of Strings that Reprensents the ZMatrix File"""
+        """Converts the Molecules info from XYZ Format to Z Matrix Format as a list of strings
+
+        ## Parameters : \n
+            self : Molecule - Default Parameter for the Class Instance
+
+        ## Returns : \n
+            list[str] - List of Lines in the Z Matrix File 
+        """
         # Create an Array Reprensenting the File, First line is Number of Atoms, Second is the Name of the Molecule
-        zMatrix = []
+        zMatrix : list[str] = []
         zMatrix.append(f"{self.atomCount}")
         zMatrix.append(self.name)
 
@@ -619,7 +659,15 @@ class Molecule:
         return zMatrix
 
     def sortAtomDataFrame(self, dataFrame: pd.core.frame.DataFrame):
-        """Sorts the Molecule Data Frame when initializing the Molecule to make sure the Heaviest Atoms are at the Top of the Data Frame"""
+        """Sorts the Molecules Atoms Data Frame by ordering the Atoms from Heaviest Molecular Weight to Lowest
+
+        ## Parameters : \n
+            self : Molecule - Default Parameter for the Class Instance \n
+            dataFrame : pd.DataFrame - The XYZ Position DataFrame to Sort
+
+        ## Returns : \n
+            pd.DataFrame - The DataFrame with Atom Positions sorted from Highest to Lowest Molecular Weight
+        """
         # Create a duplicate of the DataFrame
         sortedDataFrame = dataFrame.copy()
 
@@ -647,7 +695,14 @@ class Molecule:
         return sortedDataFrame
 
     def getMolecularWeight(self) -> float:
-        """Returns the Molecular Weight of the Molecule in g/mol"""
+        """Returns the Molecular Weight of the Molecule in g/mol (grams per mol)
+
+        ## Parameters : \n
+            self : Molecule - Default Parameter for the Class Instance
+
+        ## Returns : \n
+            float - The Molecular Weight of the Molecule in g/mol
+        """
         mw = 0
 
         # Loop through all Atoms and Add their Individual Atomic Mass
