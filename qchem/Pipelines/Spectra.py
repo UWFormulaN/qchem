@@ -12,11 +12,13 @@ from qchem.Calculation.BaseOrcaCalculation import BaseOrcaCalculation
 
 
 class Spectra(BaseOrcaCalculation):
+    """Performs a Spectra Analysis Calculation on a Molecule. Will Provide the Infra Red Spectra of the Molecule"""
 
     calculationType: str = "Spectra"
+    """The Keyword for the Calculation to run on the Molecule (For Pipelines replace with name)"""
 
     IRSpectra: pd.DataFrame
-    """The Resulting IR Spectra plotted"""
+    """DataFrame the IR Frequencies of the Molecule and their Intensities"""
 
     def __init__(
         self,
@@ -41,7 +43,14 @@ class Spectra(BaseOrcaCalculation):
         self.variables.pop("cores")
 
     def runCalculation(self):
-        """Runs through all Calculations required to produce a Spectra Graph"""
+        """Runs the Spectra Calculation and Saves the Infra Red Spectra
+
+        ## Parameters: \n
+            self - Default Parameter for the Class Instance
+
+        ## Returns: \n
+            None - No Return Value
+        """
 
         # Start the Timer
         startTime = time.time()
@@ -168,7 +177,16 @@ class Spectra(BaseOrcaCalculation):
         print(f"\nFinished Making {self.name} Spectra! ({self.clockTime(calcTime)})\n")
 
     @staticmethod
-    def gaussianBlur(data, sigma):
+    def gaussianBlur(data: list[float], sigma: float):
+        """Applies a Gaussian Blur Kernel over a vector of Data
+
+        ## Parameters : \n
+            data : list[float] - Vector of Data to apply the Gaussian Blur \n
+            sigma : float - Standard Deviation of the Gaussian Kernel, defines the broadness of the Gaussian Profile
+
+        ## Returns : \n
+            NDArray[Any] - Vector of Data with a Gaussian Blur applied
+        """
 
         # Get Size
         size = int(len(data))
@@ -191,6 +209,14 @@ class Spectra(BaseOrcaCalculation):
 
     @staticmethod
     def loadSpectra(spectra: str | pd.DataFrame):
+        """Loads the Infra red Spectra from a File or a Pandas DataFrame
+
+        ## Parameters : \n
+            spectra : str | pd.DataFrame - Path to the CSV File or the Pandas DataFrame Object
+
+        ## Returns : \n
+            pd.DataFrame - Pandas DataFrame with Data Formatted and ready to Plot, with Wavenumber and IR Intensity
+        """
 
         # Check if the file is a DataFrame or Path
         if not isinstance(spectra, (str, pd.DataFrame)):
@@ -233,12 +259,24 @@ class Spectra(BaseOrcaCalculation):
     def plotSpectra(
         spectra: str | pd.DataFrame,
         plotName: str = "Spectra",
-        sigma: int = 5,
-        maxWaveNum=4000,
-        spacing=10,
-        showPlot=True,
+        sigma: float = 5,
+        maxWaveNum: float = 4000,
+        spacing: float = 10,
+        showPlot: bool = True,
     ):
-        """Create and Plots an IR Spectra, takes a path to a CSV or Pandas Dataframe with the Calculated"""
+        """Plots an IR Spectra and opens a MatPlotLib window to Display it
+        
+        ## Parameters : \n
+            spectra : str | pd.DataFrame - Path to the CSV File or the Pandas DataFrame Object \n
+            plotName : str - Name of the Plot, used for the Title and Name of the File Saved \n
+            sigma : float - Standard Deviation of the Gaussian Kernel, defines the broadness of the Gaussian Profile \n
+            maxWaveNum : float - Upper bound WaveNumber Plotted on the Spectrum  \n
+            spacing : float - Spacing between each fake DataPoint added to the Graph to smoothen results \n
+            showPlot : bool - Boolean flag determining if the MatPlotLib window displaying the Spectrum will be shown
+        
+        ## Returns : \n
+            None - No Return Value
+        """
 
         # Load the Spectra
         IRSpectra = Spectra.loadSpectra(spectra)
