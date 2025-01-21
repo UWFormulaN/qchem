@@ -5,16 +5,16 @@ from qchem.Molecule import Molecule
 
 
 class XYZFile:
-    """Class that Describes a XYZ Molecule File"""
+    """Describes the Structure of a XYZ file. Allows for loading and saving to the file format"""
 
     atomCount: int
-    """Number of Atoms in the Molecule"""
+    """Number of Atoms Present in the File"""
 
     moleculeName: str
-    """Name of the Molecule"""
+    """Name of the Molecule being stored or loaded in the file"""
 
     atomPositions : pd.DataFrame
-    """Positions of each Atom and the Atom Atomic Element in a DataFrame"""
+    """Pandas DataFrame storing the Position of each Atom in the Molecule, stored in the Rows"""
 
     def __init__(self, molecule : Molecule | str | list[str], name : str = "Molecule"):
         # Check if it's already a Molecule
@@ -60,7 +60,15 @@ class XYZFile:
             self.atomPositions = pd.DataFrame(atoms, columns=columnHeaders)
                  
     def isValidXYZLine (self, line:str):
-        """Checks if a String / Line from a File is a Valid XYZ File Format Line"""
+        """Checks if the string provided follows the format of the Body of a XYZ File (Atom Symbol - X Y Z)
+
+        ## Parameters : \n
+            self : XYZFile - Default Parameter for the Class Instance \n
+            line : str - The Line to be Checked
+
+        ## Returns : \n
+            bool - True if the line follows (Atom Symbol - X Y Z), False Otherwise
+        """
         splitLine = re.sub(r'\s+', " ", line).split(" ")
         
         if (len(splitLine) == 4):
@@ -69,8 +77,16 @@ class XYZFile:
         
         return False
             
-    def isValidFloat(self, value):
-        """Checks if the String provided can be converted to a Float"""
+    def isValidFloat(self, value: str):
+        """Checks if the String provided can be converted to a float
+
+        ## Parameters : \n
+            self : XYZFile - Default Parameter for the Class Instance \n
+            value : str - The String that will be checked if it can be converted to a float
+
+        ## Returns : \n
+            bool - True if the String can be converted to a Float, False Otherwise
+        """
         try:
             float(value)
             return True
@@ -78,17 +94,39 @@ class XYZFile:
             return False        
         
     def getFileAsString(self):
-        """Returns the Entire XYZ File as a String"""
+        """Formats the Classes content into a XYZFile format in a single String
+
+        ## Parameters : \n
+            self : XYZFile - Default Parameter for the Class Instance
+
+        ## Returns : \n
+            str - Content of the XYZFile formatted properly in a single String
+        """
         fileString = f"{self.atomCount}"
         fileString += f"\n{self.moleculeName}\n"
         fileString += self.atomPositions.to_string(header=False, index=False)
         return fileString
     
     def saveToFile (self, directory: str = ""):
-        """Saves the XYZ File to the Specified Path"""
+        """Saves the XYZFile Class Object to a XYZFile
+
+        ## Parameters : \n
+            self : XYZFile - Default Parameter for the Class Instance \n
+            directory : str - The Directory the XYZ File is saved to (Do not include Name and File Extension)
+
+        ## Returns : \n
+            None - No Return Value
+        """
         with open(os.path.join(directory, f"{self.moleculeName}.xyz"), "w") as file:
             file.write(self.getFileAsString())
 
     def getXYZBody (self):
-        """Gets the XYZ Atom Position Body of the file as a String"""
+        """Retrieves the Body of the XYZ File, The Atomic Symbols and their XYZ Positions. Excludes the Name of the Molecule and the number of Atoms
+
+        ## Parameters : \n
+            self : XYZFile - Default Parameter for the Class Instance \n
+
+        ## Returns : \n
+            str - The Body of the XYZ File as a String (Rows of A - X Y Z)
+        """
         return self.atomPositions.to_string(header=False, index=False)
