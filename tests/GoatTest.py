@@ -30,7 +30,7 @@ def Test1 ():
     goat = GOAT(mol, cores=Cores, isLocal=LocalTest, index=1)
 
     # Run the GOAT Calculation
-    goat.RunCalculation()
+    goat.runCalculation()
 
 #
 # Test 2 : Use File Reference as Input for Molecular Geometry
@@ -48,7 +48,7 @@ def Test2 ():
     goat = GOAT("propane.xyz", cores=Cores, name="Propane_GOAT_Ref", isLocal=LocalTest, index=2)
 
     # Run the GOAT Calculation
-    goat.RunCalculation()
+    goat.runCalculation()
     
 #
 # Running Tests

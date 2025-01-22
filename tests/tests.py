@@ -11,7 +11,7 @@ from qchem.Data.Enums import OrcaInputTemplate
         "!&{calculation} &{basis} &{functional}\n*xyzfile 0 1 &{xyzfile}\n",
     ],
 )
-def test_input_file(test_input):
+def testInputFile(test_input):
     assert (
         OrcaInputFile(
             test_input,
