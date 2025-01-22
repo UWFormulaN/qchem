@@ -104,7 +104,7 @@ class BaseOrcaCalculation(ABC):
         # Set Name to the Name of the Molecule
         if self.name == self.defaultName:
             if isinstance(molecule, Molecule):
-                self.name = molecule.Name
+                self.name = molecule.name
             else:
                 self.name = (self.calculationType + " Molecule").replace(" ", "_")
 

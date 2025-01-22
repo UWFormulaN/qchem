@@ -4,12 +4,8 @@ import math
 import random
 import pandas as pd
 import numpy as np
+from qchem.XYZFile import XYZFile
 from .Data.Constants import AtomicMassConstants, CovalentRadiiConstants
-
-# We will create molecule objects which will store information about the molecule
-# Includes coordinates, atom types, how optimization was performed, how energy calculations were performed, etc.
-# We can take segmented properties from the output file, and store them as attributes of the molecule object
-# May need to Redesign all the math to use dependency injection to a Class called Internal Molecular Math
 
 
 class Molecule:
@@ -18,38 +14,26 @@ class Molecule:
     name: str = ""
     """Name of the Molecule (Often the Scientific name)"""
 
-    #  Atom Symbol, X, Y, Z
+    file: XYZFile
+    """XYZ File Object storing the Molecules Data"""
+
     XYZCoordinates: pd.DataFrame
     """Pandas DataFrame storing each atoms Atomic Symbol and XYZ position in rows"""
 
     atomCount: int = 0
     """Number of Atoms present in the Molecule"""
 
-    # Atom Index, Atom Symbol, Array of Index of other Atoms it's bonded to, Array of Booleans determining if Bond is Rotatable
     bonds: pd.DataFrame
     """Pandas DataFrame storing the index of each Atom, which Atoms they are Bonded to, their Bond Distances and if the Bond is rotatable """
 
     energy: float = None
     """Energy of the Molecule, the sum of the bond energies and the energy needed in it’s conformation"""
 
-    # multiplicity: int = None
-    # """Multiplicity of the Molecule"""
-    #
-    # atomTypes = None
-    # """Atom types of the Molecule"""
-    #
-    # optimizationMethod = None
-    # """Optimization Method of the Molecule"""
-    #
-    # energyMethod = None
-    # """Energy Method used for the Molecule"""
-
-    def __init__(self, name: str, XYZ):
+    def __init__(self, name: str, XYZ: str | XYZFile):
         """Initializes a New Molecule Object\n
         name : str
         XYZ : str | XYZFile
         """
-        from qchem.XYZFile import XYZFile  # <-- To Avoid Circular Imports
 
         if not isinstance(name, (str)):
             raise ValueError("Name must be a String")
@@ -61,29 +45,17 @@ class Molecule:
 
         if isinstance(XYZ, (str)):
             # Load the XYZ File from XYZ File
-            self.XYZCoordinates = self.sortAtomDataFrame(self.readXYZ(path=XYZ))
+            self.file = XYZFile(XYZ)
+            self.XYZCoordinates = self.file.atomPositions
             self.atomCount = len(self.XYZCoordinates["Atom"].values)
         elif isinstance(XYZ, (XYZFile)):
             # Load from the XYZ File Class
+            self.file = XYZ
             self.atomCount = XYZ.atomCount
             self.XYZCoordinates = XYZ.atomPositions
 
         self.getBonds()
         self.findRotatableBonds()
-
-    def readXYZ(self, path: str) -> pd.DataFrame:
-        """Reads the Provided XYZ Files and returns the XYZ Format in a DataFrame
-
-        ## Parameters : \n
-            self : Molecule - Default Parameter for the Class Instance
-            path : str - Path to the XYZ File
-
-        ## Returns : \n
-            pd.DataFrame - Pandas DataFrame with each row being an Atoms XYZ Position
-        """
-        return pd.read_csv(
-            path, sep=r"\s+", skiprows=2, names=["Atom", "X", "Y", "Z"], engine="python"
-        )
 
     def getGeometry(self):
         """Displays the Molecules Geometry in the Terminal
@@ -315,9 +287,7 @@ class Molecule:
         ## Returns : \n
             str - Content of XYZ File generated from the Molecule
         """
-        from qchem.XYZFile import XYZFile
-
-        return XYZFile(self).getFileAsString()
+        return self.file.getFileAsString()
 
     def XYZBody(self) -> str:
         """Returns the Body of the XYZ File as a string generated from the Molecules
@@ -328,9 +298,7 @@ class Molecule:
         ## Returns : \n
             str - Body of XYZ File generated from the Molecule
         """
-        from qchem.XYZFile import XYZFile
-
-        return XYZFile(self).getXYZBody()
+        return self.file.getXYZBody()
 
     def saveAsXYZ(self, fileDir: str):
         """Saves the Molecule as a XYZ File to the specified file directory. Uses the Molcules name as the File Name and the file directory as the folders path
@@ -342,9 +310,7 @@ class Molecule:
         ## Returns : \n
             None - No Return Value
         """
-        from qchem.XYZFile import XYZFile
-
-        XYZFile(self).saveToFile(fileDir)
+        self.file.saveToFile(fileDir)
 
     def findRotatableBonds(self):
         """Finds all rotatable bonds in the Molecule and adds it to the Bonds DataFrame under the column “Rotatable”. Rotatable bonds are not completely accurate, relies on finding a loop in the molecule (Double and Tripple bonds are still considered rotatable in this case so beware)
@@ -606,10 +572,10 @@ class Molecule:
             self : Molecule - Default Parameter for the Class Instance
 
         ## Returns : \n
-            list[str] - List of Lines in the Z Matrix File 
+            list[str] - List of Lines in the Z Matrix File
         """
         # Create an Array Reprensenting the File, First line is Number of Atoms, Second is the Name of the Molecule
-        zMatrix : list[str] = []
+        zMatrix: list[str] = []
         zMatrix.append(f"{self.atomCount}")
         zMatrix.append(self.name)
 
@@ -657,42 +623,6 @@ class Molecule:
             )
 
         return zMatrix
-
-    def sortAtomDataFrame(self, dataFrame: pd.core.frame.DataFrame):
-        """Sorts the Molecules Atoms Data Frame by ordering the Atoms from Heaviest Molecular Weight to Lowest
-
-        ## Parameters : \n
-            self : Molecule - Default Parameter for the Class Instance \n
-            dataFrame : pd.DataFrame - The XYZ Position DataFrame to Sort
-
-        ## Returns : \n
-            pd.DataFrame - The DataFrame with Atom Positions sorted from Highest to Lowest Molecular Weight
-        """
-        # Create a duplicate of the DataFrame
-        sortedDataFrame = dataFrame.copy()
-
-        atoms = []
-
-        for i in range(len(dataFrame["Atom"].values)):
-            atoms.append([i, AtomicMassConstants[dataFrame["Atom"][i]]])
-
-        # Sort atoms by atomic mass in descending order
-        sortedAtoms = sorted(atoms, key=lambda x: x[1], reverse=True)
-
-        # Extract the sorted indices from the sorted_atoms list
-        sortedIndices = [atom[0] for atom in sortedAtoms]
-
-        # Use the sorted indices to reindex the original DataFrame
-        sortedDataFrame = dataFrame.iloc[sortedIndices]
-
-        # Replace rows in the duplicate DataFrame using the sorted indices
-        for newIndex, (originalIndex, _) in enumerate(sortedAtoms):
-            sortedDataFrame.iloc[newIndex] = dataFrame.iloc[originalIndex]
-
-        # Resets the Now Sorted indexes so that they properly increment
-        sortedDataFrame.reset_index(drop=True, inplace=True)
-
-        return sortedDataFrame
 
     def getMolecularWeight(self) -> float:
         """Returns the Molecular Weight of the Molecule in g/mol (grams per mol)
