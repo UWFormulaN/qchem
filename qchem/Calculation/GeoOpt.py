@@ -10,6 +10,7 @@ from qchem.Calculation.OrcaCalculation import runOrcaCalculation, OrcaCalcResult
 
 
 class GeoOpt(BaseOrcaCalculation):
+    """Performs a Frequency Calculation on a Molecule. Can be set to Optimize until convergence or only run a single Calculation"""
 
     #
     # Need to be Set
@@ -17,18 +18,19 @@ class GeoOpt(BaseOrcaCalculation):
     calculationType: str = (
         f"{OrcaCalculationType.OPTIMIZATION.value} {OrcaCalculationType.FREQUENCY.value}"
     )
+    """The Keyword for the Calculation to run on the Molecule (For Pipelines replace with name)"""
 
     fullOptimization: bool
-    """Boolean Flag to determine if the Optimization is Full or not (True = Runs until Convergence, False = Runs for a Single Iteration)"""
+    """A Boolean Flag determining if the Molecule will be Completely Optimized or will run a Single Optimization Iteration (True = Runs until Convergence, False = Runs for a Single Iteration)"""
 
     optMolecule: Molecule
-    """The Final Optimized Molecule"""
+    """The Resulting Optimized Molecule once the Calculation is Complete"""
 
     optimizedMoleculePath: str
-    """Path to the Optimized Molecule File"""
+    """The Path to the XYZ File of the Resulting Optimized Molecule"""
 
     calculation: OrcaCalcResult
-    """Reference to the Last Orca Calculation Object for the GeoOpt"""
+    """The reference to the latest Calculation Results from the GeoOpt """
 
     def __init__(
         self,
@@ -54,16 +56,30 @@ class GeoOpt(BaseOrcaCalculation):
         self.fullOptimization = fullOptimization
 
     def runCalculation(self):
-        """Runs through a Geometry Optimization on the Molecule and repeats until properly converged"""
+        """Runs the GeoOpt Calculation and Saves the Optimized Molecule and it's Path
+        
+        ## Parameters: \n
+            self - Default Parameter for the Class Instance
+            
+        ## Returns : \n
+            None - No Return Value
+        """
 
         # Single Optimization
         if not self.fullOptimization:
             self.singleOptimization()
         else:
-            self.fullOptimization()
+            self.completeOptimization()
 
     def singleOptimization(self):
-        """Runs a Single Optimization Attempt on the Molecule (Will Output a message if the Molecule is not fully optimized)"""
+        """Runs a Single Optimization Attempt on the Molecule. If the Molecule has not Converged a warning will be sent to the Terminal
+        
+        ## Parameters : \n
+            self - Default Parameter for the Class Instance
+            
+        ## Returns : \n
+            None - No Return Value
+        """
 
         print(f"Running OPT on {self.name}...")
 
@@ -106,8 +122,14 @@ class GeoOpt(BaseOrcaCalculation):
         # Print a Finishing Statement with the Time
         print(f"Finished OPT on {self.name} ({self.clockTime(calcTime)})")
 
-    def fullOptimization(self):
-        """Runs a Full Geo Optimization on the Molecule. Will repeat the Optimization loop until the Molecule has fully converged."""
+    def completeOptimization(self):
+        """Runs an Algorithm that will continuously run Geometry Optimizations until the Molecule has been completely Optimized and Converged
+        
+        ## Parameters : \n
+            self - Default Parameter for the Class Instance
+            
+        ## Returns : \n
+            None - No Return Value"""
         # Start the Timer
         startTime = time.time()
 
@@ -183,8 +205,16 @@ class GeoOpt(BaseOrcaCalculation):
             # Generate the Input File
             self.inputFile = OrcaInputFile(self.template, **self.variables)
 
-    def isOptimized(self, frequencies):
-        """Returns a Boolean Flag as to if the Molecule is fully Optimized (Fully Optimized = All Frequencies > 0)"""
+    def isOptimized(self, frequencies: list[float]):
+        """Checks if the Molecule has been Optimized using the Vibrational Frequencies. Returns a boolean indicating if Optimized (Fully Optimized = All Frequencies > 0)
+        
+        ## Parameters : \n
+            self - Default Parameter for the Class Instance \n
+            frequencies - A list of Vibrational Frequencies
+        
+        ## Returns : \n
+            bool - True if Molecule is Optimized, False if not Optimized
+        """
         for freq in frequencies:
             if freq < 0:
                 return False

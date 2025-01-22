@@ -3,23 +3,25 @@ import time
 from qchem.XYZFile import XYZFile
 from qchem.Molecule import Molecule
 from qchem.Parser import OrcaOutput
-from qchem.Data.Enums import OrcaInputTemplate
+from qchem.Data.Enums import OrcaInputTemplate, OrcaCalculationType
 from qchem.Calculation.OrcaCalculation import runOrcaCalculation
 from qchem.Calculation.BaseOrcaCalculation import BaseOrcaCalculation
 
 
 class GOAT(BaseOrcaCalculation):
+    """Performs a GOAT (Global Optimizer Algorithm) Calculation on a Molecule. Exposes the Conformers and their Contributions to the Ensemble"""
 
     #
     # Need to be Set
     #
-    calculationType: str = "GOAT XTB"
+    calculationType: str = OrcaCalculationType.GOAT_XTB.value
+    """The Keyword for the Calculation to run on the Molecule (For Pipelines replace with name)"""
 
     conformers: list[Molecule]
-    """List of Conformer Molecules Calculated from GOAT"""
+    """List of the Conformer Molecules Found by GOAT"""
 
     conformerContribution: list[float]  # Switch to DataFrame?
-    """A List of the Contributions each Conformer provides to the Ensemble"""
+    """List of the Percentage Contributions each Molecule has to the Ensemble"""
 
     def __init__(
         self,
@@ -45,7 +47,14 @@ class GOAT(BaseOrcaCalculation):
         self.conformers = []
 
     def runCalculation(self):
-        """Runs through the GOAT Calculation"""
+        """Runs the GOAT Calculation and Saves the list of Conformer Molecules and their Individual Contributions to the Ensemble
+        
+        ## Parameters : \n
+            self - Default Parameter for the Class Instance
+        
+        ## Returns : \n
+            None - No Return Value
+        """
 
         # Start the Clock
         startTime = time.time()
@@ -76,7 +85,14 @@ class GOAT(BaseOrcaCalculation):
         print(f"Finished GOAT on {self.name}! ({self.clockTime(self.calculationTime)})")
 
     def extractConformers(self):
-        """Extracts all the Conformer Molecules from the .finalensemble.xyz File"""
+        """Extracts all the Conformer Molecules from the .finalensemble.xyz File
+        
+        ## Parameters : \n
+            self - Default Parameter for the Class Instance
+            
+        ## Returns : \n
+            None - No Return Value
+        """
         # Get the Number of Atoms we should Expect
         if self.isFileReference():
             atomNum = XYZFile(os.path.join(self.orcaCachePath, self.molecule)).atomCount
