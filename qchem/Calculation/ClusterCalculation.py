@@ -54,7 +54,6 @@ class ClusterCalculation:
         self.completedCalculations = []
         self.orcaCachePath = os.path.join(os.getcwd(), "OrcaCache", name)
         
-
     def runCalculations(self):
         """Runs all Calculations that have been assigned to the Cluster"""
 
@@ -66,7 +65,6 @@ class ClusterCalculation:
             for p in processes[:]:
                 if not p.is_alive():
                     p.join()
-                    self.completedCalculations.append(p.calculation)
                     processes.remove(p)
                     self.usedCores -= p.calculation.variables["cores"]
 
@@ -89,7 +87,10 @@ class ClusterCalculation:
             # Check for messages from the processes
             while not message_queue.empty():
                 message = message_queue.get()
-                print(message)
+                if isinstance(message, OrcaCalcResult):
+                    self.completedCalculations.append(message)
+                else:
+                    print(message)
 
             # Wait Half a Second before Checking Again
             time.sleep(0.5)
@@ -97,6 +98,6 @@ class ClusterCalculation:
     def runIndividualCalculation(self, calculation: OrcaInputFile, message_queue: multiprocessing.Queue):
         """Runs an Individual Calculation and Provides Messages Saying it's Started and Finished"""
         message_queue.put(f"Starting Calculation #{self.index}")
-        runOrcaCalculation(self.name + f"_{self.index}", calculation, self.index, self.isLocal, self.STDOut, self.orcaCachePath)
-        self.completedCalculations.append(calculation)
+        calcResults = runOrcaCalculation(self.name + f"_{self.index}", calculation, self.index, self.isLocal, self.STDOut, self.orcaCachePath)
+        message_queue.put(calcResults) # Store the Results in the Message Queue
         message_queue.put(f"Completed Calculation {self.index}")
