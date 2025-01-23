@@ -74,7 +74,6 @@ class ClusterCalculation:
                 # Check if we have Enough Cores to Spare for the Next Calculation
                 if self.usedCores + calculation.variables["cores"] <= self.maxCores:
                     # Prepare and Start the Calculation
-                    self.calculations.pop(0)
                     calculation.index = self.index
                     self.index += 1
                     p = multiprocessing.Process(target=self.runIndividualCalculation, args=(calculation,message_queue))
@@ -83,17 +82,21 @@ class ClusterCalculation:
                     p.is_alive()
                     processes.append(p)
                     self.usedCores += calculation.variables["cores"]
+                    self.calculations.pop(0) # Maybe move this back to the top
             
             # Check for messages from the processes
-            while not message_queue.empty():
-                message = message_queue.get()
-                if isinstance(message, OrcaCalcResult):
-                    self.completedCalculations.append(message)
-                else:
-                    print(message)
+            self.postMessages(message_queue)
+            #while not message_queue.empty():
+            #    message = message_queue.get()
+            #    if isinstance(message, OrcaCalcResult):
+            #        self.completedCalculations.append(message)
+            #    else:
+            #        print(message)
 
             # Wait Half a Second before Checking Again
             time.sleep(0.5)
+        
+        self.postMessages(message_queue)
                 
     def runIndividualCalculation(self, calculation: OrcaInputFile, message_queue: multiprocessing.Queue):
         """Runs an Individual Calculation and Provides Messages Saying it's Started and Finished"""
@@ -101,3 +104,13 @@ class ClusterCalculation:
         calcResults = runOrcaCalculation(self.name + f"_{self.index}", calculation, self.index, self.isLocal, self.STDOut, self.orcaCachePath)
         message_queue.put(calcResults) # Store the Results in the Message Queue
         message_queue.put(f"Completed Calculation {self.index}")
+        
+    def postMessages (self, message_queue: multiprocessing.Queue):
+        """Posts Messages from the Message Queue to the Console"""
+        # Check for messages from the processes
+        while not message_queue.empty():
+            message = message_queue.get()
+            if isinstance(message, OrcaCalcResult):
+                self.completedCalculations.append(message)
+            else:
+                print(message)

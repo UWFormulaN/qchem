@@ -9,6 +9,8 @@ from qchem.Calculation.GeoOpt import GeoOpt
 from qchem.Data.Enums import OrcaInputTemplate
 from qchem.Calculation.Frequency import Frequency
 from qchem.Calculation.BaseOrcaCalculation import BaseOrcaCalculation
+from qchem.Calculation.ClusterCalculation import ClusterCalculation
+from qchem.Parser import OrcaOutput
 
 
 class Spectra(BaseOrcaCalculation):
@@ -51,7 +53,6 @@ class Spectra(BaseOrcaCalculation):
         ## Returns: \n
             None - No Return Value
         """
-
         # Start the Timer
         startTime = time.time()
 
@@ -117,6 +118,8 @@ class Spectra(BaseOrcaCalculation):
             index=False,
         )
 
+        freqInputFiles = []
+
         # Loop through all the Conformers and Run a Frequency Calculation
         for i in range(conformersNum):
 
@@ -125,21 +128,30 @@ class Spectra(BaseOrcaCalculation):
                 goatCalc.conformers[i],
                 self.template,
                 self.index,
-                self.cores,
+                1, #self.cores
                 self.isLocal,
                 f"{self.name}_FREQ_{i}",
                 False,
                 **self.variables,
             )
+            
+            freqInputFiles.append(freqCalc.inputFile)
 
-            # Run the Frequency Calculation
-            freqCalc.runCalculation()
+        cluster = ClusterCalculation(freqInputFiles, self.cores, "FrequencyCluster", self.isLocal, False)
+        
+        cluster.runCalculations()
+        
+        for i in range(conformersNum):
+        
+            outputFile = OrcaOutput(cluster.completedCalculations[i].outputFilePath)
+            
+            IRFrequencies = outputFile.getIRFrequencies()
 
             # Load Individual Spectra Results
             FreqSpectra = pd.DataFrame(
                 {
-                    "Wavenumber": freqCalc.IRFrequencies["frequency"].values,
-                    "IRIntensity": freqCalc.IRFrequencies["IRIntensity"].values,
+                    "Wavenumber": IRFrequencies["frequency"].values,
+                    "IRIntensity": IRFrequencies["IRIntensity"].values,
                 }
             )
 

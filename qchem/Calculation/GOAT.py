@@ -121,7 +121,7 @@ class GOAT(BaseOrcaCalculation):
             moleculeName = f"{self.name}_Conf_{i}"
 
             # Load as a XYZ File
-            xyz = XYZFile(molecule=molLines, name=moleculeName)
+            xyz = XYZFile(molecule=molLines)
 
             # Convert to a Molecule
             molecule = Molecule(moleculeName, xyz)
