@@ -44,6 +44,10 @@ class Spectra(BaseOrcaCalculation):
         # Delete Cores from Variables cause it causes Issues
         self.variables.pop("cores")
 
+        # Check if the Parallel Calculations are Defined
+        if not ("parallelCalcs" in self.variables) or not isinstance(self.variables["parallelCalcs"], int) or self.variables["parallelCalcs"] < 1:
+            self.variables["parallelCalcs"] = 1
+
     def runCalculation(self):
         """Runs the Spectra Calculation and Saves the Infra Red Spectra
 
@@ -128,23 +132,25 @@ class Spectra(BaseOrcaCalculation):
                 goatCalc.conformers[i],
                 self.template,
                 self.index,
-                1, #self.cores
+                self.cores // self.variables["parallelCalcs"],
                 self.isLocal,
                 f"{self.name}_FREQ_{i}",
                 False,
                 **self.variables,
             )
-            
+
             freqInputFiles.append(freqCalc.inputFile)
 
-        cluster = ClusterCalculation(freqInputFiles, self.cores, "FrequencyCluster", self.isLocal, False)
-        
+        cluster = ClusterCalculation(
+            freqInputFiles, self.cores, "FrequencyCluster", self.isLocal, False
+        )
+
         cluster.runCalculations()
-        
+
         for i in range(conformersNum):
-        
+
             outputFile = OrcaOutput(cluster.completedCalculations[i].outputFilePath)
-            
+
             IRFrequencies = outputFile.getIRFrequencies()
 
             # Load Individual Spectra Results
@@ -277,7 +283,7 @@ class Spectra(BaseOrcaCalculation):
         showPlot: bool = True,
     ):
         """Plots an IR Spectra and opens a MatPlotLib window to Display it
-        
+
         ## Parameters : \n
             spectra : str | pd.DataFrame - Path to the CSV File or the Pandas DataFrame Object \n
             plotName : str - Name of the Plot, used for the Title and Name of the File Saved \n
@@ -285,7 +291,7 @@ class Spectra(BaseOrcaCalculation):
             maxWaveNum : float - Upper bound WaveNumber Plotted on the Spectrum  \n
             spacing : float - Spacing between each fake DataPoint added to the Graph to smoothen results \n
             showPlot : bool - Boolean flag determining if the MatPlotLib window displaying the Spectrum will be shown
-        
+
         ## Returns : \n
             None - No Return Value
         """
