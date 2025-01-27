@@ -31,5 +31,6 @@ __all__ = [
     "OrcaInputFile",
     "OrcaInputTemplate",
     "OrcaOutput",
-    "Spectra"
+    "Spectra",
+    "Calculation"
 ]

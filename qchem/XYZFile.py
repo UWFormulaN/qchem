@@ -16,24 +16,38 @@ class XYZFile:
     atomPositions: pd.DataFrame
     """Pandas DataFrame storing the Position of each Atom in the Molecule, stored in the Rows"""
 
-    def __init__(self, molecule: str):
+    def __init__(self, molecule: str | list[str]):
 
         # Check if it's a String path
-        if not isinstance(molecule, (str)) or not os.path.exists(molecule):
-            raise FileNotFoundError(f"File {molecule} not found")
-
-        # Open file and Extract all Lines
-        xyzFileLines = open(molecule).readlines()
-
-        # Check if first line is a Integer, likely to be Atom Count
-        if xyzFileLines[0].strip().isdigit():
-            self.atomCount = int(xyzFileLines[0].strip())
-
-        # Set Second line as Molecule Name
-        self.moleculeName = xyzFileLines[1].strip()
+        if isinstance(molecule, list) and all(isinstance(item, str) for item in molecule):
+            self.moleculeName = molecule[1].strip()
+            
+            atoms = []
+            columnHeaders = ["Atom", "X", "Y", "Z"]
+            
+            for i in range(len(molecule)):
+                if (self.isValidXYZLine(molecule[i].strip())):
+                    atoms.append(re.sub(r'\s+', " ", molecule[i].strip()).split(" "))
+                
+            self.atomCount = len(atoms)
+            self.atomPositions = pd.DataFrame(atoms, columns=columnHeaders)
         
-        # Load the Positions of the Atoms
-        self.atomPositions = self.sortAtomDataFrame(self.readXYZ(molecule))
+        elif isinstance(molecule, (str)) and os.path.exists(molecule):
+            # Open file and Extract all Lines
+            xyzFileLines = open(molecule).readlines()
+
+            # Check if first line is a Integer, likely to be Atom Count
+            if xyzFileLines[0].strip().isdigit():
+                self.atomCount = int(xyzFileLines[0].strip())
+
+            # Set Second line as Molecule Name
+            self.moleculeName = xyzFileLines[1].strip()
+            
+            # Load the Positions of the Atoms
+            self.atomPositions = self.sortAtomDataFrame(self.readXYZ(molecule))
+        
+        else:
+            raise ValueError("Invalid Input, must be a Path to a File or a List of Strings")
 
     def isValidXYZLine(self, line: str):
         """Checks if the string provided follows the format of the Body of a XYZ File (Atom Symbol - X Y Z)

@@ -32,7 +32,7 @@ def Test1 ():
     mol = Molecule("Ethane", os.path.join("tests", "test_files", "ethane.xyz"))
     
     # Create a Spectra Object
-    spectra = Spectra(mol, cores=Cores, isLocal=LocalTest, index=1, basis=OrcaBasisSet.DEF2_SVP.value, functional=OrcaDensityFunctional.B3LYP.value)
+    spectra = Spectra(mol, cores=Cores, isLocal=LocalTest, index=1, basis=OrcaBasisSet.DEF2_SVP.value, functional=OrcaDensityFunctional.B3LYP.value, parallelCalcs=4)
     
     # Run the Spectra Calculation
     spectra.runCalculation()
