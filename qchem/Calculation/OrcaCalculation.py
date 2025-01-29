@@ -101,7 +101,7 @@ def runLocally(name: str, cachePath: str):
         command = f'cd /d {cachePath} && "{orcaPath}" "{getInputFileName(name)}" > "{getOutputFileName(name)}"'
     else:
         # Unix based OS (Linux, Mac)
-        command = f'cd "{cachePath}" && /Orca/orca {getInputFileName()} > {getOutputFileName()}'
+        command = f'cd "{cachePath}" && /Orca/orca {getInputFileName(name)} > {getOutputFileName(name)}'
 
     # Run the Orca Calculation locally
     return subprocess.run(command, shell=True, text=True, capture_output=True)
