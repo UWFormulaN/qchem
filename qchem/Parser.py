@@ -33,6 +33,7 @@ class OrcaOutput:
         self.dipole = self.getDipoleVector()
         self.absolutedipole = self.getDipoleMagnitude()
         self.energy = self.getFinalEnergy()
+        self.solvationEnergy = self.getSolvationEnergy()
 
         # Extract calculation-specific data based on type
         self.vibrationalFrequencies = self.getVibrationalFrequencies() if "FREQ" in self.calculationTypes else None
@@ -134,6 +135,14 @@ class OrcaOutput:
         for line in self.lines:
             if line.strip().startswith("FINAL SINGLE POINT ENERGY"):
                 return float(line.split()[-1])
+            
+    def getSolvationEnergy(self) -> float:
+        """Extract solvation energy (Eh) from output"""
+        for line in self.lines:
+            if "Gsolv" in line:
+                solvationEnergy = line.strip()[29:-6]
+        return solvationEnergy
+        
 
     def getSCFEnergies(self) -> list:
         """Extract SCF iteration energies and convergence data."""
