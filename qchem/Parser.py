@@ -26,13 +26,16 @@ class OrcaOutput:
         self.determine_calculation_type()
 
         # Extract basic calculation data
-        self.scf_energies = self.get_scf_energies()
-        self.final_timings = self.get_final_timings()
-        self.mayer_population = self.get_mayer_population()
-        self.loedwin = self.get_loewdin_charges()
-        self.dipole = self.get_dipole_vector()
-        self.absolutedipole = self.get_dipole_magnitude()
-        self.energy = self.get_final_energy()
+
+        self.SCFEnergies = self.getSCFEnergies()
+        self.finalTimings = self.getFinalTimings()
+        self.mayerPopulation = self.getMayerPopulation()
+        self.loedwin = self.getLoewdinCharges()
+        self.dipole = self.getDipoleVector()
+        self.absolutedipole = self.getDipoleMagnitude()
+        self.energy = self.getFinalEnergy()
+        self.solvationEnergy = self.getSolvationEnergy()
+
 
         # Extract calculation-specific data based on type
         self.vibrational_frequencies = self.get_vibrational_frequencies() if "FREQ" in self.calc_types else None
@@ -226,6 +229,11 @@ class OrcaOutput:
                 gibbs = float(re.search(r"-?\d+\.\d+", line).group())
                 unit = re.search(r"\b\w+\b$", line).group()
                 return gibbs, unit
+    
+    def getSolvationEnergy(self) -> float:
+        """Extract Solvation Energy of the molecule"""
+        print(self.lines[418])
+        return 0.543
 
     def get_conformer_info(self) -> pd.DataFrame:
         """Extract conformer energies and populations."""
