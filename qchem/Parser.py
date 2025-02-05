@@ -140,7 +140,7 @@ class OrcaOutput:
         """Extract solvation energy (Eh) from output"""
         for line in self.lines:
             if "Gsolv" in line:
-                solvationEnergy = line.strip()[29:-6]
+                solvationEnergy = float(line.strip()[29:-9])
         return solvationEnergy
         
 
