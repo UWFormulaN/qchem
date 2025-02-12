@@ -87,7 +87,7 @@ class SolvencyCalculation:
       self.path = path
       self.Cores = cores
       self.solvencyCalc = self.calculation()
-      # self.SolvationEnergies = self.getSolvationEnergies()
+      self.SolvationEnergies = self.getSolvationEnergies()
       # self.PartitionCoeffs = self.PartitionCoeffs
 
   def convert_energy(self, energy: float, initial_unit: str, final_unit: str) -> float:
@@ -176,40 +176,40 @@ class SolvencyCalculation:
               # calc.RunCalculation()
               print(f"Completed {solute} in {solvent} {method} calculation")
 
-  #  def getSolvationEnergies(self) -> dict:
+  def getSolvationEnergies(self) -> dict:
      
-  #    """
-  #    Extracts the solvation energies for all the calculations - storing them in a dictionnary
-  #    """
-  #    SolvationEnergies = {}
+     """
+     Extracts the solvation energies for all the calculations - storing them in a dictionnary
+     """
+     SolvationEnergies = {}
 
-  #    for method in self.Methods:
-  #      SolvationEnergies[method] = []    
+     for method in self.Methods:
+       SolvationEnergies[method] = []    
      
-  #    PATH = Path(self.path)
-  #    for folder in PATH.iterdir():
-  #     if folder.is_dir():
-  #       for solutefolder in folder.iterdir():
-  #         for file in solutefolder.iterdir():
-  #           if file.name.endswith(".out"):
-  #             output = OrcaOutput(file.name)
+     PATH = Path(self.path)
+     for folder in PATH.iterdir():
+      if folder.is_dir():
+        for solutefolder in folder.iterdir():
+          for file in solutefolder.iterdir():
+            if file.name.endswith(".out"):
+              output = OrcaOutput(file.name)
 
-  #             if file.name.endswith("ALPB.out"):
-  #               SolvationEnergies["ALPB"].append((f"{file.name[:-4]}", output.solvationEnergy))
-  #             if file.name.endswith("CPCM.out"):
-  #              """CPCM calculations return single point energies rather than Gsolv. 
-  #              To calculate Gsolv, we must simply find the difference in energy when in presence of solvent vs without solvent
-  #              i.e Gsolv = Ewith - Ewithout"""
+              if file.name.endswith("ALPB.out"):
+                SolvationEnergies["ALPB"].append((f"{file.name[:-4]}", output.solvationEnergy))
+              if file.name.endswith("CPCM.out"):
+               """CPCM calculations return single point energies rather than Gsolv. 
+               To calculate Gsolv, we must simply find the difference in energy when in presence of solvent vs without solvent
+               i.e Gsolv = Ewith - Ewithout"""
 
-  #               #extracting final energy in vacuum
-  #              vacuum_out = OrcaOutput(solutefolder.name) 
+                #extracting final energy in vacuum
+               vacuum_out = OrcaOutput(solutefolder.name) 
                 
 
       
 
         
 
-  #    return SolvationEnergies
+     return SolvationEnergies
 
 
         
