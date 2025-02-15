@@ -86,7 +86,6 @@ class SolvencyCalculation:
       self.Solvents = solvents
       self.path = path
       self.Cores = cores
-      self.solvencyCalc = self.calculation()
       self.SolvationEnergies = self.getSolvationEnergies()
       # self.PartitionCoeffs = self.PartitionCoeffs
 
@@ -107,10 +106,10 @@ class SolvencyCalculation:
     return converted_energy
 
 
-  def calculation(self):
+  def geoOptCalculation(self):
 
     """
-    Runs Geo Opt for all the xyz files provided
+    Runs Geo Opt for all the xyz files provided and then feeds xyz coordinates into the desired solvency calculation
     """
     #Perform geo opt on solutes
     for solute in Solutes:
@@ -122,7 +121,7 @@ class SolvencyCalculation:
           , xyz = mol.XYZBody()
           , cores = '16'
         )
-        
+
         "Run Geo Opt Calculation"
         runOrcaCalculation(solute, inp, isLocal=True)
         # testcalc = OrcaCalculation(solute, inp, isLocal=True)
@@ -136,6 +135,7 @@ class SolvencyCalculation:
     """
     Generates input files and runs Orca Calculation
     """
+  def solvencyCalculation(self):
 
     for solvent in self.Solvents:
       for method in self.Methods:
@@ -186,23 +186,27 @@ class SolvencyCalculation:
      for method in self.Methods:
        SolvationEnergies[method] = []    
      
-     PATH = Path(self.path)
-     for folder in PATH.iterdir():
+     path_ = Path().resolve()
+     for folder in path_.iterdir():
       if folder.is_dir():
-        for solutefolder in folder.iterdir():
-          for file in solutefolder.iterdir():
-            if file.name.endswith(".out"):
-              output = OrcaOutput(file.name)
+        for subfolder in folder.iterdir():
+          if subfolder.name == "OrcaCache":
+            for solutefolder in subfolder.iterdir():
+              if solutefolder.is_dir():
+                for file in solutefolder.iterdir():
+                  if file.name.endswith(".out"):
+                    output = OrcaOutput(file.__fspath__())
 
-              if file.name.endswith("ALPB.out"):
-                SolvationEnergies["ALPB"].append((f"{file.name[:-4]}", output.solvationEnergy))
-              if file.name.endswith("CPCM.out"):
-               """CPCM calculations return single point energies rather than Gsolv. 
-               To calculate Gsolv, we must simply find the difference in energy when in presence of solvent vs without solvent
-               i.e Gsolv = Ewith - Ewithout"""
+                  if file.name.endswith("ALPB.out"):
+                    SolvationEnergies["ALPB"].append((f"{file.name[:-4]}", output.getSolvationEnergy()))
+                    print(f"solvationEnergy: {output.getSolvationEnergy()}")
 
-                #extracting final energy in vacuum
-               vacuum_out = OrcaOutput(solutefolder.name) 
+                  if file.name.endswith("CPCM.out"):
+                    """CPCM calculations return single point energies rather than Gsolv. 
+                    To calculate Gsolv, we must simply find the difference in energy when in presence of solvent vs in vacuum
+                    i.e Gsolv = Ewith - Evacuum"""
+               
+ 
                 
 
       
@@ -283,7 +287,12 @@ class SolvencyCalculation:
   
 
 
-test = SolvencyCalculation(methods=Methods, solutes=Solutes, solvents=Solvents, path="Python_calc")
+test = SolvencyCalculation(methods=Methods, solutes=Solutes, solvents=Solvents, path="Code/Pyton_calc")
+test.geoOptCalculation()
+test.solvencyCalculation()
+# test.geoOptCalculation()
+# test.solvencyCalculation()
+print(test.SolvationEnergies)
 
 print("All Calculations Complete!")
 
