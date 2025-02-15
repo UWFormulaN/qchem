@@ -33,7 +33,6 @@ class OrcaOutput:
         self.dipole = self.getDipoleVector()
         self.absolutedipole = self.getDipoleMagnitude()
         self.energy = self.getFinalEnergy()
-        self.solvationEnergy = self.getSolvationEnergy()
 
         # Extract calculation-specific data based on type
         self.vibrationalFrequencies = self.getVibrationalFrequencies() if "FREQ" in self.calculationTypes else None
@@ -117,6 +116,7 @@ class OrcaOutput:
                 self.calculationTypes.append("OPT") if not "OPT" in self.calculationTypes else None
             elif "GOAT Global Iter" in line:
                 self.calculationTypes.append("GOAT") if not "GOAT" in self.calculationTypes else None
+            
 
     def getFinalTimings(self) -> pd.DataFrame:
         """Extract computational timing information."""
@@ -135,14 +135,7 @@ class OrcaOutput:
         for line in self.lines:
             if line.strip().startswith("FINAL SINGLE POINT ENERGY"):
                 return float(line.split()[-1])
-            
-    def getSolvationEnergy(self) -> float:
-        """Extract solvation energy (Eh) from output"""
-        for line in self.lines:
-            if "Gsolv" in line:
-                solvationEnergy = float(line.strip()[29:-9])
-        return solvationEnergy
-        
+                    
 
     def getSCFEnergies(self) -> list:
         """Extract SCF iteration energies and convergence data."""
@@ -235,6 +228,13 @@ class OrcaOutput:
                 gibbs = float(re.search(r"-?\d+\.\d+", line).group())
                 unit = re.search(r"\b\w+\b$", line).group()
                 return gibbs, unit
+            
+    def getSolvationEnergy(self) -> float:
+        """Extract solvation energy (Eh) from output"""
+        for line in self.lines:
+            if "Gsolv" in line:
+                solvationEnergy = float(line.strip()[29:-9])
+        return solvationEnergy
 
     def getConformerInfo(self) -> pd.DataFrame:
         """Extract conformer energies and populations."""
