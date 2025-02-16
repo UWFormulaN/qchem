@@ -234,7 +234,7 @@ class OrcaOutput:
             self : OrcaOutput - Default Parameter for the Class Instance
 
         ## Returns : \n
-            float: solvationEnergy - Solvation energy of the solute in the specified solvent (Eh)
+            float - Solvation energy of the solute in the specified solvent (Eh)
         """
         for line in self.lines:
             if "Gsolv" in line: 
