@@ -117,7 +117,6 @@ class OrcaOutput:
             elif "GOAT Global Iter" in line:
                 self.calculationTypes.append("GOAT") if not "GOAT" in self.calculationTypes else None
             
-
     def getFinalTimings(self) -> pd.DataFrame:
         """Extract computational timing information."""
         for i, line in enumerate(self.lines[-20:]):
@@ -136,7 +135,6 @@ class OrcaOutput:
             if line.strip().startswith("FINAL SINGLE POINT ENERGY"):
                 return float(line.split()[-1])
                     
-
     def getSCFEnergies(self) -> list:
         """Extract SCF iteration energies and convergence data."""
         SCFEnergies = []
@@ -230,9 +228,16 @@ class OrcaOutput:
                 return gibbs, unit
             
     def getSolvationEnergy(self) -> float:
-        """Extract solvation energy (Eh) from output"""
+        """Extract solvation energy (Eh) from output
+
+        ## Parameters : \n
+            self : OrcaOutput - Default Parameter for the Class Instance
+
+        ## Returns : \n
+            float: solvationEnergy - Solvation energy of the solute in the specified solvent (Eh)
+        """
         for line in self.lines:
-            if "Gsolv" in line:
+            if "Gsolv" in line: 
                 solvationEnergy = float(line.strip()[29:-9])
         return solvationEnergy
 
