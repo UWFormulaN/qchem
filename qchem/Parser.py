@@ -20,6 +20,8 @@ class OrcaOutput:
 
         # Extract filename without path/extension using regex
         self.name = re.search(r"[^\\]+$", self.filePath).group()[:-4]
+        
+        self.removalList = []
 
         # Extract all data from the Output
         self.globalExtractor()
@@ -111,11 +113,15 @@ class OrcaOutput:
         df = pd.DataFrame([line.split("...") for line in timeLines], columns=["Timing", "Time"])
         df[["Time", "B"]] = df["Time"].str.split("sec", n=1, expand=True)
         self.finalTimings = df.drop(["B"], axis=1)
-
-    def getFinalEnergy(self, line):
+        self.removalList.append("FinalTiming")
+        #self.extractors.pop("FinalTiming")
+        
+    def getFinalEnergy(self, line, index):
         """Extract final single-point energy from output."""
         if line.strip().startswith("FINAL SINGLE POINT ENERGY"):
            self.energy = float(line.split()[-1])
+           self.removalList.append("FinalEnergy")
+           #self.extractors.pop("FinalEnergy")
                     
     def getSCFEnergies(self, line, index):
         """Extract SCF iteration energies and convergence data."""
@@ -135,6 +141,9 @@ class OrcaOutput:
                 energy = float(self.lines[j].split()[-2])
                 self.SCFEnergies.append(energy)
                 break
+        self.removalList.append("SCF")
+        #self.extractors.pop("SCF")
+        
 
     def getMayerPopulation(self, line, index):
         """Extract Mayer population analysis data for atomic properties."""
@@ -160,17 +169,23 @@ class OrcaOutput:
         mayerPopulations.append(df)
         
         self.mayerPopulation = mayerPopulations
+        self.removalList.append("MayerPop")
+        #self.extractors.pop("MayerPop")
 
-    def getDipoleVector(self, line):
+    def getDipoleVector(self, line, index):
         """Extract x, y, z components of dipole moment vector."""
         
         if line.strip().startswith("Total Dipole Moment"):
             self.dipole = tuple(map(float, line.split()[4:]))  # Convert to floats
+            #self.extractors.pop("Dipole")
+            self.removalList.append("Dipole")
 
-    def getDipoleMagnitude(self, line):
+    def getDipoleMagnitude(self, line, index):
         """Extract magnitude of total dipole moment."""
         if line.strip().startswith("Magnitude (a.u.)"):
             self.absoluteDipole =  float(line.split()[3])
+            #self.extractors.pop("DipoleMagnitude")
+            self.removalList.append("DipoleMagnitude")
 
     def getVibrationalFrequencies(self, line, index):
         """Extract vibrational frequencies from frequency calculation."""
@@ -203,16 +218,20 @@ class OrcaOutput:
             return
         
         self.vibrationalFrequencies = pd.DataFrame(freqs)
+        self.removalList.append("VibrationalFrequencies")
+        #self.extractors.pop("VibrationalFrequencies")
 
-    def getGibbsEnergy(self, line):
+    def getGibbsEnergy(self, line, index):
         """Extract Gibbs free energy and units."""
         
         if line.strip()[0:23] == "Final Gibbs free energy":
             gibbs = float(re.search(r"-?\d+\.\d+", line).group())
             unit = re.search(r"\b\w+\b$", line).group()
             self.gibbsEnergy = gibbs, unit
+            #self.extractors.pop("GibbsEnergy")
+            self.removalList.append("GibbsEnergy")
             
-    def getSolvationEnergy(self, line):
+    def getSolvationEnergy(self, line, index):
         """Extract solvation energy (Eh) from output
 
         ## Parameters : \n
@@ -224,6 +243,8 @@ class OrcaOutput:
         
         if "Gsolv" in line: 
             self.solvationEnergy = float(line.strip()[29:-9])
+            #self.extractors.pop("SolvationEnergy")
+            self.removalList.append("SolvationEnergy")
 
     def getConformerInfo(self, line, index):
         """Extract conformer energies and populations."""
@@ -255,8 +276,10 @@ class OrcaOutput:
             startIdx += 1
 
         self.conformerInfo = pd.DataFrame(conformers)
+        self.removalList.append("ConformerInfo")
+        #self.extractors.pop("ConformerInfo")
 
-    def getGoatSummary(self, line):
+    def getGoatSummary(self, line, index):
         """Extract GOAT calculation summary."""
         
         if not "GOAT" in self.calculationTypes:
@@ -296,6 +319,8 @@ class OrcaOutput:
             startIdx += 1
             
         self.IRFrequencies = pd.DataFrame(freqs)
+        #self.extractors.pop("IRFrequencies")
+        self.removalList.append("IRFrequencies")
 
     def getChemicalShifts(self, line, index):
         """Extract NMR chemical shifts."""
@@ -321,6 +346,8 @@ class OrcaOutput:
                 )
             startIdx += 1
         self.chemicalShifts = pd.DataFrame(shifts)
+        #self.extractors.pop("ChemicalShifts")
+        self.removalList.append("ChemicalShifts")
 
     def getLoewdinCharges(self, line, index):
         """Extract Loewdin atomic charges."""
@@ -340,6 +367,8 @@ class OrcaOutput:
             startIdx += 1
             
         self.loedwin.append(pd.DataFrame(currentCharges))
+        #self.extractors.pop("Loedwin")
+        self.removalList.append("Loedwin")
 
     def extractConformers(self):
         """Extract conformer molecular structures."""
@@ -384,37 +413,63 @@ class OrcaOutput:
         self.solvationEnergy = None
         self.GOATSummary = {}
         self.loedwin = []
+        self.vibrationalFrequencies = pd.DataFrame(columns=["mode", "frequency"])
+        self.IRFrequencies = pd.DataFrame(columns=["mode", "frequency", "IRIntensity"])
+        self.conformerInfo = pd.DataFrame(columns=["conformer", "energy", "degeneracy", "totalPercent", "cumulativePercent"])
+        self.GOATSummary = None
+        self.chemicalShifts = None
+        
+        self.extractors = {
+            "SCF" : self.getSCFEnergies,
+            "FinalTiming" : self.getFinalTimings,
+            "FinalEnergy" : self.getFinalEnergy,
+            "MayerPop" : self.getMayerPopulation,
+            "Dipole" : self.getDipoleVector,
+            "DipoleMagnitude" : self.getDipoleMagnitude,
+            "GibbsEnergy" : self.getGibbsEnergy,
+            "SolvationEnergy" : self.getSolvationEnergy,
+            "Loedwin" : self.getLoewdinCharges,
+        }
         
         for i, line in enumerate(self.lines):
             self.determineCalculationType(line)
             
-        if not "FREQ" in self.calculationTypes:
-            self.vibrationalFrequencies = pd.DataFrame(columns=["mode", "frequency"])
-            self.IRFrequencies = pd.DataFrame(columns=["mode", "frequency", "IRIntensity"])
-        
-        if not "GOAT" in self.calculationTypes:
-            self.conformerInfo = pd.DataFrame(columns=["conformer", "energy", "degeneracy", "totalPercent", "cumulativePercent"])
-            self.GOATSummary = None
+        if "FREQ" in self.calculationTypes:
             
-        if not "NMR" in self.calculationTypes:
-            self.chemicalShifts = None
-        
+            self.extractors["VibrationalFrequencies"] = self.getVibrationalFrequencies
+            self.extractors["IRFrequencies"] = self.getIRFrequencies
+            
+        if "GOAT" in self.calculationTypes:
+            self.extractors["ConformerInfo"] = self.getConformerInfo
+            self.extractors["GOATSummary"] = self.getGoatSummary
+            
+        if "NMR" in self.calculationTypes:
+            self.extractors["ChemicalShifts"] = self.getChemicalShifts
+            
         # Loop through all the lines in the file and grab it's line index alongside it
         for i, line in enumerate(self.lines):
-            self.getSCFEnergies(line, i)
-            self.getFinalTimings(line, i)
-            self.getFinalEnergy(line)
-            self.getMayerPopulation(line, i)
-            self.getDipoleVector(line)
-            self.getDipoleMagnitude(line)
-            self.getVibrationalFrequencies(line, i)
-            self.getGibbsEnergy(line)
-            self.getSolvationEnergy(line)
-            self.getConformerInfo(line, i)
-            self.getGoatSummary(line)
-            self.getIRFrequencies(line, i)
-            self.getChemicalShifts(line, i)
-            self.getLoewdinCharges(line, i)
+            for extractor in self.extractors.keys():
+                self.extractors[extractor](line, i)
+            
+            for removal in self.removalList:
+                self.extractors.pop(removal)
+                #extractor(line, i)
+            self.removalList = []
+            
+            #self.getSCFEnergies(line, i)
+            #self.getFinalTimings(line, i)
+            #self.getFinalEnergy(line, i)
+            #self.getMayerPopulation(line, i)
+            #self.getDipoleVector(line, i)
+            #self.getDipoleMagnitude(line, i)
+            #self.getVibrationalFrequencies(line, i)
+            #self.getGibbsEnergy(line, i)
+            #self.getSolvationEnergy(line, i)
+            #self.getConformerInfo(line, i)
+            #self.getGoatSummary(line, i)
+            #self.getIRFrequencies(line, i)
+            #self.getChemicalShifts(line, i)
+            #self.getLoewdinCharges(line, i)
 
 if __name__ == "__main__":
     for file in os.listdir(os.path.join(os.getcwd(), "tests", "test_files", "output_files")):
