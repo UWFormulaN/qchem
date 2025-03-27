@@ -10,7 +10,6 @@ from qchem.XYZFile import XYZFile
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__))))
 
-
 class OrcaOutput:
     def __init__(self, filePath: str):
         """Initialize OrcaOutput with ORCA output file path and extract all data."""
@@ -22,24 +21,8 @@ class OrcaOutput:
         # Extract filename without path/extension using regex
         self.name = re.search(r"[^\\]+$", self.filePath).group()[:-4]
 
-        # Determine calculation types (FREQ, NMR, OPT, GOAT)
-        self.determineCalculationType()
-
-        # Extract basic calculation data
-        self.SCFEnergies = self.getSCFEnergies()
-        self.finalTimings = self.getFinalTimings()
-        self.mayerPopulation = self.getMayerPopulation()
-        self.loedwin = self.getLoewdinCharges()
-        self.dipole = self.getDipoleVector()
-        self.absolutedipole = self.getDipoleMagnitude()
-        self.energy = self.getFinalEnergy()
-
-        # Extract calculation-specific data based on type
-        self.vibrationalFrequencies = self.getVibrationalFrequencies() if "FREQ" in self.calculationTypes else None
-        self.IRFrequencies = self.getIRFrequencies() if "FREQ" in self.calculationTypes else None
-        self.chemicalShifts = self.getChemicalShifts() if "NMR" in self.calculationTypes else None
-        self.conformers = self.getConformerInfo() if "GOAT" in self.calculationTypes else None
-        self.GOATSummary = self.getGoatSummary() if "GOAT" in self.calculationTypes else None
+        # Extract all data from the Output
+        self.globalExtractor()
 
     def saveToTxt(self, outputPath: str):
         """Save all extracted data to formatted text file."""
@@ -75,11 +58,11 @@ class OrcaOutput:
 
             # Write dipole information
             file.write(f"Total Dipole Moment: {self.dipole}\n")
-            file.write(f"Magnitude of Dipole Moment: {self.absolutedipole}\n\n")
+            file.write(f"Magnitude of Dipole Moment: {self.absoluteDipole}\n\n")
 
             # Write Gibbs energy if available
             file.write("Gibbs Free Energy:\n")
-            gibbs = self.getGibbsEnergy()
+            gibbs = self.gibbsEnergy
             if gibbs:
                 file.write(f"Final Gibbs Free Energy: {gibbs[0]} {gibbs[1]}\n\n")
 
@@ -103,131 +86,133 @@ class OrcaOutput:
         """Read XYZ format atomic coordinates."""
         return pd.read_csv(path, sep=r"\s+", skiprows=1, names=["Atom", "X", "Y", "Z"], engine="python")
 
-    def determineCalculationType(self) -> list[str]:
+    def determineCalculationType(self, line):
         """Determine types of calculations in output file."""
-        self.calculationTypes = []
-
-        for line in self.lines:
-            if "VIBRATIONAL FREQUENCIES" in line:
-                self.calculationTypes.append("FREQ") if not "FREQ" in self.calculationTypes else None
-            elif "CHEMICAL SHIELDINGS (ppm)" in line:
-                self.calculationTypes.append("NMR") if not "NMR" in self.calculationTypes else None
-            elif "GEOMETRY OPTIMIZATION" in line:
-                self.calculationTypes.append("OPT") if not "OPT" in self.calculationTypes else None
-            elif "GOAT Global Iter" in line:
-                self.calculationTypes.append("GOAT") if not "GOAT" in self.calculationTypes else None
+        
+        if "VIBRATIONAL FREQUENCIES" in line:
+            self.calculationTypes.append("FREQ") if not "FREQ" in self.calculationTypes else None
+        elif "CHEMICAL SHIELDINGS (ppm)" in line:
+            self.calculationTypes.append("NMR") if not "NMR" in self.calculationTypes else None
+        elif "GEOMETRY OPTIMIZATION" in line:
+            self.calculationTypes.append("OPT") if not "OPT" in self.calculationTypes else None
+        elif "GOAT Global Iter" in line:
+            self.calculationTypes.append("GOAT") if not "GOAT" in self.calculationTypes else None
             
-    def getFinalTimings(self) -> pd.DataFrame:
+    def getFinalTimings(self, line, index) :
         """Extract computational timing information."""
-        for i, line in enumerate(self.lines[-20:]):
-            if line.strip() == "Timings for individual modules:":
-                startIndex = i + 2
-                timeLines = self.lines[-20:][startIndex:-2]
+        
+        if index < len(self.lines) - 20 or not line.strip() == "Timings for individual modules:":
+            return None
+            
+        startIndex = index + 2
+        timeLines = self.lines[startIndex:-2]
 
-                # Process timing data into a DataFrame
-                df = pd.DataFrame([line.split("...") for line in timeLines], columns=["Timing", "Time"])
-                df[["Time", "B"]] = df["Time"].str.split("sec", n=1, expand=True)
-                return df.drop(["B"], axis=1)
+        # Process timing data into a DataFrame
+        df = pd.DataFrame([line.split("...") for line in timeLines], columns=["Timing", "Time"])
+        df[["Time", "B"]] = df["Time"].str.split("sec", n=1, expand=True)
+        self.finalTimings = df.drop(["B"], axis=1)
 
-    def getFinalEnergy(self) -> float:
+    def getFinalEnergy(self, line):
         """Extract final single-point energy from output."""
-        for line in self.lines:
-            if line.strip().startswith("FINAL SINGLE POINT ENERGY"):
-                return float(line.split()[-1])
+        if line.strip().startswith("FINAL SINGLE POINT ENERGY"):
+           self.energy = float(line.split()[-1])
                     
-    def getSCFEnergies(self) -> list:
+    def getSCFEnergies(self, line, index):
         """Extract SCF iteration energies and convergence data."""
-        SCFEnergies = []
+        
+        if not ("TOTAL SCF ENERGY" in line or "FINAL SINGLE POINT ENERGY" in line):
+            return
+            
+        # Skip header lines to get to actual energy value
+        for j in range(index + 1, min(index + 5, len(self.lines))):
+            if "Total Energy" in self.lines[j]:
+                # Extract energy value
+                energy = float(self.lines[j].split()[-2])
+                self.SCFEnergies.append(energy)
+                break
+            elif any(char.isdigit() for char in self.lines[j]):
+                # Direct energy value line
+                energy = float(self.lines[j].split()[-2])
+                self.SCFEnergies.append(energy)
+                break
 
-        # Look for SCF energy blocks
-        for i, line in enumerate(self.lines):
-            # Look for headers indicating SCF energy sections
-            if "TOTAL SCF ENERGY" in line or "FINAL SINGLE POINT ENERGY" in line:
-                # Skip header lines to get to actual energy value
-                for j in range(i + 1, min(i + 5, len(self.lines))):
-                    if "Total Energy" in self.lines[j]:
-                        # Extract energy value
-                        energy = float(self.lines[j].split()[-2])
-                        SCFEnergies.append(energy)
-                        break
-                    elif any(char.isdigit() for char in self.lines[j]):
-                        # Direct energy value line
-                        energy = float(self.lines[j].split()[-2])
-                        SCFEnergies.append(energy)
-                        break
-
-        return SCFEnergies
-
-    def getMayerPopulation(self) -> list:
+    def getMayerPopulation(self, line, index):
         """Extract Mayer population analysis data for atomic properties."""
         # Get total number of atoms
-        for line in self.lines:
-            if line.strip().startswith("Number of atoms"):
-                atomCount = int(line.split()[-1])
+        if line.strip().startswith("Number of atoms"):
+            self.atomCount = int(line.split()[-1])
 
+        if not line.strip() == "ATOM       NA         ZA         QA         VA         BVA        FA":
+            return
+        
         mayerPopulations = []
-        # Look for Mayer population blocks
-        for i, line in enumerate(self.lines):
-            if line.strip() == "ATOM       NA         ZA         QA         VA         BVA        FA":
-                startIndex = i + 1
-                endIndex = i + atomCount + 1
-                mayerLines = self.lines[startIndex:endIndex]
+        startIndex = index + 1
+        endIndex = index + self.atomCount + 1
+        mayerLines = self.lines[startIndex:endIndex]
 
-                # Convert to DataFrame with atomic properties
-                df = pd.DataFrame(
-                    [line.split()[1:8] for line in mayerLines],
-                    columns=["ATOM", "NA", "ZA", "QA", "VA", "BVA", "FA"],
-                )
-                # Convert numeric columns
-                df[["NA", "ZA", "QA", "VA", "BVA", "FA"]] = df[["NA", "ZA", "QA", "VA", "BVA", "FA"]].astype(float)
-                mayerPopulations.append(df)
+        # Convert to DataFrame with atomic properties
+        df = pd.DataFrame(
+            [line.split()[1:8] for line in mayerLines],
+            columns=["ATOM", "NA", "ZA", "QA", "VA", "BVA", "FA"],
+        )
+        # Convert numeric columns
+        df[["NA", "ZA", "QA", "VA", "BVA", "FA"]] = df[["NA", "ZA", "QA", "VA", "BVA", "FA"]].astype(float)
+        mayerPopulations.append(df)
+        
+        self.mayerPopulation = mayerPopulations
 
-        return mayerPopulations
-
-    def getDipoleVector(self) -> tuple:
+    def getDipoleVector(self, line):
         """Extract x, y, z components of dipole moment vector."""
-        for line in self.lines:
-            if line.strip().startswith("Total Dipole Moment"):
-                return tuple(map(float, line.split()[4:]))  # Convert to floats
+        
+        if line.strip().startswith("Total Dipole Moment"):
+            self.dipole = tuple(map(float, line.split()[4:]))  # Convert to floats
 
-    def getDipoleMagnitude(self) -> float:
+    def getDipoleMagnitude(self, line):
         """Extract magnitude of total dipole moment."""
-        for line in self.lines:
-            if line.strip().startswith("Magnitude (a.u.)"):
-                return float(line.split()[3])
+        if line.strip().startswith("Magnitude (a.u.)"):
+            self.absoluteDipole =  float(line.split()[3])
 
-    def getVibrationalFrequencies(self) -> pd.DataFrame:
+    def getVibrationalFrequencies(self, line, index):
         """Extract vibrational frequencies from frequency calculation."""
+
+        if not "FREQ" in self.calculationTypes:
+            self.vibrationalFrequencies = pd.DataFrame(columns=["mode", "frequency"])
+            return
+        
+        if not "VIBRATIONAL FREQUENCIES" in line:
+            return
+        
         freqs = []
-        for i, line in enumerate(self.lines):
-            if "VIBRATIONAL FREQUENCIES" in line:
-                startIdx = i + 5  # Skip header lines
-                # Process each frequency line
-                while self.lines[startIdx].strip():
-                    parts = self.lines[startIdx].split()
-                    if len(parts) >= 2:
-                        freqs.append(
-                            {
-                                "mode": int(parts[0].strip(":")),
-                                "frequency": float(parts[1]),
-                            }
-                        )
-                    startIdx += 1
+        
+        startIdx = index + 5  # Skip header lines
+        # Process each frequency line
+        while self.lines[startIdx].strip():
+            parts = self.lines[startIdx].split()
+            if len(parts) >= 2:
+                freqs.append(
+                    {
+                        "mode": int(parts[0].strip(":")),
+                        "frequency": float(parts[1]),
+                    }
+                )
+            startIdx += 1
 
-        # Return empty DataFrame if no frequencies found
+        # Return empty DataFrame if no frequen cies found
         if len(freqs) == 0:
-            return pd.DataFrame(columns=["mode", "frequency"])
-        return pd.DataFrame(freqs)
+            self.vibrationalFrequencies = pd.DataFrame(columns=["mode", "frequency"])
+            return
+        
+        self.vibrationalFrequencies = pd.DataFrame(freqs)
 
-    def getGibbsEnergy(self) -> tuple:
+    def getGibbsEnergy(self, line):
         """Extract Gibbs free energy and units."""
-        for i, line in enumerate(self.lines):
-            if line.strip()[0:23] == "Final Gibbs free energy":
-                gibbs = float(re.search(r"-?\d+\.\d+", line).group())
-                unit = re.search(r"\b\w+\b$", line).group()
-                return gibbs, unit
+        
+        if line.strip()[0:23] == "Final Gibbs free energy":
+            gibbs = float(re.search(r"-?\d+\.\d+", line).group())
+            unit = re.search(r"\b\w+\b$", line).group()
+            self.gibbsEnergy = gibbs, unit
             
-    def getSolvationEnergy(self) -> float:
+    def getSolvationEnergy(self, line):
         """Extract solvation energy (Eh) from output
 
         ## Parameters : \n
@@ -236,107 +221,125 @@ class OrcaOutput:
         ## Returns : \n
             float - Solvation energy of the solute in the specified solvent (Eh)
         """
-        for line in self.lines:
-            if "Gsolv" in line: 
-                solvationEnergy = float(line.strip()[29:-9])
-        return solvationEnergy
+        
+        if "Gsolv" in line: 
+            self.solvationEnergy = float(line.strip()[29:-9])
 
-    def getConformerInfo(self) -> pd.DataFrame:
+    def getConformerInfo(self, line, index):
         """Extract conformer energies and populations."""
+        
+        if not "GOAT" in self.calculationTypes:
+            return
+        
+        if not "# Final ensemble info #" in line:
+            return
+        
         conformers = []
-        for i, line in enumerate(self.lines):
-            if "# Final ensemble info #" in line:
-                startIdx = i + 2  # Skip header
-                while "------" not in self.lines[startIdx]:
-                    startIdx += 1
-                startIdx += 1  # Skip separator line
+        startIdx = index + 2  # Skip header
+        while "------" not in self.lines[startIdx]:
+            startIdx += 1
+        startIdx += 1  # Skip separator line
 
-                while self.lines[startIdx].strip() and not "Conformers below" in self.lines[startIdx]:
-                    parts = self.lines[startIdx].split()
-                    if len(parts) >= 5:
-                        conformers.append(
-                            {
-                                "conformer": int(parts[0]),
-                                "energy": float(parts[1]),
-                                "degeneracy": int(parts[2]),
-                                "totalPercent": float(parts[3]),
-                                "cumulativePercent": float(parts[4]),
-                            }
-                        )
-                    startIdx += 1
+        while self.lines[startIdx].strip() and not "Conformers below" in self.lines[startIdx]:
+            parts = self.lines[startIdx].split()
+            if len(parts) >= 5:
+                conformers.append(
+                    {
+                        "conformer": int(parts[0]),
+                        "energy": float(parts[1]),
+                        "degeneracy": int(parts[2]),
+                        "totalPercent": float(parts[3]),
+                        "cumulativePercent": float(parts[4]),
+                    }
+                )
+            startIdx += 1
 
-        return pd.DataFrame(conformers)
+        self.conformerInfo = pd.DataFrame(conformers)
 
-    def getGoatSummary(self) -> dict:
+    def getGoatSummary(self, line):
         """Extract GOAT calculation summary."""
-        summary = {}
-        for line in self.lines:
-            if "Conformers below" in line:
-                summary["conformersBelow3KCal"] = int(line.split(":")[1])
-            elif "Lowest energy conformer" in line:
-                summary["lowestEnergy"] = float(line.split(":")[1].split()[0])
-            elif "Sconf at" in line:
-                summary["sconf"] = float(line.split(":")[1].split()[0])
-            elif "Gconf at" in line:
-                summary["gconf"] = float(line.split(":")[1].split()[0])
-        return summary
-
-    def getIRFrequencies(self) -> pd.DataFrame:
+        
+        if not "GOAT" in self.calculationTypes:
+            return
+        
+        if "Conformers below" in line:
+            self.GOATSummary["conformersBelow3KCal"] = int(line.split(":")[1])
+        elif "Lowest energy conformer" in line:
+            self.GOATSummary["lowestEnergy"] = float(line.split(":")[1].split()[0])
+        elif "Sconf at" in line:
+            self.GOATSummary["sconf"] = float(line.split(":")[1].split()[0])
+        elif "Gconf at" in line:
+            self.GOATSummary["gconf"] = float(line.split(":")[1].split()[0])
+            
+    def getIRFrequencies(self, line, index):
         """Extract IR frequencies and intensities."""
+        
+        if not "FREQ" in self.calculationTypes:
+            return
+        
+        if not "IR SPECTRUM" in line:
+            return
+        
         freqs = []
-        for i, line in enumerate(self.lines):
-            if "IR SPECTRUM" in line:
-                startIdx = i + 4  # Skip header lines
-                while self.lines[startIdx].strip():
-                    parts = self.lines[startIdx].split()
-                    if len(parts) >= 7:  # Mode, freq, eps, Int, T**2, TX, TY, TZ
-                        freqs.append(
-                            {
-                                "mode": int(parts[0].strip(":")),
-                                "frequency": float(parts[1]),
-                                "IRIntensity": float(parts[3]),  # km/mol
-                            }
-                        )
-                    startIdx += 1
-        return pd.DataFrame(freqs)
+       
+        startIdx = index + 4  # Skip header lines
+        while self.lines[startIdx].strip():
+            parts = self.lines[startIdx].split()
+            if len(parts) >= 7:  # Mode, freq, eps, Int, T**2, TX, TY, TZ
+                freqs.append(
+                    {
+                        "mode": int(parts[0].strip(":")),
+                        "frequency": float(parts[1]),
+                        "IRIntensity": float(parts[3]),  # km/mol
+                    }
+                )
+            startIdx += 1
+            
+        self.IRFrequencies = pd.DataFrame(freqs)
 
-    def getChemicalShifts(self) -> pd.DataFrame:
+    def getChemicalShifts(self, line, index):
         """Extract NMR chemical shifts."""
+        
+        if not "NMR" in self.calculationTypes:
+            return
+        
+        if not "CHEMICAL SHIELDING SUMMARY (ppm)" in line:
+            return
+        
         shifts = []
-        for i, line in enumerate(self.lines):
-            if "CHEMICAL SHIELDING SUMMARY (ppm)" in line:
-                startIdx = i + 6
-                while self.lines[startIdx].strip():
-                    parts = self.lines[startIdx].split()
-                    if len(parts) >= 4:
-                        shifts.append(
-                            {
-                                "atom": parts[0],
-                                "nucleus": parts[1],
-                                "isotropic": float(parts[2]),
-                                "anisotropic": float(parts[3]),
-                            }
-                        )
-                    startIdx += 1
-        return pd.DataFrame(shifts)
+        startIdx = index + 6
+        while self.lines[startIdx].strip():
+            parts = self.lines[startIdx].split()
+            if len(parts) >= 4:
+                shifts.append(
+                    {
+                        "atom": parts[0],
+                        "nucleus": parts[1],
+                        "isotropic": float(parts[2]),
+                        "anisotropic": float(parts[3]),
+                    }
+                )
+            startIdx += 1
+        self.chemicalShifts = pd.DataFrame(shifts)
 
-    def getLoewdinCharges(self) -> list:
+    def getLoewdinCharges(self, line, index):
         """Extract Loewdin atomic charges."""
-        charges = []
-        for i, line in enumerate(self.lines):
-            if "LOEWDIN ATOMIC CHARGES" in line:
-                startIdx = i + 2
-                currentCharges = []
-                # Read charges until blank line
-                while self.lines[startIdx].strip():
-                    parts = self.lines[startIdx].split()
-                    for i, part in enumerate(parts):
-                        if part == ":":
-                            parts = parts[:i] + parts[i + 1 :]
-                    currentCharges.append({"atomNum": int(parts[0]), "atom": parts[1], "charge": float(parts[2])})
-                    startIdx += 1
-                charges.append(pd.DataFrame(currentCharges))
-        return charges
+
+        if not "LOEWDIN ATOMIC CHARGES" in line:
+            return 
+        
+        startIdx = index + 2
+        currentCharges = []
+        # Read charges until blank line
+        while self.lines[startIdx].strip():
+            parts = self.lines[startIdx].split()
+            for i, part in enumerate(parts):
+                if part == ":":
+                    parts = parts[:i] + parts[i + 1 :]
+            currentCharges.append({"atomNum": int(parts[0]), "atom": parts[1], "charge": float(parts[2])})
+            startIdx += 1
+            
+        self.loedwin.append(pd.DataFrame(currentCharges))
 
     def extractConformers(self):
         """Extract conformer molecular structures."""
@@ -373,7 +376,45 @@ class OrcaOutput:
 
             # Add to the Conformer List
             self.conformers.append(molecule)
-
+            
+    def globalExtractor(self):
+        
+        self.calculationTypes = []
+        self.SCFEnergies = []
+        self.solvationEnergy = None
+        self.GOATSummary = {}
+        self.loedwin = []
+        
+        for i, line in enumerate(self.lines):
+            self.determineCalculationType(line)
+            
+        if not "FREQ" in self.calculationTypes:
+            self.vibrationalFrequencies = pd.DataFrame(columns=["mode", "frequency"])
+            self.IRFrequencies = pd.DataFrame(columns=["mode", "frequency", "IRIntensity"])
+        
+        if not "GOAT" in self.calculationTypes:
+            self.conformerInfo = pd.DataFrame(columns=["conformer", "energy", "degeneracy", "totalPercent", "cumulativePercent"])
+            self.GOATSummary = None
+            
+        if not "NMR" in self.calculationTypes:
+            self.chemicalShifts = None
+        
+        # Loop through all the lines in the file and grab it's line index alongside it
+        for i, line in enumerate(self.lines):
+            self.getSCFEnergies(line, i)
+            self.getFinalTimings(line, i)
+            self.getFinalEnergy(line)
+            self.getMayerPopulation(line, i)
+            self.getDipoleVector(line)
+            self.getDipoleMagnitude(line)
+            self.getVibrationalFrequencies(line, i)
+            self.getGibbsEnergy(line)
+            self.getSolvationEnergy(line)
+            self.getConformerInfo(line, i)
+            self.getGoatSummary(line)
+            self.getIRFrequencies(line, i)
+            self.getChemicalShifts(line, i)
+            self.getLoewdinCharges(line, i)
 
 if __name__ == "__main__":
     for file in os.listdir(os.path.join(os.getcwd(), "tests", "test_files", "output_files")):
@@ -384,3 +425,5 @@ if __name__ == "__main__":
             )
             output = OrcaOutput(loadPath)
             output.saveToTxt(savePath)
+            
+            
