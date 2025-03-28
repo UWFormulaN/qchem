@@ -386,58 +386,58 @@ class OrcaOutput:
                 self.atomCount = int(line.split()[-1])
       
         for i in self.matchIndices["FinalEnergy"]:
-            self.getFinalEnergy(self.lines[i], i)
+            self.getFinalEnergy(self.lines[i])
             
         for i in self.matchIndices["SCF"]:
-            self.getSCFEnergies(self.lines[i], i)
+            self.getSCFEnergies(i)
         
         for i in self.matchIndices["FinalTiming"]:
-            self.getFinalTimings(self.lines[i], i)
+            self.getFinalTimings(i)
         
         for i in self.matchIndices["MayerPopStart"]:
-            self.getMayerPopulation(self.lines[i], i)
+            self.getMayerPopulation( i)
             
         for i in self.matchIndices["Dipole"]:
-            self.getDipoleVector(self.lines[i], i)
+            self.getDipoleVector(self.lines[i])
         
         for i in self.matchIndices["DipoleMagnitude"]:
             self.getDipoleMagnitude(self.lines[i], i)
         
         for i in self.matchIndices["GibbsEnergy"]:
-            self.getGibbsEnergy(self.lines[i], i)
+            self.getGibbsEnergy(self.lines[i])
         
         for i in self.matchIndices["SolvationEnergy"]:
             self.getSolvationEnergy(self.lines[i], i)
         
         for i in self.matchIndices["Loedwin"]:
-            self.getLoewdinCharges(self.lines[i], i)
+            self.getLoewdinCharges( i)
         
         if "FREQ" in self.calculationTypes:
             for i in self.matchIndices["VibrationalFrequencies"]:
-                self.getVibrationalFrequencies(self.lines[i], i)
+                self.getVibrationalFrequencies( i)
                 
             for i in self.matchIndices["IRFrequencies"]:
-                self.getIRFrequencies(self.lines[i], i)
+                self.getIRFrequencies( i)
                 
         if "NMR" in self.calculationTypes:
             for i in self.matchIndices["ChemicalShifts"]:
-                self.getChemicalShifts(self.lines[i], i)
+                self.getChemicalShifts( i)
         
         if "GOAT" in self.calculationTypes:
             for i in self.matchIndices["ConformerInfo"]:
-                self.getConformerInfo(self.lines[i], i)
+                self.getConformerInfo( i)
             
             for i in self.matchIndices["GoatConformerCount"]:
-                self.getGoatSummary(self.lines[i], i)
+                self.getGoatSummary(self.lines[i])
         
             for i in self.matchIndices["GoatLowestEnergy"]:
-                self.getGoatSummary(self.lines[i], i)
+                self.getGoatSummary(self.lines[i])
             
             for i in self.matchIndices["GoatSconf"]:
-                self.getGoatSummary(self.lines[i], i)
+                self.getGoatSummary(self.lines[i])
             
             for i in self.matchIndices["GoatGconf"]:
-                self.getGoatSummary(self.lines[i], i)
+                self.getGoatSummary(self.lines[i])
 
 
 if __name__ == "__main__":
