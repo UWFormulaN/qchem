@@ -22,6 +22,29 @@ class OrcaOutput:
         # Extract filename without path/extension using regex
         self.name = re.search(r"[^\\]+$", self.filePath).group()[:-4]
 
+        self.patterns = {
+            "FinalEnergy": re.compile(r"^FINAL SINGLE POINT ENERGY\s+(-?\d+\.\d+)", re.MULTILINE),
+            "SCF": re.compile(r"^TOTAL SCF ENERGY", re.MULTILINE),
+            "FinalTiming": re.compile(r"^Timings for individual modules:", re.MULTILINE),
+            "MayerPopStart": re.compile(r"ATOM\s+NA\s+ZA\s+QA\s+VA\s+BVA\s+FA"),
+            "NumberOfAtoms": re.compile(r"^Number of atoms\s+(\d+)", re.MULTILINE),
+            "GeoOpt" : re.compile(r"^GEOMETRY OPTIMIZATION", re.MULTILINE),
+            "Dipole": re.compile(r"^Total Dipole Moment", re.MULTILINE),
+            "DipoleMagnitude": re.compile(r"^Magnitude \(a\.u\.\)", re.MULTILINE),
+            "GibbsEnergy": re.compile(r"^Final Gibbs free energy", re.MULTILINE),
+            "SolvationEnergy": re.compile(r"\s+Gsolv\s+=\s+([-+]?\d+\.\d+)", re.MULTILINE),
+            "Loedwin": re.compile(r"^LOEWDIN ATOMIC CHARGES", re.MULTILINE),
+            "VibrationalFrequencies": re.compile(r"^VIBRATIONAL FREQUENCIES", re.MULTILINE),
+            "IRFrequencies": re.compile(r"^IR SPECTRUM", re.MULTILINE),
+            "ChemicalShifts": re.compile(r"^CHEMICAL SHIELDING SUMMARY \(ppm\)", re.MULTILINE),
+            "ConformerInfo": re.compile(r"^# Final ensemble info #", re.MULTILINE),
+            "GoatConformerCount": re.compile(r"^Conformers below", re.MULTILINE),
+            "GoatLowestEnergy": re.compile(r"^Lowest energy conformer", re.MULTILINE),
+            "GOAT" : re.compile(r"^GOAT Global Iter", re.MULTILINE),
+            "GoatSconf": re.compile(r"^Sconf at", re.MULTILINE),
+            "GoatGconf": re.compile(r"^Gconf at", re.MULTILINE),
+        }
+        
         # Determine calculation types (FREQ, NMR, OPT, GOAT)
         self.determineCalculationType()
 
@@ -108,19 +131,19 @@ class OrcaOutput:
         self.calculationTypes = []
 
         for line in self.lines:
-            if "VIBRATIONAL FREQUENCIES" in line:
+            if self.patterns["VibrationalFrequencies"].search(line):
                 self.calculationTypes.append("FREQ") if not "FREQ" in self.calculationTypes else None
-            elif "CHEMICAL SHIELDINGS (ppm)" in line:
+            elif self.patterns["ChemicalShifts"].search(line):
                 self.calculationTypes.append("NMR") if not "NMR" in self.calculationTypes else None
-            elif "GEOMETRY OPTIMIZATION" in line:
+            elif self.patterns["GeoOpt"].search(line):
                 self.calculationTypes.append("OPT") if not "OPT" in self.calculationTypes else None
-            elif "GOAT Global Iter" in line:
+            elif self.patterns["GOAT"].search(line):
                 self.calculationTypes.append("GOAT") if not "GOAT" in self.calculationTypes else None
             
     def getFinalTimings(self) -> pd.DataFrame:
         """Extract computational timing information."""
         for i, line in enumerate(self.lines[-20:]):
-            if line.strip() == "Timings for individual modules:":
+            if self.patterns["FinalTiming"].match(line.strip()):
                 startIndex = i + 2
                 timeLines = self.lines[-20:][startIndex:-2]
 
@@ -132,7 +155,7 @@ class OrcaOutput:
     def getFinalEnergy(self) -> float:
         """Extract final single-point energy from output."""
         for line in self.lines:
-            if line.strip().startswith("FINAL SINGLE POINT ENERGY"):
+            if self.patterns["FinalEnergy"].match(line.strip()):
                 return float(line.split()[-1])
                     
     def getSCFEnergies(self) -> list:
@@ -168,7 +191,7 @@ class OrcaOutput:
         mayerPopulations = []
         # Look for Mayer population blocks
         for i, line in enumerate(self.lines):
-            if line.strip() == "ATOM       NA         ZA         QA         VA         BVA        FA":
+            if self.patterns["MayerPopStart"].match(line.strip()):
                 startIndex = i + 1
                 endIndex = i + atomCount + 1
                 mayerLines = self.lines[startIndex:endIndex]
@@ -187,20 +210,20 @@ class OrcaOutput:
     def getDipoleVector(self) -> tuple:
         """Extract x, y, z components of dipole moment vector."""
         for line in self.lines:
-            if line.strip().startswith("Total Dipole Moment"):
+            if self.patterns["Dipole"].match(line.strip()):
                 return tuple(map(float, line.split()[4:]))  # Convert to floats
 
     def getDipoleMagnitude(self) -> float:
         """Extract magnitude of total dipole moment."""
         for line in self.lines:
-            if line.strip().startswith("Magnitude (a.u.)"):
+            if self.patterns["DipoleMagnitude"].match(line.strip()):
                 return float(line.split()[3])
 
     def getVibrationalFrequencies(self) -> pd.DataFrame:
         """Extract vibrational frequencies from frequency calculation."""
         freqs = []
         for i, line in enumerate(self.lines):
-            if "VIBRATIONAL FREQUENCIES" in line:
+            if self.patterns["VibrationalFrequencies"].match(line.strip()):
                 startIdx = i + 5  # Skip header lines
                 # Process each frequency line
                 while self.lines[startIdx].strip():
@@ -222,7 +245,7 @@ class OrcaOutput:
     def getGibbsEnergy(self) -> tuple:
         """Extract Gibbs free energy and units."""
         for i, line in enumerate(self.lines):
-            if line.strip()[0:23] == "Final Gibbs free energy":
+            if self.patterns["GibbsEnergy"].match(line.strip()):
                 gibbs = float(re.search(r"-?\d+\.\d+", line).group())
                 unit = re.search(r"\b\w+\b$", line).group()
                 return gibbs, unit
@@ -237,7 +260,7 @@ class OrcaOutput:
             float - Solvation energy of the solute in the specified solvent (Eh)
         """
         for line in self.lines:
-            if "Gsolv" in line: 
+            if self.patterns["SolvationEnergy"].match(line.strip()):
                 solvationEnergy = float(line.strip()[29:-9])
         return solvationEnergy
 
@@ -245,7 +268,7 @@ class OrcaOutput:
         """Extract conformer energies and populations."""
         conformers = []
         for i, line in enumerate(self.lines):
-            if "# Final ensemble info #" in line:
+            if self.patterns["ConformerInfo"].match(line.strip()):
                 startIdx = i + 2  # Skip header
                 while "------" not in self.lines[startIdx]:
                     startIdx += 1
@@ -271,13 +294,13 @@ class OrcaOutput:
         """Extract GOAT calculation summary."""
         summary = {}
         for line in self.lines:
-            if "Conformers below" in line:
+            if self.patterns["GoatConformerCount"].match(line.strip()):
                 summary["conformersBelow3KCal"] = int(line.split(":")[1])
-            elif "Lowest energy conformer" in line:
+            elif self.patterns["GoatLowestEnergy"].match(line.strip()):
                 summary["lowestEnergy"] = float(line.split(":")[1].split()[0])
-            elif "Sconf at" in line:
+            elif self.patterns["GoatSconf"].match(line.strip()):
                 summary["sconf"] = float(line.split(":")[1].split()[0])
-            elif "Gconf at" in line:
+            elif self.patterns["GoatGconf"].match(line.strip()):
                 summary["gconf"] = float(line.split(":")[1].split()[0])
         return summary
 
@@ -285,7 +308,7 @@ class OrcaOutput:
         """Extract IR frequencies and intensities."""
         freqs = []
         for i, line in enumerate(self.lines):
-            if "IR SPECTRUM" in line:
+            if self.patterns["IRFrequencies"].match(line.strip()):
                 startIdx = i + 4  # Skip header lines
                 while self.lines[startIdx].strip():
                     parts = self.lines[startIdx].split()
@@ -304,7 +327,7 @@ class OrcaOutput:
         """Extract NMR chemical shifts."""
         shifts = []
         for i, line in enumerate(self.lines):
-            if "CHEMICAL SHIELDING SUMMARY (ppm)" in line:
+            if self.patterns["ChemicalShifts"].match(line.strip()):
                 startIdx = i + 6
                 while self.lines[startIdx].strip():
                     parts = self.lines[startIdx].split()
@@ -324,7 +347,7 @@ class OrcaOutput:
         """Extract Loewdin atomic charges."""
         charges = []
         for i, line in enumerate(self.lines):
-            if "LOEWDIN ATOMIC CHARGES" in line:
+            if self.patterns["Loedwin"].match(line.strip()):
                 startIdx = i + 2
                 currentCharges = []
                 # Read charges until blank line

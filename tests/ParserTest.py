@@ -1,5 +1,6 @@
 import sys
 import os
+import time
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
@@ -92,3 +93,9 @@ def testDipoleMoments():
     assert len(vector) == 3
     assert all(isinstance(x, float) for x in vector)
     assert isinstance(magnitude, float)
+
+initTime = time.time()
+output = OrcaOutput(ASPIRIN_FTIR)
+
+finalTime = time.time()
+print("Time taken for parsing: ", finalTime - initTime)
