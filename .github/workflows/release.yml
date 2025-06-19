@@ -51,7 +51,7 @@ jobs:
       - name: Build with setup.py using version
         run: |
           export PACKAGE_VERSION=${{ needs.version.outputs.version }}
-          python setup.py sdist bdist_wheel
+          python Setup.py sdist bdist_wheel
 
   publish:
     runs-on: ["self-hosted", "run-${{github.run_id}}"]
