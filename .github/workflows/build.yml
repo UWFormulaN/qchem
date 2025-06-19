@@ -42,4 +42,4 @@ jobs:
       - name: Build with setup.py using version
         run: |
           export PACKAGE_VERSION=${{ needs.version.outputs.version }}
-          python Setup.py sdist bdist_wheel
+          python setup.py sdist bdist_wheel
