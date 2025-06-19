@@ -30,6 +30,8 @@ jobs:
     runs-on: ["self-hosted", "run-${{github.run_id}}"]
     needs: [version]
     steps:
+      - uses: actions/checkout@v4
+      
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
