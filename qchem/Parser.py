@@ -1,15 +1,8 @@
 import pandas as pd
 import re
 import os
-import sys
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
 from qchem.Molecule import Molecule
 from qchem.XYZFile import XYZFile
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__))))
-
 
 class OrcaOutput:
     def __init__(self, filePath: str):
