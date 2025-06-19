@@ -62,5 +62,5 @@ jobs:
       - name: Publish to custom repo (qchem)
         env:
           TWINE_USERNAME: __token__
-          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
         run: twine upload dist/* --repository qchem
