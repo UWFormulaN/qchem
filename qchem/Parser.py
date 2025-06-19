@@ -20,7 +20,7 @@ class OrcaOutput:
             self.lines = file.readlines()
 
         # Extract filename without path/extension using regex
-        self.name = re.search(r"[^\\]+$", self.filePath).group()[:-4]
+        self.name =  os.path.splitext(os.path.basename(self.filePath))[0]
 
         # Determine calculation types (FREQ, NMR, OPT, GOAT)
         self.determineCalculationType()
