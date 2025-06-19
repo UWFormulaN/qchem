@@ -11,7 +11,6 @@ permissions:
 jobs:
   setup:
     runs-on: ["self-hosted", "run-${{github.run_id}}"]
-    needs: [version]
     steps:
       - name: Set up Python
         uses: actions/setup-python@v5
