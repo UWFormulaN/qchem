@@ -13,7 +13,7 @@ jobs:
     runs-on: ["self-hosted", "run-${{github.run_id}}"]
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -32,6 +32,13 @@ jobs:
     runs-on: ["self-hosted", "run-${{github.run_id}}"]
     needs: [setup]
     steps:
+
+      - name: Check Directory
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Contents:"
+          ls -la
+
       - name: Build with setup.py using version
         run: |
           export PACKAGE_VERSION=${{ needs.version.outputs.version }}
