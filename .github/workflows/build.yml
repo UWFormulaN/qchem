@@ -9,12 +9,10 @@ permissions:
   packages: read
 
 jobs:
-  build:
+  setup:
     runs-on: ["self-hosted", "run-${{github.run_id}}"]
-
+    needs: [version]
     steps:
-      - uses: actions/checkout@v4
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -23,7 +21,17 @@ jobs:
       - name: Install build tools
         run: |
           python -m pip install --upgrade pip
-          pip install build
+          pip install twine setuptools wheel
 
-      - name: Build package
-        run: python -m build
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+  build:
+    runs-on: ["self-hosted", "run-${{github.run_id}}"]
+    needs: [setup]
+    steps:
+      - name: Build with setup.py using version
+        run: |
+          export PACKAGE_VERSION=${{ needs.version.outputs.version }}
+          python setup.py sdist bdist_wheel
