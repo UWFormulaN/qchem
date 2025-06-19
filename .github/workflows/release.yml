@@ -1,0 +1,64 @@
+name: Release
+
+on:
+  release:
+    types: [published]  
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+
+  version:
+    runs-on: ["self-hosted", "run-${{github.run_id}}"]
+    needs: setup
+    outputs:
+      version: ${{ steps.get-tag-version.outputs.version }}
+
+    steps:
+      - name: Get Tag Version
+        id: get-tag-version
+        shell: bash
+        run: |
+          tagName="${{ github.event.release.tag_name }}"
+          version="${tagName#v}"  # Removes the 'v' prefix if it exists
+          echo "Extracted version $version from tag"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+  setup:
+    runs-on: ["self-hosted", "run-${{github.run_id}}"]
+    needs: [version]
+    steps:
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install build tools
+        run: |
+          python -m pip install --upgrade pip
+          pip install twine setuptools wheel
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+  build:
+    runs-on: ["self-hosted", "run-${{github.run_id}}"]
+    needs: [setup]
+    steps:
+      - name: Build with setup.py using version
+        run: |
+          export PACKAGE_VERSION=${{ needs.version.outputs.version }}
+          python setup.py sdist bdist_wheel
+
+  publish:
+    runs-on: ["self-hosted", "run-${{github.run_id}}"]
+    needs: [build]
+    steps:
+      - name: Publish to custom repo (qchem)
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: twine upload dist/* --repository qchem
