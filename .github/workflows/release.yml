@@ -9,7 +9,6 @@ permissions:
   packages: write
 
 jobs:
-
   version:
     runs-on: ["self-hosted", "run-${{github.run_id}}"]
     needs: setup
@@ -26,7 +25,7 @@ jobs:
           echo "Extracted version $version from tag"
           echo "version=$version" >> "$GITHUB_OUTPUT"
 
-  setup:
+  publish:
     runs-on: ["self-hosted", "run-${{github.run_id}}"]
     needs: [version]
     steps:
@@ -51,21 +50,32 @@ jobs:
         run: |
           pip install -r requirements.txt
 
-  build:
-    runs-on: ["self-hosted", "run-${{github.run_id}}"]
-    needs: [setup]
-    steps:
       - name: Build with setup.py using version
         run: |
           export PACKAGE_VERSION=${{ needs.version.outputs.version }}
           python setup.py sdist bdist_wheel
 
-  publish:
-    runs-on: ["self-hosted", "run-${{github.run_id}}"]
-    needs: [build]
-    steps:
       - name: Publish to custom repo (qchem)
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
         run: twine upload dist/* --repository qchem
+
+  #build:
+  #  runs-on: ["self-hosted", "run-${{github.run_id}}"]
+  #  needs: [setup, version]
+  #  steps:
+  #    - name: Build with setup.py using version
+  #      run: |
+  #        export PACKAGE_VERSION=${{ needs.version.outputs.version }}
+  #        python setup.py sdist bdist_wheel
+#
+  #publish:
+  #  runs-on: ["self-hosted", "run-${{github.run_id}}"]
+  #  needs: [build]
+  #  steps:
+  #    - name: Publish to custom repo (qchem)
+  #      env:
+  #        TWINE_USERNAME: __token__
+  #        TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+  #      run: twine upload dist/* --repository qchem
