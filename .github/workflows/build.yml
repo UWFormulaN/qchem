@@ -33,6 +33,17 @@ jobs:
         run: |
           pip install -r requirements.txt
 
+      - name: Check Directory
+        run: |
+          echo "Current directory: $(pwd)"
+          echo "Contents:"
+          ls -la
+
+      - name: Build with setup.py using version
+        run: |
+          export PACKAGE_VERSION=${{ needs.version.outputs.version }}
+          python setup.py sdist bdist_wheel
+
   build:
     runs-on: ["self-hosted", "run-${{github.run_id}}"]
     needs: [setup]
