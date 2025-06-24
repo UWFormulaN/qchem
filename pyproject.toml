@@ -1,19 +1,16 @@
-[project]
+[tool.poetry]
 name = "qchem"
 version = "0.6.0"
-description = "QChem is a project used for Quantum Chemistry Simulations and Data Anaylsis/Visualization, developed by the Formula Nano student design team at the University of Waterloo."
+description = "QChem is a project used for Quantum Chemistry Simulations and Data Analysis/Visualization, developed by the Formula Nano student design team at the University of Waterloo."
 authors = [
-    {name = "Alex Dufresne-Nappert"},
-    {name = "Ryan Miller"},
-    {name = "Cameron Chin"},
-    {name = "Matthew Athanasopoulos"}
+    "Alex Dufresne-Nappert",
+    "Ryan Miller",
+    "Cameron Chin",
+    "Matthew Athanasopoulos"
 ]
 readme = "README.md"
-requires-python = ">=3.11, <4.0"
 
-[tool.poetry]
-
-[poetry.dependencies]
+[tool.poetry.dependencies]
 python = ">=3.11,<3.13"
 pandas = "^2.2.0"
 matplotlib = "^3.8.2"

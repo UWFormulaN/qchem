@@ -1,15 +1,8 @@
 import pandas as pd
 import re
 import os
-import sys
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
 from qchem.Molecule import Molecule
 from qchem.XYZFile import XYZFile
-
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__))))
-
 
 class OrcaOutput:
     def __init__(self, filePath: str):
@@ -20,7 +13,7 @@ class OrcaOutput:
             self.lines = file.readlines()
 
         # Extract filename without path/extension using regex
-        self.name = re.search(r"[^\\]+$", self.filePath).group()[:-4]
+        self.name =  os.path.splitext(os.path.basename(self.filePath))[0]
 
         # Determine calculation types (FREQ, NMR, OPT, GOAT)
         self.determineCalculationType()
