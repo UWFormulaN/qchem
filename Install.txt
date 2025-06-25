@@ -1,0 +1,4 @@
+qchem==0.53
+pandas
+matplotlib
+numpy
