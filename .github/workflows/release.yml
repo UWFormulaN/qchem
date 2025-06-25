@@ -11,7 +11,6 @@ permissions:
 jobs:
   version:
     runs-on: ["self-hosted", "run-${{github.run_id}}"]
-    needs: setup
     outputs:
       version: ${{ steps.get-tag-version.outputs.version }}
 
