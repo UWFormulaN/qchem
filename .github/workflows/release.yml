@@ -54,17 +54,6 @@ jobs:
           export PACKAGE_VERSION=${{ needs.version.outputs.version }}
           python setup.py sdist bdist_wheel
 
-      # - name: Configure .pypirc
-      #   run: |
-      #     mkdir -p ~/.config/pypoetry
-      #     echo "[distutils]" >> ~/.pypirc
-      #     echo "index-servers =" >> ~/.pypirc
-      #     echo "    qchem" >> ~/.pypirc
-      #     echo "[qchem]" >> ~/.pypirc
-      #     echo "repository = https://your.repo.url/" >> ~/.pypirc
-      #     echo "username = ${{ secrets.PYPI_USERNAME }}" >> ~/.pypirc
-      #     echo "password = ${{ secrets.PYPI_PASSWORD }}" >> ~/.pypirc
-
       - name: Publish to QChem on Pypi
         env:
           TWINE_USERNAME: __token__
