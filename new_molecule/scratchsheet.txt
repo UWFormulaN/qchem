@@ -1,0 +1,21 @@
+Looking to make new molecule class for use in qchem
+
+Goal is to be able to do more with molecule manipulations:
+- Combine several molecules into one, rotate molecules
+
+
+Molecule class should have properties:
+- xyz coordinates
+- internal coordinates
+- bond information (?)
+- atom information
+
+
+Molecule class should have methods:
+- get_xyz
+- get_internal_coordinates
+- save
+- transform
+  - rotate, translate, scale
+- make_xyz_from_smiles
+
